@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Âgée OL - Collaborative</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header h1 { font-size: 28px; display: flex; align-items: center; gap: 10px; }
+        .user-info { text-align: right; }
+        .user-info .name { font-size: 18px; font-weight: bold; }
+        .user-info .agences { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+        .sync-indicator {
+            font-size: 12px;
+            color: #27ae60;
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        
+        .login-screen { padding: 60px 30px; text-align: center; }
+        .login-screen h2 { color: #667eea; margin-bottom: 30px; font-size: 32px; }
+        .login-form { max-width: 400px; margin: 0 auto; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .input-group input:focus { outline: none; border-color: #667eea; }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        .btn-success { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); }
+        
+        .main-content { padding: 30px; }
+        
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .toolbar input[type="file"] { display: none; }
+        .toolbar label.btn { display: inline-block; margin: 0; }
+        .toolbar select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .search-box { flex: 1; min-width: 250px; }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .version-badge {
+            background: #3498db;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-card .label { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
+        .stat-card .value { font-size: 28px; font-weight: bold; }
+        
+        .table-container { 
+            overflow-x: auto; 
+            border-radius: 10px; 
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        thead { background: #f8f9fa; position: sticky; top: 0; z-index: 10; }
+        th {
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+        td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; }
+        tbody tr:hover { background: #f8f9fa; }
+        tbody tr { transition: background 0.2s; }
+        
+        .clickable { cursor: pointer; color: #667eea; text-decoration: underline; font-weight: 600; }
+        .clickable:hover { color: #764ba2; }
+        .amount { text-align: right; font-weight: 600; font-family: 'Courier New', monospace; }
+        .amount.negative { color: #e74c3c; }
+        .amount.positive { color: #27ae60; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .modal-header h3 { color: #667eea; font-size: 24px; }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+        
+        .close-btn:hover { color: #333; }
+        
+        .client-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .detail-item { display: flex; flex-direction: column; gap: 5px; }
+        .detail-label { font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase; }
+        .detail-value { font-size: 16px; color: #333; font-weight: bold; }
+        
+        .comments-section { margin-top: 30px; }
+        .comments-section h4 { 
+            color: #667eea; 
+            margin-bottom: 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        
+        .comment-form { margin-bottom: 20px; }
+        .comment-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+        }
+        .comment-form textarea:focus { outline: none; border-color: #667eea; }
+        
+        .comment-list { max-height: 400px; overflow-y: auto; }
+        
+        .comment {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            animation: commentSlideIn 0.3s ease;
+        }
+        
+        @keyframes commentSlideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .comment-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .comment-author { font-weight: 600; color: #667eea; }
+        .comment-date { font-size: 12px; color: #999; }
+        .comment-text { color: #333; line-height: 1.6; }
+        
+        .historique-section { margin-top: 30px; }
+        .historique-section h4 { 
+            color: #667eea; 
+            margin-bottom: 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        
+        .historique-chart {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .historique-chart table { margin-top: 10px; }
+        .historique-chart th { background: #667eea; color: white; }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            display: none;
+            max-width: 350px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.show { display: block; }
+        .notification.success { border-left: 4px solid #27ae60; }
+        .notification.error { border-left: 4px solid #e74c3c; }
+        .notification.info { border-left: 4px solid #3498db; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .loader { display: none; text-align: center; padding: 40px; }
+        .loader.active { display: block; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden { display: none; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
+        .empty-state-title { font-size: 24px; color: #667eea; margin-bottom: 10px; }
+        .empty-state-text { font-size: 16px; }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; }
+            .user-info { text-align: center; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .stats { grid-template-columns: 1fr; }
+            .client-details-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="notification" class="notification"></div>
+    
+    <!-- LOGIN -->
+    <div id="loginScreen" class="container">
+        <div class="login-screen">
+            <h2>🔐 Connexion - Balance Âgée OL</h2>
+            <p style="color: #666; margin-bottom: 30px;">Système collaboratif avec import Excel</p>
+            <form class="login-form" onsubmit="login(event)">
+                <div class="input-group">
+                    <label>📧 Email Olympic Location</label>
+                    <input type="email" id="emailInput" placeholder="prenom@olympiclocation.com" required>
+                </div>
+                <button type="submit" class="btn" id="loginBtn">Se connecter</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- MAIN APP -->
+    <div id="mainApp" class="container hidden">
+        <div class="header">
+            <h1>📊 Balance Âgée - Olympic Location</h1>
+            <div class="user-info">
+                <div class="name" id="userName"></div>
+                <div class="agences" id="userAgences"></div>
+                <div class="sync-indicator" id="syncIndicator">🔄 Synchronisé</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="toolbar">
+                <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="importExcel(event)">
+                <label for="fileInput" class="btn">📁 Importer Balance Excel</label>
+                
+                <select id="versionFilter" onchange="loadData()">
+                    <option value="latest">📌 Dernière version</option>
+                </select>
+                
+                <select id="agenceFilter" onchange="filterData()">
+                    <option value="all">Toutes mes agences</option>
+                </select>
+                
+                <button class="btn btn-secondary" onclick="refreshData()">🔄 Actualiser</button>
+                
+                <div class="version-badge" id="versionBadge">
+                    <span>📦</span>
+                    <span id="currentVersion">Aucune donnée</span>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Rechercher un client..." onkeyup="filterData()">
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="label">Nombre de clients</div>
+                    <div class="value" id="statClients">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Solde total</div>
+                    <div class="value" id="statSolde">0 €</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Échéance 30-60j</div>
+                    <div class="value" id="statEcheance60">0 €</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Échéance > 90j</div>
+                    <div class="value" id="statEcheance90">0 €</div>
+                </div>
+            </div>
+            
+            <div class="loader" id="loader">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px;">Chargement des données...</p>
+            </div>
+            
+            <div id="emptyState" class="empty-state hidden">
+                <div class="empty-state-icon">📊</div>
+                <div class="empty-state-title">Aucune donnée disponible</div>
+                <div class="empty-state-text">Importez votre première balance Excel pour commencer</div>
+            </div>
+            
+            <div class="table-container" id="tableContainer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code Client</th>
+                            <th>Nom Client</th>
+                            <th>Solde</th>
+                            <th>0-30j</th>
+                            <th>30-60j</th>
+                            <th>60-90j</th>
+                            <th>90-120j</th>
+                            <th>&gt;120j</th>
+                            <th>Paiement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL DÉTAILS CLIENT -->
+    <div id="clientModal" class="modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modalTitle">Détails Client</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div id="modalBody">
+                <div class="client-details-grid" id="clientDetails"></div>
+                
+                <div class="comments-section">
+                    <h4>💬 Commentaires collaboratifs</h4>
+                    <div class="comment-form">
+                        <textarea id="commentInput" placeholder="Ajouter un commentaire (visible par tous les utilisateurs autorisés)..."></textarea>
+                        <button class="btn btn-success" onclick="addComment()" style="margin-top: 10px;">📤 Envoyer le commentaire</button>
+                    </div>
+                    <div id="commentList" class="comment-list"></div>
+                </div>
+                
+                <div class="historique-section">
+                    <h4>📈 Historique des imports</h4>
+                    <div class="historique-chart" id="historiqueChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVbrtyM32oJHmMJAmHZTy1STaxQH5LtJjmsmdNAWxQkwORk9plULOw9KVxv7-Yk_2c/exec'; // ⚠️ À REMPLACER
+        
+        let currentUser = null;
+        let allData = [];
+        let filteredData = [];
+        let currentClient = null;
+        let lastSyncTime = new Date();
+        let syncInterval = null;
+        
+        // ============================================
+        // AUTHENTIFICATION
+        // ============================================
+        async function login(event) {
+            event.preventDefault();
+            const email = document.getElementById('emailInput').value;
+            const btn = document.getElementById('loginBtn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Connexion en cours...';
+            
+            try {
+                const response = await fetch(SCRIPT_URL + '?action=authentifier&email=' + encodeURIComponent(email));
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentUser = result;
+                    localStorage.setItem('olUser', JSON.stringify(currentUser));
+                    showMainApp();
+                    await loadVersions();
+                    await loadData();
+                    startAutoSync();
+                    showNotification('✅ Connexion réussie ! Bienvenue ' + result.nom, 'success');
+                } else {
+                    showNotification('❌ ' + result.message, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Se connecter';
+                }
+            } catch (error) {
+                showNotification('❌ Erreur de connexion : ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Se connecter';
+            }
+        }
+        
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.nom;
+            document.getElementById('userAgences').textContent = '📍 ' + currentUser.agences.replace(/;/g, ', ');
+            
+            const agenceFilter = document.getElementById('agenceFilter');
+            currentUser.agences.split(';').forEach(agence => {
+                const option = document.createElement('option');
+                option.value = agence.trim();
+                option.textContent = agence.trim();
+                agenceFilter.appendChild(option);
+            });
+        }
+        
+        // ============================================
+        // IMPORT EXCEL - FORMAT BALANCE ÂGÉE OL
+        // ============================================
+        async function importExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            showLoader();
+            
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                
+                // Parser les données selon le format OL
+                const parsedData = parseBalanceAgeeOL(jsonData);
+                
+                if (parsedData.length === 0) {
+                    showNotification('❌ Aucune donnée valide trouvée dans le fichier', 'error');
+                    hideLoader();
+                    return;
+                }
+                
+                const agence = currentUser.agences.split(';')[0].trim();
+                
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'importerBalance',
+                        data: parsedData,
+                        agence: agence,
+                        email: currentUser.email,
+                        nom: currentUser.nom
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('✅ ' + result.message + ' (' + parsedData.length + ' clients importés)', 'success');
+                    await loadVersions();
+                    await loadData();
+                } else {
+                    showNotification('❌ ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('❌ Erreur lors de l\'import : ' + error.message, 'error');
+            } finally {
+                hideLoader();
+                event.target.value = '';
+            }
+        }
+        
+        // ============================================
+        // PARSER BALANCE ÂGÉE FORMAT OL
+        // ============================================
+        function parseBalanceAgeeOL(jsonData) {
+            const parsedData = [];
+            
+            // Trouver la ligne d'en-tête (contient "Compte", "Intitulé", etc.)
+            let headerRowIndex = -1;
+            for (let i = 0; i < Math.min(5, jsonData.length); i++) {
+                const row = jsonData[i];
+                if (row[0] && row[0].toString().toLowerCase().includes('compte')) {
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+            
+            if (headerRowIndex === -1) {
+                console.error('En-tête non trouvé');
+                return [];
+            }
+            
+            // Mapper les colonnes
+            const headers = jsonData[headerRowIndex];
+            const colMap = {
+                compte: -1,
+                intitule: -1,
+                plus120: -1,
+                de90a119: -1,
+                de60a89: -1,
+                de30a59: -1,
+                de0a29: -1,
+                paiement: -1,
+                solde: -1
+            };
+            
+            headers.forEach((header, index) => {
+                const h = header.toString().toLowerCase().trim();
+                if (h.includes('compte')) colMap.compte = index;
+                else if (h.includes('intitulé') || h.includes('intitule')) colMap.intitule = index;
+                else if (h.includes('120') && h.includes('+')) colMap.plus120 = index;
+                else if (h.includes('90') && h.includes('119')) colMap.de90a119 = index;
+                else if (h.includes('60') && h.includes('89')) colMap.de60a89 = index;
+                else if (h.includes('30') && h.includes('59')) colMap.de30a59 = index;
+                else if (h.includes('0') && h.includes('29')) colMap.de0a29 = index;
+                else if (h.includes('paiement')) colMap.paiement = index;
+                else if (h.includes('solde')) colMap.solde = index;
+            });
+            
+            // Vérifier que les colonnes essentielles sont trouvées
+            if (colMap.compte === -1 || colMap.intitule === -1 || colMap.solde === -1) {
+                console.error('Colonnes essentielles manquantes', colMap);
+                return [];
+            }
+            
+            // Parser les données
+            for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                
+                // Ignorer les lignes vides
+                if (!row[colMap.compte] || row[colMap.compte].toString().trim() === '') continue;
+                
+                const codeClient = row[colMap.compte].toString().trim();
+                const nomClient = row[colMap.intitule] ? row[colMap.intitule].toString().trim() : '';
+                
+                // Ignorer si pas de nom client
+                if (!nomClient) continue;
+                
+                // Parser les montants (gérer les valeurs vides)
+                const parseAmount = (val) => {
+                    if (val === undefined || val === null || val === '') return 0;
+                    const num = parseFloat(val.toString().replace(/,/g, '.'));
+                    return isNaN(num) ? 0 : num;
+                };
+                
+                const client = {
+                    codeClient: codeClient,
+                    nomClient: nomClient,
+                    echeancePlus120: parseAmount(row[colMap.plus120]),
+                    echeance90: parseAmount(row[colMap.de90a119]),
+                    echeance60: parseAmount(row[colMap.de60a89]),
+                    echeance30: parseAmount(row[colMap.de30a59]),
+                    echeance0: parseAmount(row[colMap.de0a29]),
+                    paiement: parseAmount(row[colMap.paiement]),
+                    solde: parseAmount(row[colMap.solde])
+                };
+                
+                parsedData.push(client);
+}
+          console.log(`✅ ${parsedData.length} clients parsés avec succès`);
+          return parsedData;
+      }
+      
+      // ============================================
+      // CHARGEMENT DES VERSIONS
+      // ============================================
+      async function loadVersions() {
+          try {
+              const url = SCRIPT_URL + '?action=getVersionsDisponibles&agences=' + encodeURIComponent(currentUser.agences);
+              const response = await fetch(url);
+              const result = await response.json();
+              
+              if (result.success) {
+                  const select = document.getElementById('versionFilter');
+                  select.innerHTML = '<option value="latest">📌 Dernière version</option>';
+                  
+                  const allVersions = [];
+                  Object.keys(result.versions).forEach(agence => {
+                      result.versions[agence].forEach(v => {
+                          allVersions.push({ ...v, agence: agence });
+                      });
+                  });
+                  
+                  allVersions.sort((a, b) => {
+                      const vA = parseInt(a.version.replace('v', ''));
+                      const vB = parseInt(b.version.replace('v', ''));
+                      return vB - vA;
+                  });
+                  
+                  allVersions.forEach(v => {
+                      const option = document.createElement('option');
+                      option.value = v.version;
+                      option.textContent = `${v.version} - ${v.agence} - ${v.date} ${v.heure}`;
+                      select.appendChild(option);
+                  });
+              }
+          } catch (error) {
+              console.error('Erreur chargement versions:', error);
+          }
+      }
+      
+      // ============================================
+      // CHARGEMENT DES DONNÉES
+      // ============================================
+      async function loadData() {
+          showLoader();
+          
+          try {
+              const versionFilter = document.getElementById('versionFilter').value;
+              const url = SCRIPT_URL + '?action=getBalances&agences=' + encodeURIComponent(currentUser.agences) + '&version=' + versionFilter;
+              const response = await fetch(url);
+              const result = await response.json();
+              
+              if (result.success) {
+                  allData = result.data;
+                  
+                  if (allData.length === 0) {
+                      document.getElementById('emptyState').classList.remove('hidden');
+                      document.getElementById('tableContainer').classList.add('hidden');
+                      document.getElementById('currentVersion').textContent = 'Aucune donnée';
+                  } else {
+                      document.getElementById('emptyState').classList.add('hidden');
+                      document.getElementById('tableContainer').classList.remove('hidden');
+                      
+                      if (allData.length > 0) {
+                          const version = allData[0].version;
+                          const date = allData[0].dateImport;
+                          const heure = allData[0].heureImport;
+                          document.getElementById('currentVersion').textContent = `${version} - ${date} ${heure}`;
+                      }
+                  }
+                  
+                  filterData();
+                  updateSyncIndicator();
+              }
+          } catch (error) {
+              showNotification('❌ Erreur de chargement : ' + error.message, 'error');
+          } finally {
+              hideLoader();
+          }
+      }
+      
+      function filterData() {
+          const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+          const agenceFilter = document.getElementById('agenceFilter').value;
+          
+          filteredData = allData.filter(item => {
+              const matchSearch = item.nomClient.toLowerCase().includes(searchTerm) || 
+                                 item.codeClient.toLowerCase().includes(searchTerm);
+              const matchAgence = agenceFilter === 'all' || item.agence === agenceFilter;
+              return matchSearch && matchAgence;
+          });
+          
+          displayData();
+      }
+      
+      function displayData() {
+          const tbody = document.getElementById('tableBody');
+          tbody.innerHTML = '';
+          
+          let totalSolde = 0;
+          let totalEcheance60 = 0;
+          let totalEcheance90 = 0;
+          
+          filteredData.forEach(item => {
+              totalSolde += item.solde;
+              totalEcheance60 += item.echeance60;
+              totalEcheance90 += (item.echeance90 || 0) + (item.echeancePlus120 || 0);
+              
+              const row = tbody.insertRow();
+              row.innerHTML = `
+                  <td>${item.codeClient}</td>
+                  <td class="clickable" onclick="showClientDetails('${item.id}')">${item.nomClient}</td>
+                  <td class="amount ${item.solde < 0 ? 'negative' : 'positive'}">${formatAmount(item.solde)}</td>
+                  <td class="amount">${formatAmount(item.echeance0 || 0)}</td>
+                  <td class="amount">${formatAmount(item.echeance30 || 0)}</td>
+                  <td class="amount">${formatAmount(item.echeance60 || 0)}</td>
+                  <td class="amount">${formatAmount(item.echeance90 || 0)}</td>
+                  <td class="amount">${formatAmount(item.echeancePlus120 || 0)}</td>
+                  <td class="amount">${formatAmount(item.paiement || 0)}</td>
+                  <td>
+                      <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="showClientDetails('${item.id}')">👁️ Voir</button>
+                  </td>
+              `;
+          });
+          
+          // Mettre à jour les statistiques
+          document.getElementById('statClients').textContent = filteredData.length;
+          document.getElementById('statSolde').textContent = formatAmount(totalSolde);
+          document.getElementById('statEcheance60').textContent = formatAmount(totalEcheance60);
+          document.getElementById('statEcheance90').textContent = formatAmount(totalEcheance90);
+      }
+      
+      // ============================================
+      // DÉTAILS CLIENT
+      // ============================================
+      async function showClientDetails(clientId) {
+          const client = allData.find(c => c.id === clientId);
+          if (!client) return;
+          
+          currentClient = client;
+          
+          document.getElementById('modalTitle').textContent = `📋 ${client.nomClient}`;
+          
+          // Afficher les détails
+          const detailsHtml = `
+              <div class="detail-item">
+                  <div class="detail-label">Code Client</div>
+                  <div class="detail-value">${client.codeClient}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Solde Total</div>
+                  <div class="detail-value" style="color: ${client.solde < 0 ? '#e74c3c' : '#27ae60'};">${formatAmount(client.solde)}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Échéance 0-30j</div>
+                  <div class="detail-value">${formatAmount(client.echeance0 || 0)}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Échéance 30-60j</div>
+                  <div class="detail-value">${formatAmount(client.echeance30 || 0)}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Échéance 60-90j</div>
+                  <div class="detail-value">${formatAmount(client.echeance60 || 0)}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Échéance 90-120j</div>
+                  <div class="detail-value">${formatAmount(client.echeance90 || 0)}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Échéance > 120j</div>
+                  <div class="detail-value">${formatAmount(client.echeancePlus120 || 0)}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Paiement</div>
+                  <div class="detail-value">${formatAmount(client.paiement || 0)}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Agence</div>
+                  <div class="detail-value">${client.agence}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Version</div>
+                  <div class="detail-value">${client.version}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Date Import</div>
+                  <div class="detail-value">${client.dateImport} ${client.heureImport}</div>
+              </div>
+              <div class="detail-item">
+                  <div class="detail-label">Importé par</div>
+                  <div class="detail-value">${client.importePar}</div>
+              </div>
+          `;
+          
+          document.getElementById('clientDetails').innerHTML = detailsHtml;
+          
+          // Charger les commentaires
+          await loadComments(client.codeClient);
+          
+          // Charger l'historique
+          await loadHistorique(client.codeClient);
+          
+          // Ouvrir la modal
+          document.getElementById('clientModal').classList.add('active');
+      }
+      
+      // ============================================
+      // COMMENTAIRES
+      // ============================================
+      async function loadComments(codeClient) {
+          try {
+              const url = SCRIPT_URL + '?action=getCommentaires&codeClient=' + encodeURIComponent(codeClient) + '&agences=' + encodeURIComponent(currentUser.agences);
+              const response = await fetch(url);
+              const result = await response.json();
+              
+              if (result.success) {
+                  displayComments(result.data);
+              }
+          } catch (error) {
+              console.error('Erreur chargement commentaires:', error);
+          }
+      }
+      
+      function displayComments(comments) {
+          const container = document.getElementById('commentList');
+          
+          if (comments.length === 0) {
+              container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucun commentaire pour le moment</p>';
+              return;
+          }
+          
+          container.innerHTML = comments.map(c => `
+              <div class="comment">
+                  <div class="comment-header">
+                      <span class="comment-author">👤 ${c.auteur}</span>
+                      <span class="comment-date">🕒 ${c.date}</span>
+                  </div>
+                  <div class="comment-text">${c.commentaire}</div>
+              </div>
+          `).join('');
+      }
+      
+      async function addComment() {
+          const textarea = document.getElementById('commentInput');
+          const commentaire = textarea.value.trim();
+          
+          if (!commentaire) {
+              showNotification('⚠️ Veuillez saisir un commentaire', 'error');
+              return;
+          }
+          
+          try {
+              const response = await fetch(SCRIPT_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      action: 'ajouterCommentaire',
+                      codeClient: currentClient.codeClient,
+                      nomClient: currentClient.nomClient,
+                      commentaire: commentaire,
+                      auteur: currentUser.nom,
+                      agence: currentClient.agence
+                  })
+              });
+              
+              const result = await response.json();
+              
+              if (result.success) {
+                  showNotification('✅ Commentaire ajouté avec succès', 'success');
+                  textarea.value = '';
+                  await loadComments(currentClient.codeClient);
+              } else {
+                  showNotification('❌ ' + result.message, 'error');
+              }
+          } catch (error) {
+              showNotification('❌ Erreur : ' + error.message, 'error');
+          }
+      }
+      
+      // ============================================
+      // HISTORIQUE
+      // ============================================
+      async function loadHistorique(codeClient) {
+          try {
+              const url = SCRIPT_URL + '?action=getHistoriqueClient&codeClient=' + encodeURIComponent(codeClient) + '&agences=' + encodeURIComponent(currentUser.agences);
+              const response = await fetch(url);
+              const result = await response.json();
+              
+              if (result.success) {
+                  displayHistorique(result.data);
+              }
+          } catch (error) {
+              console.error('Erreur chargement historique:', error);
+          }
+      }
+      
+      function displayHistorique(historique) {
+          const container = document.getElementById('historiqueChart');
+          
+          if (historique.length === 0) {
+              container.innerHTML = '<p style="text-align: center; color: #999;">Aucun historique disponible</p>';
+              return;
+          }
+          
+          let html = '<table style="width: 100%; border-collapse: collapse;">';
+          html += '<thead><tr>';
+          html += '<th style="padding: 10px; text-align: left;">Version</th>';
+          html += '<th style="padding: 10px; text-align: left;">Date</th>';
+          html += '<th style="padding: 10px; text-align: right;">Solde</th>';
+          html += '<th style="padding: 10px; text-align: right;">0-30j</th>';
+          html += '<th style="padding: 10px; text-align: right;">30-60j</th>';
+          html += '<th style="padding: 10px; text-align: right;">60-90j</th>';
+          html += '<th style="padding: 10px; text-align: right;">90-120j</th>';
+          html += '<th style="padding: 10px; text-align: right;">&gt;120j</th>';
+          html += '<th style="padding: 10px; text-align: left;">Par</th>';
+          html += '</tr></thead><tbody>';
+          
+          historique.forEach(h => {
+              html += '<tr>';
+              html += `<td style="padding: 8px;">${h.version}</td>`;
+              html += `<td style="padding: 8px;">${h.dateImport} ${h.heureImport}</td>`;
+              html += `<td style="padding: 8px; text-align: right; font-weight: bold; color: ${h.solde < 0 ? '#e74c3c' : '#27ae60'};">${formatAmount(h.solde)}</td>`;
+              html += `<td style="padding: 8px; text-align: right;">${formatAmount(h.echeance0 || 0)}</td>`;
+              html += `<td style="padding: 8px; text-align: right;">${formatAmount(h.echeance30 || 0)}</td>`;
+              html += `<td style="padding: 8px; text-align: right;">${formatAmount(h.echeance60 || 0)}</td>`;
+              html += `<td style="padding: 8px; text-align: right;">${formatAmount(h.echeance90 || 0)}</td>`;
+              html += `<td style="padding: 8px; text-align: right;">${formatAmount(h.echeancePlus120 || 0)}</td>`;
+              html += `<td style="padding: 8px; font-size: 12px;">${h.importePar.split('@')[0]}</td>`;
+              html += '</tr>';
+          });
+          
+          html += '</tbody></table>';
+          container.innerHTML = html;
+      }
+      
+      // ============================================
+      // MODAL
+      // ============================================
+      function closeModal() {
+          document.getElementById('clientModal').classList.remove('active');
+          currentClient = null;
+      }
+      
+      function closeModalOnBackdrop(event) {
+          if (event.target.id === 'clientModal') {
+              closeModal();
+          }
+      }
+      
+      // ============================================
+      // SYNCHRONISATION AUTO
+      // ============================================
+      function startAutoSync() {
+          syncInterval = setInterval(async () => {
+              await loadData();
+          }, 30000); // Toutes les 30 secondes
+      }
+      
+      function updateSyncIndicator() {
+          lastSyncTime = new Date();
+          const indicator = document.getElementById('syncIndicator');
+          indicator.textContent = '✅ Synchronisé à ' + lastSyncTime.toLocaleTimeString();
+      }
+      
+      async function refreshData() {
+          showNotification('🔄 Actualisation en cours...', 'info');
+          await loadVersions();
+          await loadData();
+      }
+      
+      // ============================================
+      // UTILITAIRES
+      // ============================================
+      function formatAmount(amount) {
+          return new Intl.NumberFormat('fr-FR', {
+              style: 'currency',
+              currency: 'EUR'
+          }).format(amount);
+      }
+      
+      function showLoader() {
+          document.getElementById('loader').classList.add('active');
+      }
+      
+      function hideLoader() {
+          document.getElementById('loader').classList.remove('active');
+      }
+      
+      function showNotification(message, type = 'info') {
+          const notif = document.getElementById('notification');
+          notif.textContent = message;
+          notif.className = 'notification ' + type + ' show';
+          
+          setTimeout(() => {
+              notif.classList.remove('show');
+          }, 4000);
+      }
+      
+      // ============================================
+      // INITIALISATION
+      // ============================================
+      window.addEventListener('load', () => {
+          // Vérifier si l'utilisateur est déjà connecté
+          const savedUser = localStorage.getItem('olUser');
+          if (savedUser) {
+              currentUser = JSON.parse(savedUser);
+              showMainApp();
+              loadVersions();
+              loadData();
+              startAutoSync();
+          }
+      });
+      
+      // Arrêter la synchronisation quand on quitte la page
+      window.addEventListener('beforeunload', () => {
+          if (syncInterval) {
+              clearInterval(syncInterval);
+          }
+      });
+  </script>
