@@ -121,14 +121,16 @@
         </div>
 
         <!-- Navigation par onglets -->
-        <div class="bg-white rounded-lg shadow-md mb-8">
-            <div class="flex border-b overflow-x-auto">
-                <button class="tab-button active" onclick="switchTab('config')">⚙️ Configuration</button>
-                <button class="tab-button" onclick="switchTab('import')">📤 Import</button>
-                <button class="tab-button" onclick="switchTab('analyse')">📊 Analyse</button>
-                <button class="tab-button" onclick="switchTab('versions')">📁 Versions</button>
-                <button class="tab-button" onclick="switchTab('historique')">📜 Historique</button>
-            </div>
+<div class="bg-white rounded-lg shadow-md mb-8">
+    <div class="flex border-b overflow-x-auto">
+        <button class="tab-button active" data-tab="config">⚙️ Configuration</button>
+        <button class="tab-button" data-tab="import">📤 Import</button>
+        <button class="tab-button" data-tab="analyse">📊 Analyse</button>
+        <button class="tab-button" data-tab="versions">📁 Versions</button>
+        <button class="tab-button" data-tab="historique">📜 Historique</button>
+    </div>
+    <!-- Le reste reste identique -->
+
 
             <!-- Onglet Configuration -->
             <div id="tab-config" class="tab-content active p-6">
@@ -1047,5 +1049,6 @@ function switchTab(tabName) {
       </script>
   </body>
   </html>
+
 
 
