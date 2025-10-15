@@ -518,10 +518,18 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
                     
+                    console.log('Données brutes Excel:', jsonData);
+                    
                     currentData = parseExcelData(jsonData);
-                    console.log('Données chargées:', currentData);
-                    alert(`✅ Fichier chargé : ${currentData.length} clients détectés`);
+                    console.log('Données parsées:', currentData);
+                    
+                    if (currentData.length === 0) {
+                        alert('❌ Aucune donnée détectée. Vérifiez les colonnes de votre fichier.');
+                    } else {
+                        alert(`✅ Fichier chargé : ${currentData.length} clients détectés`);
+                    }
                 } catch (error) {
+                    console.error('Erreur:', error);
                     alert('❌ Erreur lors de la lecture du fichier : ' + error.message);
                 }
             };
@@ -530,50 +538,71 @@
 
         function parseExcelData(jsonData) {
             return jsonData.map(row => {
-                const codeClient = row['Code Client'] || row['Code'] || row['code'] || '';
-                const nomClient = row['Nom Client'] || row['Nom'] || row['nom'] || '';
-                const solde = parseFloat(row['Solde'] || row['solde'] || 0);
-                const echeance0 = parseFloat(row['0-30j'] || row['Echeance 0-30'] || 0);
-                const echeance30 = parseFloat(row['30-60j'] || row['Echeance 30-60'] || 0);
-                const echeance60 = parseFloat(row['60-90j'] || row['Echeance 60-90'] || 0);
-                const echeance90 = parseFloat(row['>90j'] || row['Echeance >90'] || 0);
+                // Recherche flexible des colonnes
+                const keys = Object.keys(row);
                 
-                return {
-                    codeClient,
-                    nomClient,
-                    solde,
-                    echeance0,
-                    echeance30,
-                    echeance60,
-                    echeance90,
-                    echeancePlus120: echeance90,
-                    paiement: 0
-                };
-            });
-        }
+                const codeKey = keys.find(k => k.toLowerCase().includes('code'));
+                const nomKey = keys.find(k => k.toLowerCase().includes('nom') || k.toLowerCase().includes('client'));
+                const soldeKey = keys.find(k => k.toLowerCase().includes('solde'));
+                const e0Key = keys.find(k => k.includes('0-30') || k.includes('0 30'));
+                const e30Key = keys.find(k => k.includes('30-60') || k.includes('30 60'));
+                const e60Key = keys.find(k => k.includes('60-90') || k.includes('60 90'));
+                const e90Key = keys.find(k => k.includes('>90') || k.includes('90') || k.includes('plus 90'));
+                
+                const codeClient = row[codeKey] || '';
+                const nomClient = row[nomKey] || '';
+                const solde = parseFloat(row[soldeKey] || 0);
+                const echeance0 = parseFloat(row[e0Key] || 0);
+                const echeance30 = parseFloat(row[e30Key] || 0);
+                                  const echeance60 = parseFloat(row[e60Key] || 0);
+                  const echeance90 = parseFloat(row[e90Key] || 0);
+                  
+                  return {
+                      codeClient: String(codeClient).trim(),
+                      nomClient: String(nomClient).trim(),
+                      solde: solde,
+                      echeance0: echeance0,
+                      echeance30: echeance30,
+                      echeance60: echeance60,
+                      echeance90: echeance90,
+                      echeancePlus120: 0
+                  };
+              }).filter(client => client.codeClient && client.nomClient);
+          }
 
-        async function analyzeAndSaveToCloud() {
-            if (currentData.length === 0) {
-                alert('❌ Veuillez d\'abord charger un fichier Excel');
-                return;
-            }
+          async function analyzeAndSaveToCloud() {
+              if (currentData.length === 0) {
+                  alert('❌ Veuillez d\'abord charger un fichier Excel');
+                  return;
+              }
 
-            const config = getConfig();
-            document.getElementById('loadingIndicator').classList.add('active');
+              const config = getConfig();
+              if (!config.userName || !config.email || !config.agence) {
+                  alert('❌ Veuillez d\'abord configurer vos informations (nom, email, agence)');
+                  switchTab('import');
+                  return;
+              }
 
-            try {
-                                  const dataEncoded = encodeURIComponent(JSON.stringify(currentData));
+              document.getElementById('loadingIndicator').classList.add('active');
+
+              try {
+                  const dataEncoded = encodeURIComponent(JSON.stringify(currentData));
                   const url = `${API_URL}?action=importerBalance&data=${dataEncoded}&agence=${config.agence}&email=${encodeURIComponent(config.email)}&nom=${encodeURIComponent(config.userName)}`;
                   
-                  const response = await fetch(url);
+                  console.log('Envoi vers API...');
+                  const response = await fetch(url, {
+                      method: 'GET',
+                      mode: 'cors'
+                  });
+                  
                   const result = await response.json();
+                  console.log('Réponse API:', result);
                   
                   document.getElementById('loadingIndicator').classList.remove('active');
                   
                   if (result.success) {
                       alert(`✅ ${result.message}\n\nVersion: ${result.version}\nDate: ${result.dateImport} à ${result.heureImport}\nClients: ${result.nbClients}`);
                       
-                      // Afficher l'analyse
                       displayAnalysis();
                       switchTab('analyse');
                   } else {
@@ -581,7 +610,8 @@
                   }
               } catch (error) {
                   document.getElementById('loadingIndicator').classList.remove('active');
-                  alert('❌ Erreur lors de la sauvegarde : ' + error.message);
+                  console.error('Erreur complète:', error);
+                  alert('❌ Erreur lors de la sauvegarde : ' + error.message + '\n\nVérifiez que l\'API Google Apps Script est bien déployée et accessible.');
               }
           }
 
@@ -598,7 +628,6 @@
           function displayAnalysis() {
               document.getElementById('analysisResults').classList.remove('hidden');
               
-              // Calculs
               let soldesDebiteurs = 0;
               let soldesCrediteurs = 0;
               let clientsCritiques = 0;
@@ -627,17 +656,13 @@
               const balanceTotale = soldesDebiteurs - soldesCrediteurs;
               const tauxRisque = soldesDebiteurs > 0 ? ((total90plus / soldesDebiteurs) * 100).toFixed(1) : 0;
 
-              // Affichage
               document.getElementById('soldesDebiteurs').textContent = formatCurrency(soldesDebiteurs);
               document.getElementById('soldesCrediteurs').textContent = formatCurrency(soldesCrediteurs);
               document.getElementById('balanceTotale').textContent = formatCurrency(balanceTotale);
               document.getElementById('clientsCritiques').textContent = clientsCritiques;
               document.getElementById('tauxRisque').textContent = tauxRisque + '%';
 
-              // Tableau
               displayTable();
-              
-              // Graphiques
               displayCharts(total0_30, total30_60, total60_90, total90plus);
           }
 
@@ -693,7 +718,6 @@
           }
 
           function displayCharts(total0_30, total30_60, total60_90, total90plus) {
-              // Graphique par ancienneté
               const ageCtx = document.getElementById('ageChart').getContext('2d');
               if (ageChartInstance) ageChartInstance.destroy();
               
@@ -714,7 +738,6 @@
                   }
               });
 
-              // Top 10 clients
               const topClients = [...currentData]
                   .sort((a, b) => Math.abs(b.solde) - Math.abs(a.solde))
                   .slice(0, 10);
@@ -770,7 +793,6 @@
               }
           }
 
-          // Commentaires
           function openCommentModal(index) {
               currentClientForComment = currentData[index];
               
@@ -827,7 +849,6 @@
               showSaveIndicator();
           }
 
-          // Versions
           async function loadVersionsList() {
               const agence = document.getElementById('filterAgence').value;
               const container = document.getElementById('versionsList');
@@ -880,7 +901,6 @@
               }
           }
 
-          // Historique
           async function loadHistorique() {
               const container = document.getElementById('historiqueList');
               container.innerHTML = '<div class="text-center py-8"><div class="animate-pulse">Chargement...</div></div>';
@@ -926,7 +946,6 @@
               }
           }
 
-          // Export Excel
           function exportToExcel() {
               const ws = XLSX.utils.json_to_sheet(currentData);
               const wb = XLSX.utils.book_new();
@@ -937,7 +956,6 @@
               XLSX.writeFile(wb, filename);
           }
 
-          // Utilitaires
           function formatCurrency(value) {
               return new Intl.NumberFormat('fr-FR', {
                   style: 'currency',
@@ -953,7 +971,6 @@
               }, 2000);
           }
 
-          // Charger les commentaires au démarrage
           const savedComments = localStorage.getItem('olComments');
           if (savedComments) {
               clientComments = JSON.parse(savedComments);
