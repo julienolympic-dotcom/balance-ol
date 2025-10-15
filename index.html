@@ -527,62 +527,63 @@
 
         // ========== IMPORT ==========
         async function importerBalance() {
-            if (!API_URL) {
-                alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
-                switchTab('config');
-                return;
-            }
+    if (!API_URL) {
+        alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
+        switchTab('config');
+        return;
+    }
+    
+    const agence = document.getElementById('agenceSelect').value;
+    if (!agence) {
+        alert('❌ Veuillez sélectionner une agence');
+        return;
+    }
+    
+    if (currentData.length === 0) {
+        alert('❌ Veuillez d\'abord charger un fichier Excel');
+        return;
+    }
+    
+    document.getElementById('loadingIndicator').classList.add('active');
+    
+    try {
+        const payload = {
+            action: 'importerBalance',
+            data: currentData,
+            agence: agence,
+            email: USER_EMAIL,
+            nom: USER_NAME
+        };
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ ${result.message}\nVersion: ${result.version}\nNombre de clients: ${result.nbClients}`);
+            showSaveIndicator();
             
-            const agence = document.getElementById('agenceSelect').value;
-            if (!agence) {
-                alert('❌ Veuillez sélectionner une agence');
-                return;
-            }
-            
-            if (currentData.length === 0) {
-                alert('❌ Veuillez d\'abord charger un fichier Excel');
-                return;
-            }
-            
-            document.getElementById('loadingIndicator').classList.add('active');
-            
-            try {
-                const payload = {
-                    action: 'importerBalance',
-                    data: currentData,
-                    agence: agence,
-                    email: USER_EMAIL,
-                    nom: USER_NAME
-                };
-                
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(`✅ ${result.message}\nVersion: ${result.version}\nNombre de clients: ${result.nbClients}`);
-                    showSaveIndicator();
-                    
-                    // Réinitialiser
-                    currentData = [];
-                    document.getElementById('fileInfo').classList.add('hidden');
-                    document.getElementById('fileInput').value = '';
-                } else {
-                    alert('❌ Erreur : ' + result.message);
-                                  
-              } catch (error) {
-                  console.error('❌ Erreur:', error);
-                  alert('❌ Erreur lors de l\'import : ' + error.message);
-              } finally {
-                  document.getElementById('loadingIndicator').classList.remove('active');
-              }
-          }
+            // Réinitialiser
+            currentData = [];
+            document.getElementById('fileInfo').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+        } else {
+            alert('❌ Erreur : ' + result.message);
+        }
+    } catch (error) {
+        console.error('❌ Erreur:', error);
+        alert('❌ Erreur lors de l\'import : ' + error.message);
+    } finally {
+        document.getElementById('loadingIndicator').classList.remove('active');
+    }
+}
+
 
           // ========== CHARGEMENT ET ANALYSE ==========
           async function chargerEtAnalyser() {
@@ -1022,3 +1023,4 @@
       </script>
   </body>
   </html>
+
