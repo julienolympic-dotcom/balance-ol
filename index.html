@@ -1046,9 +1046,21 @@ function switchTab(tabName) {
                   }
               });
           });
+        // ========== INITIALISATION DES ONGLETS ==========
+document.addEventListener('DOMContentLoaded', function() {
+    // Gérer les clics sur les onglets
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            switchTab(tabName);
+        });
+    });
+});
+
       </script>
   </body>
   </html>
+
 
 
 
