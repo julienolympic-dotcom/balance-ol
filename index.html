@@ -539,32 +539,84 @@
         }
 
         function parseExcelData(data) {
-            if (data.length < 2) return [];
-            
-            const headers = data[0].map(h => String(h).toLowerCase().trim());
-            
-            const codeIndex = headers.findIndex(h => h.includes('code'));
-            const nomIndex = headers.findIndex(h => h.includes('nom') || h.includes('raison'));
-            const soldeIndex = headers.findIndex(h => h.includes('solde') && !h.includes('échéance'));
-            const e0Index = headers.findIndex(h => (h.includes('0') && h.includes('30')) || h.includes('courant'));
-            const e30Index = headers.findIndex(h => h.includes('30') && h.includes('60'));
-            const e60Index = headers.findIndex(h => h.includes('60') && h.includes('90'));
-            const e90Index = headers.findIndex(h => h.includes('90') && h.includes('120'));
-            const e120Index = headers.findIndex(h => h.includes('120') || (h.includes('>') && h.includes('120')));
-            const paiementIndex = headers.findIndex(h => h.includes('paiement'));
-            
-            return data.slice(1).map(row => ({
+    if (data.length < 2) {
+        console.error('❌ Fichier vide ou incomplet');
+        return [];
+    }
+    
+    // Afficher les en-têtes pour debug
+    console.log('📋 En-têtes détectés:', data[0]);
+    
+    const headers = data[0].map(h => String(h).toLowerCase().trim());
+    console.log('📋 En-têtes normalisés:', headers);
+    
+    // Recherche intelligente des colonnes
+    const findColumn = (keywords) => {
+        for (let keyword of keywords) {
+            const index = headers.findIndex(h => h.includes(keyword));
+            if (index !== -1) {
+                console.log(`✅ Colonne "${keyword}" trouvée à l'index ${index}`);
+                return index;
+            }
+        }
+        console.warn(`⚠️ Aucune colonne trouvée pour: ${keywords.join(', ')}`);
+        return -1;
+    };
+    
+    // Mapping des colonnes avec plusieurs variantes possibles
+    const codeIndex = findColumn(['code', 'client', 'compte']);
+    const nomIndex = findColumn(['nom', 'raison', 'intitulé', 'libellé', 'libelle']);
+    const soldeIndex = findColumn(['solde', 'balance', 'total']);
+    const e0Index = findColumn(['0-30', '0 30', 'courant', '30j', '0à30', '0 à 30']);
+    const e30Index = findColumn(['30-60', '30 60', '60j', '30à60', '30 à 60']);
+    const e60Index = findColumn(['60-90', '60 90', '90j', '60à90', '60 à 90']);
+    const e90Index = findColumn(['90-120', '90 120', '120j', '90à120', '90 à 120']);
+    const e120Index = findColumn(['120', '>120', 'plus120', '+ 120', 'sup 120']);
+    const paiementIndex = findColumn(['paiement', 'règlement', 'reglement', 'encaissement']);
+    
+    // Vérification des colonnes obligatoires
+    if (codeIndex === -1 || nomIndex === -1) {
+        console.error('❌ Colonnes obligatoires manquantes (Code ou Nom)');
+        alert('❌ Format invalide : colonnes "Code Client" et "Nom Client" introuvables');
+        return [];
+    }
+    
+    // Parser les données
+    const parsedData = data.slice(1)
+        .map((row, index) => {
+            const client = {
                 codeClient: String(row[codeIndex] || '').trim(),
                 nomClient: String(row[nomIndex] || '').trim(),
-                solde: parseFloat(row[soldeIndex]) || 0,
-                echeance0: parseFloat(row[e0Index]) || 0,
-                echeance30: parseFloat(row[e30Index]) || 0,
-                echeance60: parseFloat(row[e60Index]) || 0,
-                echeance90: parseFloat(row[e90Index]) || 0,
-                echeancePlus120: parseFloat(row[e120Index]) || 0,
-                paiement: parseFloat(row[paiementIndex]) || 0
-            })).filter(c => c.codeClient && c.nomClient);
-        }
+                solde: soldeIndex !== -1 ? parseFloat(row[soldeIndex]) || 0 : 0,
+                echeance0: e0Index !== -1 ? parseFloat(row[e0Index]) || 0 : 0,
+                echeance30: e30Index !== -1 ? parseFloat(row[e30Index]) || 0 : 0,
+                echeance60: e60Index !== -1 ? parseFloat(row[e60Index]) || 0 : 0,
+                echeance90: e90Index !== -1 ? parseFloat(row[e90Index]) || 0 : 0,
+                echeancePlus120: e120Index !== -1 ? parseFloat(row[e120Index]) || 0 : 0,
+                paiement: paiementIndex !== -1 ? parseFloat(row[paiementIndex]) || 0 : 0
+            };
+            
+            // Log de la première ligne pour vérification
+            if (index === 0) {
+                console.log('📊 Premier client parsé:', client);
+            }
+            
+            return client;
+        })
+        .filter(c => {
+            // Filtrer les lignes vides ou invalides
+            const isValid = c.codeClient && c.nomClient && c.codeClient !== '' && c.nomClient !== '';
+            if (!isValid && c.codeClient) {
+                console.warn('⚠️ Ligne ignorée:', c);
+            }
+            return isValid;
+        });
+    
+    console.log(`✅ ${parsedData.length} clients valides détectés`);
+    
+    return parsedData;
+}
+
 
         // ========== IMPORT ==========
         async function importerBalance() {
@@ -1063,3 +1115,4 @@
 </html>
 
             
+
