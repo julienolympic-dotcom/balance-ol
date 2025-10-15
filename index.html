@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balance Âgée OL - Système Collaboratif</title>
+    <title>Olympic Location - Balance Âgée (Cloud)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -52,60 +52,36 @@
         }
         .modal-content {
             background-color: #fefefe;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            max-width: 800px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
             width: 90%;
-            max-height: 85vh;
+            max-height: 80vh;
             overflow-y: auto;
         }
-        .comment-badge {
-            background: #fbbf24;
-            color: #92400e;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
+        .comment-input-cell {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
             cursor: pointer;
-            display: inline-block;
             transition: all 0.3s;
+            min-height: 40px;
+            background-color: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-        .comment-badge:hover {
-            background: #f59e0b;
-            transform: scale(1.05);
+        .comment-input-cell:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
         }
-        .comment-badge.has-comment {
-            background: #10b981;
-            color: white;
-        }
-        .comment-item {
-            background: #f3f4f6;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 3px solid #3b82f6;
-            position: relative;
-        }
-        .comment-delete-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .comment-item:hover .comment-delete-btn {
-            opacity: 1;
-        }
-        .comment-delete-btn:hover {
-            background: #dc2626;
+        .comment-input-cell.has-comment {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+            font-weight: 500;
         }
         .save-indicator {
             position: fixed;
@@ -124,169 +100,168 @@
             0%, 100% { opacity: 0; }
             10%, 90% { opacity: 1; }
         }
+        .tab-button {
+            padding: 12px 24px;
+            border: none;
+            background: #f3f4f6;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button:hover {
+            background: #e5e7eb;
+        }
+        .tab-button.active {
+            background: white;
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .version-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .version-card:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    
-    <!-- Indicateur de sauvegarde -->
+<body class="bg-gray-50">
     <div class="save-indicator" id="saveIndicator">✓ Sauvegarde effectuée</div>
 
-    <!-- ÉCRAN DE CONNEXION -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Balance Âgée OL</h1>
-                <p class="text-gray-600">Système Collaboratif de Gestion</p>
-            </div>
-            
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Email professionnel</label>
-                <input 
-                    type="email" 
-                    id="emailInput" 
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="votre.nom@olympiclocation.com"
-                >
-            </div>
-            
-            <button 
-                onclick="seConnecter()" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg hover:shadow-xl"
-            >
-                Se connecter
-            </button>
-            
-            <div id="loginError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden"></div>
-            <div id="loginLoading" class="mt-4 text-center text-gray-600 hidden">
-                <div class="animate-pulse">Connexion en cours...</div>
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">🏢 Olympic Location</h1>
+                    <p class="text-blue-100 text-sm">Balance Âgée - Version Cloud</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm">Utilisateur: <span id="userName">-</span></p>
+                    <p class="text-xs text-blue-100">Agence: <span id="currentAgence">-</span></p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ÉCRAN PRINCIPAL -->
-    <div id="mainScreen" class="hidden">
-        
-        <!-- HEADER -->
-        <header class="bg-white shadow-md no-print">
-            <div class="container mx-auto px-4 py-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Balance Âgée OL</h1>
-                        <p class="text-sm text-gray-600">Bienvenue, <span id="userName" class="font-semibold"></span></p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="text-right text-sm">
-                            <div class="text-gray-600">Agences:</div>
-                            <div id="userAgences" class="font-semibold text-blue-600"></div>
-                        </div>
-                        <button 
-                            onclick="seDeconnecter()" 
-                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
-                        >
-                            Déconnexion
-                        </button>
-                    </div>
-                </div>
+    <div class="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-2">
+                <button class="tab-button active" onclick="switchTab('import')">📤 Import</button>
+                <button class="tab-button" onclick="switchTab('analyse')">📊 Analyse</button>
+                <button class="tab-button" onclick="switchTab('versions')">📋 Versions</button>
+                <button class="tab-button" onclick="switchTab('historique')">🕐 Historique</button>
             </div>
-        </header>
+        </div>
+    </div>
 
-        <!-- NAVIGATION -->
-        <nav class="bg-white border-b border-gray-200 no-print">
-            <div class="container mx-auto px-4">
-                <div class="flex space-x-1">
-                    <button onclick="changerOnglet('import')" id="tab-import" class="px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">
-                        📤 Import
-                    </button>
-                    <button onclick="changerOnglet('analyse')" id="tab-analyse" class="px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">
-                        📊 Analyse
-                    </button>
-                    <button onclick="changerOnglet('historique')" id="tab-historique" class="px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">
-                        📜 Historique
-                    </button>
-                </div>
-            </div>
-        </nav>
-
-        <!-- CONTENU -->
-        <main class="container mx-auto px-4 py-6">
-            
-            <!-- ONGLET IMPORT -->
-            <div id="content-import" class="hidden">
-                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">📤 Importer une Balance Âgée</h2>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionnez l'agence</label>
-                        <select id="agenceSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">-- Choisir une agence --</option>
-                        </select>
-                    </div>
-                    
-                    <div 
-                        id="dropZone" 
-                        class="drop-zone rounded-xl p-12 text-center cursor-pointer bg-gray-50 hover:bg-blue-50 transition"
-                    >
-                        <div class="text-6xl mb-4">📁</div>
-                        <p class="text-lg font-semibold text-gray-700 mb-2">Glissez votre fichier Excel ici</p>
-                        <p class="text-sm text-gray-500 mb-4">ou cliquez pour parcourir</p>
-                        <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
-                        <button onclick="document.getElementById('fileInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
-                            Parcourir
-                        </button>
-                    </div>
-                    
-                    <div id="importStatus" class="mt-4 hidden"></div>
-                    
-                    <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h3 class="font-semibold text-blue-800 mb-2">💡 Format attendu :</h3>
-                        <ul class="text-sm text-blue-700 space-y-1">
-                            <li>• Colonne A : Code Client</li>
-                            <li>• Colonne B : Nom Client</li>
-                            <li>• Colonnes C-G : Tranches d'ancienneté (>120j, 90-119j, 60-89j, 30-59j, 0-29j)</li>
-                            <li>• Colonne H : Paiement</li>
-                            <li>• Colonne I : Solde</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ONGLET ANALYSE -->
-            <div id="content-analyse" class="hidden">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- TAB: Import -->
+        <div id="tab-import" class="tab-content active">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-4">⚙️ Configuration</h2>
                 
-                <!-- FILTRES -->
-                <div class="bg-white rounded-xl shadow-lg p-6 mb-6 no-print">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Agence</label>
-                            <select id="filterAgence" onchange="chargerVersions()" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="">Toutes les agences</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Version</label>
-                            <select id="filterVersion" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="latest">Dernière version</option>
-                            </select>
-                        </div>
-                        <div class="flex items-end">
-                            <button onclick="chargerBalances()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
-                                🔍 Charger
-                            </button>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nom d'utilisateur</label>
+                        <input type="text" id="configUserName" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2" placeholder="Votre nom" value="Julien">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="configEmail" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2" placeholder="email@olympiclocation.com" value="julien@olympiclocation.com">
                     </div>
                 </div>
 
-                <!-- CALCUL TAUX D'IMPAYÉS -->
-                <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-lg p-6 mb-6 border-2 border-purple-200">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agence</label>
+                    <select id="configAgence" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2">
+                        <option value="00">00 - Gèze</option>
+                        <option value="01">01 - 5 Av</option>
+                        <option value="02">02 - Gare St Charles</option>
+                        <option value="03">03 - Aubagne</option>
+                        <option value="06">06 - La Valentine</option>
+                        <option value="09" selected>09 - Plombières</option>
+                        <option value="12">12 - La Garde</option>
+                        <option value="13">13 - La Ciotat</option>
+                        <option value="08">08 - Toulon</option>
+                    </select>
+                </div>
+
+                <button onclick="saveConfig()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold">
+                    💾 Enregistrer la configuration
+                </button>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">📤 Charger votre fichier Excel</h2>
+                
+                <div id="dropZone" class="drop-zone rounded-lg p-8 text-center cursor-pointer">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="text-gray-600 mb-2">Glissez-déposez votre fichier Excel ici</p>
+                    <p class="text-sm text-gray-500">ou</p>
+                    <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.csv">
+                    <button onclick="document.getElementById('fileInput').click()" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        Parcourir
+                    </button>
+                </div>
+
+                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">💡 Colonnes requises dans votre fichier :</h3>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• <strong>Code Client</strong> (obligatoire)</li>
+                        <li>• <strong>Nom Client</strong> (obligatoire)</li>
+                        <li>• <strong>Solde</strong> (obligatoire)</li>
+                        <li>• <strong>Échéances :</strong> 0-30j, 30-60j, 60-90j, >90j</li>
+                        <li>• Les données seront automatiquement sauvegardées dans Google Sheets</li>
+                    </ul>
+                </div>
+
+                <div class="mt-4 flex space-x-3">
+                    <button onclick="analyzeAndSaveToCloud()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold flex items-center">
+                        <span class="mr-2">☁️</span> Analyser et Sauvegarder dans le Cloud
+                    </button>
+                    <button onclick="analyzeLocalOnly()" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 font-semibold">
+                        📊 Analyser localement uniquement
+                    </button>
+                </div>
+            </div>
+
+            <div id="loadingIndicator" class="loading bg-white rounded-lg shadow-md p-6 mb-8">
+                <div class="flex items-center">
+                    <div class="animate-pulse mr-4">
+                        <div class="h-4 w-4 bg-blue-500 rounded-full"></div>
+                    </div>
+                    <p class="text-gray-600">Analyse en cours...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Analyse -->
+        <div id="tab-analyse" class="tab-content">
+            <div id="analysisResults" class="hidden">
+                <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-md p-6 mb-8 border-2 border-purple-200">
                     <h2 class="text-xl font-semibold mb-4 text-purple-800">💼 Calcul du Taux d'Impayés</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Chiffre d'Affaires Annuel (€)</label>
-                            <input type="number" id="chiffreAffaires" class="w-full border-2 border-purple-300 rounded-lg px-4 py-2 focus:border-purple-500 focus:outline-none" placeholder="Ex: 1000000" min="0">
+                            <input type="number" id="chiffreAffaires" class="w-full border-2 border-purple-300 rounded-lg px-4 py-2" placeholder="Ex: 1000000" min="0">
                         </div>
                         <div>
                             <button onclick="calculateTauxImpaye()" class="w-full bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-semibold">
-                                Calculer le Taux d'Impayés
+                                Calculer
                             </button>
                         </div>
                         <div id="tauxImpayeResult" class="hidden bg-white rounded-lg p-4 border-2 border-purple-300">
@@ -295,987 +270,694 @@
                             <p id="tauxImpayeStatus" class="text-xs mt-1"></p>
                         </div>
                     </div>
-                    <div class="mt-3 text-sm text-purple-700">
-                        <strong>Objectif :</strong> Maintenir le taux d'impayés <strong>sous 2%</strong> pour une gestion saine
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <h2 class="text-xl font-semibold mb-4">📊 Synthèse Globale</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="bg-red-50 rounded-lg p-4">
+                            <p class="text-sm text-red-600">Soldes Débiteurs</p>
+                            <p id="soldesDebiteurs" class="text-2xl font-bold text-red-800">-</p>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <p class="text-sm text-green-600">Soldes Créditeurs</p>
+                            <p id="soldesCrediteurs" class="text-2xl font-bold text-green-800">-</p>
+                        </div>
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <p class="text-sm text-blue-600">Balance Totale</p>
+                            <p id="balanceTotale" class="text-2xl font-bold text-blue-800">-</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <p class="text-sm text-orange-600">Clients > 90j</p>
+                            <p id="clientsCritiques" class="text-2xl font-bold text-orange-800">-</p>
+                        </div>
+                        <div class="bg-yellow-50 rounded-lg p-4">
+                            <p class="text-sm text-yellow-600">Taux de risque</p>
+                            <p id="tauxRisque" class="text-2xl font-bold text-yellow-800">-</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- STATISTIQUES -->
-                <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 hidden">
-                    <div class="bg-red-50 rounded-xl shadow-lg p-6">
-                        <div class="text-sm text-red-600 mb-1">Soldes Débiteurs</div>
-                        <div id="soldesDebiteurs" class="text-2xl font-bold text-red-800">0 €</div>
-                    </div>
-                    <div class="bg-green-50 rounded-xl shadow-lg p-6">
-                        <div class="text-sm text-green-600 mb-1">Soldes Créditeurs</div>
-                        <div id="soldesCrediteurs" class="text-2xl font-bold text-green-800">0 €</div>
-                    </div>
-                    <div class="bg-blue-50 rounded-xl shadow-lg p-6">
-                        <div class="text-sm text-blue-600 mb-1">Balance Totale</div>
-                        <div id="balanceTotale" class="text-2xl font-bold text-blue-800">0 €</div>
-                    </div>
-                    <div class="bg-orange-50 rounded-xl shadow-lg p-6">
-                        <div class="text-sm text-orange-600 mb-1">Clients > 90j</div>
-                        <div id="clientsCritiques" class="text-2xl font-bold text-orange-800">0</div>
-                    </div>
-                    <div class="bg-yellow-50 rounded-xl shadow-lg p-6">
-                        <div class="text-sm text-yellow-600 mb-1">Taux de risque</div>
-                        <div id="tauxRisque" class="text-2xl font-bold text-yellow-800">0%</div>
-                    </div>
-                </div>
-
-                <!-- GRAPHIQUES -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden" id="chartsContainer">
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">📊 Répartition par Ancienneté</h3>
-                        <canvas id="ageChart"></canvas>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">🎯 Top 10 Soldes à Risque</h3>
-                        <canvas id="riskChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- ALERTES -->
-                <div id="alertsContainer" class="mb-6 hidden">
-                    <div id="urgentAlert" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded mb-4">
-                        <h3 class="font-semibold text-red-800 mb-2">🚨 <span id="urgentTitle"></span></h3>
-                        <p class="text-sm text-red-700" id="urgentText"></p>
-                    </div>
-                    <div id="riskAlert" class="hidden bg-orange-50 border-l-4 border-orange-500 p-4 rounded mb-4">
-                        <h3 class="font-semibold text-orange-800 mb-2">⚠️ <span id="riskTitle"></span></h3>
-                        <p class="text-sm text-orange-700" id="riskText"></p>
-                    </div>
-                </div>
-
-                <!-- TABLEAU -->
-                <div id="tableContainer" class="bg-white rounded-xl shadow-lg p-6 hidden">
-                    <div class="flex justify-between items-center mb-4 no-print">
-                        <h3 class="text-lg font-bold text-gray-800">📋 Liste des Clients</h3>
-                        <div class="flex gap-2">
-                            <button onclick="exporterExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
-                                📥 Excel
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">📋 Détail par Client</h2>
+                        <div class="space-x-2">
+                            <button onclick="exportToExcel()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                                📥 Export Excel
                             </button>
-                            <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition">
+                            <button onclick="window.print()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
                                 🖨️ Imprimer
                             </button>
                         </div>
                     </div>
-                    
-                    <!-- Filtres -->
-                    <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
-                        <div>
-                            <label class="text-sm text-gray-600">Niveau de risque:</label>
-                            <select id="riskFilter" onchange="appliquerFiltres()" class="w-full mt-1 border rounded px-3 py-2">
-                                <option value="all">Tous</option>
-                                <option value="critical">Critique (>90j)</option>
-                                <option value="high">Élevé (60-90j)</option>
-                                <option value="medium">Modéré (30-60j)</option>
-                                <option value="low">Faible (<30j)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-600">Type de solde:</label>
-                            <select id="soldeTypeFilter" onchange="appliquerFiltres()" class="w-full mt-1 border rounded px-3 py-2">
-                                <option value="all">Tous</option>
-                                <option value="debiteur">Débiteurs uniquement</option>
-                                <option value="crediteur">Créditeurs uniquement</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-600">Solde minimum (€):</label>
-                            <input type="number" id="minBalance" onchange="appliquerFiltres()" class="w-full mt-1 border rounded px-3 py-2" placeholder="0" min="0">
-                        </div>
-                    </div>
-                    
                     <div class="overflow-x-auto">
-                        <table id="balanceTable" class="w-full text-sm">
+                        <table id="clientsTable" class="w-full text-sm">
                             <thead class="bg-gray-100">
                                 <tr>
-                                    <th onclick="trierTableau('codeClient')" class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-200">Code ↕</th>
-                                    <th onclick="trierTableau('nomClient')" class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-200">Nom Client ↕</th>
-                                    <th onclick="trierTableau('solde')" class="px-4 py-3 text-right font-semibold text-gray-700 cursor-pointer hover:bg-gray-200">Solde ↕</th>
-                                    <th class="px-4 py-3 text-right font-semibold text-gray-700">0-30j</th>
-                                    <th class="px-4 py-3 text-right font-semibold text-gray-700">30-60j</th>
-                                    <th class="px-4 py-3 text-right font-semibold text-gray-700">60-90j</th>
-                                    <th class="px-4 py-3 text-right font-semibold text-gray-700">90-120j</th>
-                                    <th class="px-4 py-3 text-right font-semibold text-gray-700">>120j</th>
-                                    <th onclick="trierTableau('pourcentageAncien')" class="px-4 py-3 text-right font-semibold text-gray-700 cursor-pointer hover:bg-gray-200">% Ancien ↕</th>
-                                    <th class="px-4 py-3 text-center font-semibold text-gray-700">Risque</th>
-                                    <th class="px-4 py-3 text-center font-semibold text-gray-700 no-print">Commentaires</th>
+                                    <th class="px-4 py-3 text-left">Code</th>
+                                    <th class="px-4 py-3 text-left">Nom Client</th>
+                                    <th class="px-4 py-3 text-right">Solde</th>
+                                    <th class="px-4 py-3 text-right">0-30j</th>
+                                    <th class="px-4 py-3 text-right">30-60j</th>
+                                    <th class="px-4 py-3 text-right">60-90j</th>
+                                    <th class="px-4 py-3 text-right">> 90j</th>
+                                    <th class="px-4 py-3 text-center">Risque</th>
+                                    <th class="px-4 py-3 text-center">Commentaires</th>
                                 </tr>
                             </thead>
-                            <tbody id="balanceTableBody">
+                            <tbody id="clientsTableBody">
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- ONGLET HISTORIQUE -->
-            <div id="content-historique" class="hidden">
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">📜 Historique des Imports</h2>
-                    <div id="historiqueContainer">
-                        <p class="text-gray-600">Chargement...</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4">📊 Répartition par ancienneté</h3>
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4">🎯 Top 10 clients à risque</h3>
+                        <canvas id="topClientsChart"></canvas>
                     </div>
                 </div>
             </div>
+        </div>
 
-        </main>
+        <!-- TAB: Versions -->
+        <div id="tab-versions" class="tab-content">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">📋 Versions sauvegardées</h2>
+                    <button onclick="loadVersionsList()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        🔄 Actualiser
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Filtrer par agence</label>
+                    <select id="filterAgence" onchange="loadVersionsList()" class="w-full md:w-64 border-2 border-gray-300 rounded-lg px-4 py-2">
+                        <option value="">Toutes les agences</option>
+                        <option value="00">00 - Gèze</option>
+                        <option value="01">01 - 5 Av</option>
+                        <option value="02">02 - Gare St Charles</option>
+                        <option value="03">03 - Aubagne</option>
+                        <option value="06">06 - La Valentine</option>
+                        <option value="09">09 - Plombières</option>
+                        <option value="12">12 - La Garde</option>
+                        <option value="13">13 - La Ciotat</option>
+                        <option value="08">08 - Toulon</option>
+                    </select>
+                </div>
+
+                <div id="versionsList"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Historique -->
+        <div id="tab-historique" class="tab-content">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">🕐 Historique des imports</h2>
+                    <button onclick="loadHistorique()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        🔄 Actualiser
+                    </button>
+                </div>
+                <div id="historiqueList"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- MODAL COMMENTAIRES -->
+    <!-- Modal Commentaires -->
     <div id="commentModal" class="modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">💬 Commentaires Client</h3>
-                <button onclick="fermerModalCommentaire()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">💬 Commentaires Client</h3>
+            <div class="bg-blue-50 p-3 rounded mb-4">
+                <p class="text-sm"><strong>Code:</strong> <span id="modalClientCode"></span></p>
+                <p class="text-sm"><strong>Nom:</strong> <span id="modalClientName"></span></p>
+                <p class="text-sm"><strong>Solde:</strong> <span id="modalClientSolde"></span></p>
             </div>
             
-            <div class="mb-4 p-4 bg-blue-50 rounded-lg">
-                <div class="font-semibold text-gray-800" id="modalClientNom"></div>
-                <div class="text-sm text-gray-600">Code: <span id="modalClientCode"></span></div>
-                <div class="text-sm text-gray-600">Solde: <span id="modalClientSolde"></span></div>
-            </div>
-
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Historique des commentaires</label>
-                <div id="commentairesList" class="max-h-64 overflow-y-auto">
-                    <p class="text-gray-500 text-sm">Aucun commentaire</p>
-                </div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Historique :</label>
+                <div id="commentHistory" class="max-h-48 overflow-y-auto bg-gray-50 p-3 rounded"></div>
             </div>
-
+            
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Ajouter un commentaire</label>
-                <textarea 
-                    id="commentaireInput" 
-                    rows="3" 
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Votre commentaire..."
-                ></textarea>
-                <button onclick="ajouterCommentaire()" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-                    ➕ Ajouter
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nouveau commentaire :</label>
+                <textarea id="newCommentText" class="w-full border rounded px-3 py-2" rows="3"></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeCommentModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                    Annuler
+                </button>
+                <button onclick="saveNewComment()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Enregistrer
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        // ============================================
-        // CONFIGURATION
-        // ============================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEvVGraEnWnGLB_Kb0lMh_iN4O56L4BoG157RrXKjSbyWDLe4mIQkgM0EtSdOdBQc/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzBWezbMQZwNYfV4PJm1-TdVKQwKFWUsUxHxd2N_-1rFH7w1ewe57hyaZHxnvTiXFiD/exec';
         
-        const AGENCES_MAP = {
-            '00': 'Gèze',
-            '01': '5 Av',
-            '02': 'Gare St Charles',
-            '03': 'Aubagne',
-            '06': 'La Valentine',
-            '09': 'Plombières',
-            '12': 'La Garde',
-            '13': 'La Ciotat',
-            '08': 'Toulon'
-        };
-
-        let currentUser = null;
-        let currentBalances = [];
-        let currentBalancesFiltered = [];
-        let currentClient = null;
+        let currentData = [];
+        let currentClientForComment = null;
+        let clientComments = {};
         let ageChartInstance = null;
-        let riskChartInstance = null;
-        let currentSortColumn = 'solde';
-        let currentSortDirection = 'desc';
+        let topClientsChartInstance = null;
 
-        // ============================================
-        // AUTHENTIFICATION
-        // ============================================
-        
-        async function seConnecter() {
-            const email = document.getElementById('emailInput').value.trim();
-            
-            if (!email) {
-                afficherErreurLogin('Veuillez entrer votre email');
-                return;
-            }
-
-            document.getElementById('loginLoading').classList.remove('hidden');
-            document.getElementById('loginError').classList.add('hidden');
-
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=authentifier&email=${encodeURIComponent(email)}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    // ✅ CORRECTION : Créer agencesArray à partir de la chaîne agences
-                    if (data.agences && !data.agencesArray) {
-                        // Si agences est une chaîne comme "00,01,02"
-                        data.agencesArray = data.agences.split(',').map(a => a.trim());
-                    }
-                    
-                    // Vérification de sécurité supplémentaire
-                    if (!data.agencesArray || !Array.isArray(data.agencesArray)) {
-                        data.agencesArray = [];
-                    }
-                    
-                    currentUser = data;
-                    localStorage.setItem('balanceOL_user', JSON.stringify(data));
-                    afficherEcranPrincipal();
-                } else {
-                    afficherErreurLogin(data.message);
-                }
-            } catch (error) {
-                afficherErreurLogin('Erreur de connexion: ' + error.message);
-            } finally {
-                document.getElementById('loginLoading').classList.add('hidden');
-            }
-        }
-
-        function afficherErreurLogin(message) {
-            const errorDiv = document.getElementById('loginError');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-        }
-
-        function afficherEcranPrincipal() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainScreen').classList.remove('hidden');
-            
-            // ✅ CORRECTION : Vérifier et créer agencesArray si nécessaire
-            if (currentUser.agences && !currentUser.agencesArray) {
-                currentUser.agencesArray = currentUser.agences.split(',').map(a => a.trim());
-            }
-            
-            document.getElementById('userName').textContent = currentUser.nom;
-            document.getElementById('userAgences').textContent = currentUser.agences;
-                        initialiserAgences();
-            changerOnglet('import');
-        }
-
-        function seDeconnecter() {
-            localStorage.removeItem('balanceOL_user');
-            currentUser = null;
-            location.reload();
-        }
-
-        function initialiserAgences() {
-            const agenceSelect = document.getElementById('agenceSelect');
-            const filterAgence = document.getElementById('filterAgence');
-            
-            agenceSelect.innerHTML = '<option value="">-- Choisir une agence --</option>';
-            filterAgence.innerHTML = '<option value="">Toutes les agences</option>';
-            
-            // ✅ CORRECTION : Vérification de sécurité
-            if (!currentUser.agencesArray || !Array.isArray(currentUser.agencesArray)) {
-                console.error('agencesArray non défini ou invalide');
-                if (currentUser.agences) {
-                    currentUser.agencesArray = currentUser.agences.split(',').map(a => a.trim());
-                } else {
-                    currentUser.agencesArray = [];
-                }
-            }
-            
-            currentUser.agencesArray.forEach(code => {
-                const nom = AGENCES_MAP[code] || code;
-                agenceSelect.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
-                filterAgence.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
-            });
-        }
-
-        // ============================================
-        // NAVIGATION
-        // ============================================
-        
-        function changerOnglet(onglet) {
-            ['import', 'analyse', 'historique'].forEach(o => {
-                document.getElementById(`content-${o}`).classList.add('hidden');
-                document.getElementById(`tab-${o}`).classList.remove('border-blue-600', 'text-blue-600');
-            });
-            
-            document.getElementById(`content-${onglet}`).classList.remove('hidden');
-            document.getElementById(`tab-${onglet}`).classList.add('border-blue-600', 'text-blue-600');
-            
-            if (onglet === 'historique') {
-                chargerHistorique();
-            } else if (onglet === 'analyse') {
-                chargerVersions();
-            }
-        }
-
-        // ============================================
-        // IMPORT FICHIER
-        // ============================================
-        
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        
-        dropZone.addEventListener('click', () => fileInput.click());
-        
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-        
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-        
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                traiterFichier(files[0]);
-            }
-        });
-        
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                traiterFichier(e.target.files[0]);
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            setupFileUpload();
+            setupDropZone();
         });
 
-        async function traiterFichier(file) {
-            const agence = document.getElementById('agenceSelect').value;
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             
-            if (!agence) {
-                afficherStatut('Veuillez sélectionner une agence', 'error');
-                return;
-            }
-            
-            afficherStatut('Lecture du fichier...', 'loading');
-            
-            try {
-                const data = await lireExcel(file);
-                afficherStatut('Envoi vers Google Sheets...', 'loading');
-                await envoyerVersSheets(agence, data);
-            } catch (error) {
-                afficherStatut('Erreur: ' + error.message, 'error');
-            }
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'versions') loadVersionsList();
+            else if (tabName === 'historique') loadHistorique();
         }
 
-        function lireExcel(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                
-                reader.onload = (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                        
-                        const balances = [];
-                        for (let i = 1; i < jsonData.length; i++) {
-                            const row = jsonData[i];
-                            if (row[0] && row[1]) {
-                                balances.push({
-                                    codeClient: String(row[0]),
-                                    nomClient: String(row[1]),
-                                    plus120j: parseFloat(row[2]) || 0,
-                                    j90_119: parseFloat(row[3]) || 0,
-                                    j60_89: parseFloat(row[4]) || 0,
-                                    j30_59: parseFloat(row[5]) || 0,
-                                    j0_29: parseFloat(row[6]) || 0,
-                                    paiement: parseFloat(row[7]) || 0,
-                                    solde: parseFloat(row[8]) || 0
-                                });
-                            }
-                        }
-                        
-                        resolve(balances);
-                    } catch (error) {
-                        reject(error);
-                    }
-                };
-                
-                reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        async function envoyerVersSheets(agence, balances) {
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'importerBalance',
-                        agence: agence,
-                        balances: balances,
-                        utilisateur: currentUser.email
-                    })
-                });
-                
-                afficherStatut(`✓ Import réussi ! ${balances.length} lignes importées`, 'success');
-                afficherIndicateurSauvegarde();
-                
-                setTimeout(() => {
-                    changerOnglet('analyse');
-                    document.getElementById('filterAgence').value = agence;
-                    chargerVersions();
-                }, 2000);
-                
-            } catch (error) {
-                throw new Error('Erreur d\'envoi: ' + error.message);
-            }
-        }
-
-        function afficherStatut(message, type) {
-            const statusDiv = document.getElementById('importStatus');
-            statusDiv.classList.remove('hidden');
-            
-            const colors = {
-                loading: 'bg-blue-100 border-blue-400 text-blue-700',
-                success: 'bg-green-100 border-green-400 text-green-700',
-                error: 'bg-red-100 border-red-400 text-red-700'
+        function saveConfig() {
+            const config = {
+                userName: document.getElementById('configUserName').value,
+                email: document.getElementById('configEmail').value,
+                agence: document.getElementById('configAgence').value
             };
-            
-            statusDiv.className = `mt-4 p-4 border rounded-lg ${colors[type]}`;
-            statusDiv.innerHTML = type === 'loading' 
-                ? `<div class="animate-pulse">${message}</div>`
-                : message;
+            localStorage.setItem('olConfig', JSON.stringify(config));
+            document.getElementById('userName').textContent = config.userName;
+            document.getElementById('currentAgence').textContent = config.agence;
+            showSaveIndicator();
+            alert('✅ Configuration enregistrée !');
         }
 
-        // ============================================
-        // CHARGEMENT DONNÉES
-        // ============================================
-        
-        async function chargerVersions() {
-            const agence = document.getElementById('filterAgence').value;
-            const versionSelect = document.getElementById('filterVersion');
-            
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=listerVersions&agence=${agence}`);
-                const data = await response.json();
-                
-                versionSelect.innerHTML = '<option value="latest">Dernière version</option>';
-                
-                if (data.versions) {
-                    data.versions.forEach(v => {
-                        versionSelect.innerHTML += `<option value="${v.timestamp}">${v.date} - ${v.utilisateur}</option>`;
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur chargement versions:', error);
+        function loadConfig() {
+            const saved = localStorage.getItem('olConfig');
+            if (saved) {
+                const config = JSON.parse(saved);
+                document.getElementById('configUserName').value = config.userName || '';
+                document.getElementById('configEmail').value = config.email || '';
+                document.getElementById('configAgence').value = config.agence || '09';
+                document.getElementById('userName').textContent = config.userName || '-';
+                document.getElementById('currentAgence').textContent = config.agence || '-';
             }
         }
 
-        async function chargerBalances() {
-            const agence = document.getElementById('filterAgence').value;
-            const version = document.getElementById('filterVersion').value;
-            
-            try {
-                const url = `${SCRIPT_URL}?action=chargerBalance&agence=${agence}&version=${version}`;
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.success && data.balances) {
-                    currentBalances = data.balances;
-                    afficherAnalyse();
-                } else {
-                    alert('Aucune donnée trouvée');
-                }
-            } catch (error) {
-                alert('Erreur de chargement: ' + error.message);
-            }
-        }
-
-        // ============================================
-        // ANALYSE ET AFFICHAGE
-        // ============================================
-        
-        function afficherAnalyse() {
-            calculerStatistiques();
-            afficherGraphiques();
-            afficherAlertes();
-            afficherTableau();
-            
-            document.getElementById('statsContainer').classList.remove('hidden');
-            document.getElementById('chartsContainer').classList.remove('hidden');
-            document.getElementById('alertsContainer').classList.remove('hidden');
-            document.getElementById('tableContainer').classList.remove('hidden');
-        }
-
-        function calculerStatistiques() {
-            let soldesDebiteurs = 0;
-            let soldesCrediteurs = 0;
-            let clientsCritiques = 0;
-            
-            currentBalances.forEach(b => {
-                if (b.solde > 0) {
-                    soldesDebiteurs += b.solde;
-                    if ((b.plus120j + b.j90_119) > 0) {
-                        clientsCritiques++;
-                    }
-                } else {
-                    soldesCrediteurs += Math.abs(b.solde);
-                }
-            });
-            
-            const balanceTotale = soldesDebiteurs - soldesCrediteurs;
-            const tauxRisque = soldesDebiteurs > 0 
-                ? ((currentBalances.filter(b => (b.plus120j + b.j90_119) > 0).reduce((sum, b) => sum + b.solde, 0) / soldesDebiteurs) * 100).toFixed(1)
-                : 0;
-            
-            document.getElementById('soldesDebiteurs').textContent = formatEuro(soldesDebiteurs);
-            document.getElementById('soldesCrediteurs').textContent = formatEuro(soldesCrediteurs);
-            document.getElementById('balanceTotale').textContent = formatEuro(balanceTotale);
-            document.getElementById('clientsCritiques').textContent = clientsCritiques;
-            document.getElementById('tauxRisque').textContent = tauxRisque + '%';
-        }
-
-        function afficherGraphiques() {
-            const totaux = {
-                plus120j: 0,
-                j90_119: 0,
-                j60_89: 0,
-                j30_59: 0,
-                j0_29: 0
+        function getConfig() {
+            const saved = localStorage.getItem('olConfig');
+            return saved ? JSON.parse(saved) : {
+                userName: 'Utilisateur',
+                email: 'user@olympiclocation.com',
+                agence: '09'
             };
+        }
+
+        function setupFileUpload() {
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        }
+
+        function setupDropZone() {
+            const dropZone = document.getElementById('dropZone');
             
-            currentBalances.forEach(b => {
-                totaux.plus120j += b.plus120j;
-                totaux.j90_119 += b.j90_119;
-                totaux.j60_89 += b.j60_89;
-                totaux.j30_59 += b.j30_59;
-                totaux.j0_29 += b.j0_29;
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
             });
             
-            // Graphique ancienneté
-            if (ageChartInstance) ageChartInstance.destroy();
-            const ageCtx = document.getElementById('ageChart').getContext('2d');
-            ageChartInstance = new Chart(ageCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['>120j', '90-119j', '60-89j', '30-59j', '0-29j'],
-                    datasets: [{
-                        label: 'Montant (€)',
-                        data: [totaux.plus120j, totaux.j90_119, totaux.j60_89, totaux.j30_59, totaux.j0_29],
-                        backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
             });
             
-            // Top 10 risques
-            const top10 = [...currentBalances]
-                .filter(b => b.solde > 0)
-                .sort((a, b) => (b.plus120j + b.j90_119) - (a.plus120j + a.j90_119))
-                .slice(0, 10);
-            
-            if (riskChartInstance) riskChartInstance.destroy();
-            const riskCtx = document.getElementById('riskChart').getContext('2d');
-            riskChartInstance = new Chart(riskCtx, {
-                type: 'horizontalBar',
-                data: {
-                    labels: top10.map(b => b.nomClient.substring(0, 20)),
-                    datasets: [{
-                        label: 'Solde à risque (€)',
-                        data: top10.map(b => b.plus120j + b.j90_119),
-                        backgroundColor: '#ef4444'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false }
-                    }
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    document.getElementById('fileInput').files = files;
+                    handleFileSelect({ target: { files: files } });
                 }
             });
         }
 
-        function afficherAlertes() {
-            const urgents = currentBalances.filter(b => b.plus120j > 1000);
-            const risques = currentBalances.filter(b => b.j90_119 > 500);
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
             
-            if (urgents.length > 0) {
-                document.getElementById('urgentAlert').classList.remove('hidden');
-                document.getElementById('urgentTitle').textContent = `${urgents.length} clients avec soldes > 120 jours`;
-                document.getElementById('urgentText').textContent = `Montant total: ${formatEuro(urgents.reduce((sum, b) => sum + b.plus120j, 0))}`;
-            }
-            
-            if (risques.length > 0) {
-                document.getElementById('riskAlert').classList.remove('hidden');
-                document.getElementById('riskTitle').textContent = `${risques.length} clients en zone de risque (90-119j)`;
-                document.getElementById('riskText').textContent = `Montant total: ${formatEuro(risques.reduce((sum, b) => sum + b.j90_119, 0))}`;
-            }
-        }
-
-        function afficherTableau() {
-            currentBalancesFiltered = [...currentBalances];
-            appliquerFiltres();
-        }
-
-        function appliquerFiltres() {
-            const riskFilter = document.getElementById('riskFilter').value;
-            const soldeTypeFilter = document.getElementById('soldeTypeFilter').value;
-            const minBalance = parseFloat(document.getElementById('minBalance').value) || 0;
-            
-            currentBalancesFiltered = currentBalances.filter(b => {
-                if (soldeTypeFilter === 'debiteur' && b.solde <= 0) return false;
-                if (soldeTypeFilter === 'crediteur' && b.solde >= 0) return false;
-                if (Math.abs(b.solde) < minBalance) return false;
-                
-                if (riskFilter === 'critical' && (b.plus120j + b.j90_119) === 0) return false;
-                if (riskFilter === 'high' && b.j60_89 === 0) return false;
-                if (riskFilter === 'medium' && b.j30_59 === 0) return false;
-                if (riskFilter === 'low' && b.j0_29 === 0) return false;
-                
-                return true;
-            });
-            
-            trierEtAfficherTableau();
-        }
-
-        function trierTableau(colonne) {
-            if (currentSortColumn === colonne) {
-                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortColumn = colonne;
-                currentSortDirection = 'desc';
-            }
-            trierEtAfficherTableau();
-        }
-
-        function trierEtAfficherTableau() {
-            currentBalancesFiltered.sort((a, b) => {
-                let valA = a[currentSortColumn];
-                let valB = b[currentSortColumn];
-                
-                if (currentSortColumn === 'pourcentageAncien') {
-                    valA = calculerPourcentageAncien(a);
-                    valB = calculerPourcentageAncien(b);
-                }
-                
-                if (typeof valA === 'string') {
-                    return currentSortDirection === 'asc' 
-                        ? valA.localeCompare(valB)
-                        : valB.localeCompare(valA);
-                } else {
-                    return currentSortDirection === 'asc' ? valA - valB : valB - valA;
-                }
-            });
-            
-            const tbody = document.getElementById('balanceTableBody');
-            tbody.innerHTML = '';
-            
-            currentBalancesFiltered.forEach(balance => {
-                const pourcentageAncien = calculerPourcentageAncien(balance);
-                const niveauRisque = getNiveauRisque(balance);
-                
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="px-4 py-3">${balance.codeClient}</td>
-                    <td class="px-4 py-3">${balance.nomClient}</td>
-                    <td class="px-4 py-3 text-right font-semibold ${balance.solde > 0 ? 'text-red-600' : 'text-green-600'}">
-                        ${formatEuro(balance.solde)}
-                    </td>
-                    <td class="px-4 py-3 text-right">${formatEuro(balance.j0_29)}</td>
-                    <td class="px-4 py-3 text-right">${formatEuro(balance.j30_59)}</td>
-                    <td class="px-4 py-3 text-right">${formatEuro(balance.j60_89)}</td>
-                    <td class="px-4 py-3 text-right">${formatEuro(balance.j90_119)}</td>
-                    <td class="px-4 py-3 text-right">${formatEuro(balance.plus120j)}</td>
-                    <td class="px-4 py-3 text-right font-semibold">${pourcentageAncien}%</td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${niveauRisque.class}">
-                            ${niveauRisque.label}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-center no-print">
-                        <span class="comment-badge ${balance.commentaires && balance.commentaires.length > 0 ? 'has-comment' : ''}" 
-                              onclick="ouvrirModalCommentaire('${balance.codeClient}')">
-                            💬 ${balance.commentaires ? balance.commentaires.length : 0}
-                        </span>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function calculerPourcentageAncien(balance) {
-            const total = Math.abs(balance.solde);
-            if (total === 0) return 0;
-            const ancien = balance.plus120j + balance.j90_119;
-            return ((ancien / total) * 100).toFixed(1);
-        }
-
-        function getNiveauRisque(balance) {
-            if (balance.plus120j > 0) return { label: 'CRITIQUE', class: 'bg-red-100 text-red-800' };
-            if (balance.j90_119 > 0) return { label: 'ÉLEVÉ', class: 'bg-orange-100 text-orange-800' };
-            if (balance.j60_89 > 0) return { label: 'MODÉRÉ', class: 'bg-yellow-100 text-yellow-800' };
-            if (balance.j30_59 > 0) return { label: 'FAIBLE', class: 'bg-blue-100 text-blue-800' };
-            return { label: 'OK', class: 'bg-green-100 text-green-800' };
-        }
-
-        // ============================================
-        // CALCUL TAUX D'IMPAYÉS
-        // ============================================
-        
-        function calculateTauxImpaye() {
-            const ca = parseFloat(document.getElementById('chiffreAffaires').value);
-            
-            if (!ca || ca <= 0) {
-                alert('Veuillez entrer un chiffre d\'affaires valide');
-                return;
-            }
-            
-            const totalImpayes = currentBalances
-                .filter(b => b.solde > 0)
-                .reduce((sum, b) => sum + b.solde, 0);
-            
-            const tauxImpaye = ((totalImpayes / ca) * 100).toFixed(2);
-            
-            document.getElementById('tauxImpayeResult').classList.remove('hidden');
-            document.getElementById('tauxImpayeValue').textContent = tauxImpaye + '%';
-            
-            const statusEl = document.getElementById('tauxImpayeStatus');
-            if (tauxImpaye < 2) {
-                statusEl.textContent = '✓ Excellent';
-                statusEl.className = 'text-xs mt-1 text-green-600 font-semibold';
-            } else if (tauxImpaye < 5) {
-                statusEl.textContent = '⚠️ À surveiller';
-                statusEl.className = 'text-xs mt-1 text-orange-600 font-semibold';
-            } else {
-                statusEl.textContent = '🚨 Critique';
-                statusEl.className = 'text-xs mt-1 text-red-600 font-semibold';
-            }
-        }
-
-        // ============================================
-        // COMMENTAIRES
-        // ============================================
-        
-        async function ouvrirModalCommentaire(codeClient) {
-            currentClient = currentBalances.find(b => b.codeClient === codeClient);
-            if (!currentClient) return;
-            
-            document.getElementById('modalClientNom').textContent = currentClient.nomClient;
-            document.getElementById('modalClientCode').textContent = currentClient.codeClient;
-            document.getElementById('modalClientSolde').textContent = formatEuro(currentClient.solde);
-            
-            await chargerCommentaires();
-            
-            document.getElementById('commentModal').classList.add('active');
-        }
-
-        function fermerModalCommentaire() {
-            document.getElementById('commentModal').classList.remove('active');
-            currentClient = null;
-        }
-
-        async function chargerCommentaires() {
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=lireCommentaires&codeClient=${currentClient.codeClient}`);
-                const data = await response.json();
-                
-                const listDiv = document.getElementById('commentairesList');
-                
-                if (data.commentaires && data.commentaires.length > 0) {
-                    listDiv.innerHTML = data.commentaires.map(c => `
-                        <div class="comment-item">
-                            <button class="comment-delete-btn" onclick="supprimerCommentaire('${c.id}')">✕</button>
-                            <div class="text-xs text-gray-500 mb-1">${c.date} - ${c.auteur}</div>
-                            <div class="text-sm text-gray-800">${c.texte}</div>
-                        </div>
-                    `).join('');
-                } else {
-                    listDiv.innerHTML = '<p class="text-gray-500 text-sm">Aucun commentaire</p>';
-                }
-            } catch (error) {
-                console.error('Erreur chargement commentaires:', error);
-            }
-        }
-
-        async function ajouterCommentaire() {
-            const texte = document.getElementById('commentaireInput').value.trim();
-            
-            if (!texte) {
-                alert('Veuillez entrer un commentaire');
-                return;
-            }
-            
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'ajouterCommentaire',
-                        codeClient: currentClient.codeClient,
-                        texte: texte,
-                        auteur: currentUser.nom
-                    })
-                });
-                
-                document.getElementById('commentaireInput').value = '';
-                afficherIndicateurSauvegarde();
-                await chargerCommentaires();
-                await chargerBalances();
-                
-            } catch (error) {
-                alert('Erreur lors de l\'ajout du commentaire');
-            }
-        }
-
-        async function supprimerCommentaire(commentId) {
-            if (!confirm('Supprimer ce commentaire ?')) return;
-            
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'supprimerCommentaire',
-                        commentId: commentId
-                    })
-                });
-                
-                afficherIndicateurSauvegarde();
-                await chargerCommentaires();
-                
-            } catch (error) {
-                alert('Erreur lors de la suppression');
-            }
-        }
-
-        // ============================================
-        // HISTORIQUE
-        // ============================================
-        
-        async function chargerHistorique() {
-            const container = document.getElementById('historiqueContainer');
-            container.innerHTML = '<p class="text-gray-600">Chargement...</p>';
-            
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=historique`);
-                const data = await response.json();
-                
-                if (data.historique && data.historique.length > 0) {
-                    container.innerHTML = data.historique.map(h => `
-                        <div class="border-b py-4">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <div class="font-semibold text-gray-800">${h.agence} - ${AGENCES_MAP[h.agence]}</div>
-                                    <div class="text-sm text-gray-600">${h.date}</div>
-                                    <div class="text-sm text-gray-500">Par: ${h.utilisateur}</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-gray-600">${h.nbLignes} lignes</div>
-                                    <button onclick="chargerVersionHistorique('${h.agence}', '${h.timestamp}')" 
-                                            class="mt-2 text-blue-600 hover:text-blue-800 text-sm">
-                                        📊 Voir
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<p class="text-gray-600">Aucun historique</p>';
-                }
-            } catch (error) {
-                container.innerHTML = '<p class="text-red-600">Erreur de chargement</p>';
-            }
-        }
-
-        function chargerVersionHistorique(agence, timestamp) {
-            document.getElementById('filterAgence').value = agence;
-            document.getElementById('filterVersion').value = timestamp;
-            changerOnglet('analyse');
-            chargerBalances();
-        }
-
-        // ============================================
-        // EXPORT
-        // ============================================
-        
-        function exporterExcel() {
-            const data = currentBalancesFiltered.map(b => ({
-                'Code': b.codeClient,
-                'Nom': b.nomClient,
-                'Solde': b.solde,
-                '0-30j': b.j0_29,
-                '30-60j': b.j30_59,
-                '60-90j': b.j60_89,
-                '90-120j': b.j90_119,
-                '>120j': b.plus120j,
-                '% Ancien': calculerPourcentageAncien(b)
-            }));
-            
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Balance');
-            
-            const agence = document.getElementById('filterAgence').value || 'Toutes';
-            const date = new Date().toISOString().split('T')[0];
-            XLSX.writeFile(wb, `Balance_Agee_${agence}_${date}.xlsx`);
-        }
-
-        // ============================================
-        // UTILITAIRES
-        // ============================================
-        
-        function formatEuro(montant) {
-            return new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: 'EUR',
-                minimumFractionDigits: 2
-            }).format(montant);
-        }
-
-        function afficherIndicateurSauvegarde() {
-            const indicator = document.getElementById('saveIndicator');
-            indicator.style.display = 'block';
-            setTimeout(() => {
-                indicator.style.display = 'none';
-            }, 2000);
-        }
-
-        // ============================================
-        // INITIALISATION
-        // ============================================
-        
-        window.addEventListener('load', () => {
-            const savedUser = localStorage.getItem('balanceOL_user');
-            if (savedUser) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
                 try {
-                    currentUser = JSON.parse(savedUser);
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
                     
-                    // ✅ CORRECTION : Vérifier et créer agencesArray lors du chargement depuis localStorage
-                    if (currentUser.agences && !currentUser.agencesArray) {
-                        currentUser.agencesArray = currentUser.agences.split(',').map(a => a.trim());
-                    }
-                    
-                    // Vérification de sécurité supplémentaire
-                    if (!currentUser.agencesArray || !Array.isArray(currentUser.agencesArray)) {
-                        currentUser.agencesArray = [];
-                    }
-                    
-                    afficherEcranPrincipal();
+                    currentData = parseExcelData(jsonData);
+                    console.log('Données chargées:', currentData);
+                    alert(`✅ Fichier chargé : ${currentData.length} clients détectés`);
                 } catch (error) {
-                    console.error('Erreur lors du chargement de l\'utilisateur:', error);
-                    localStorage.removeItem('balanceOL_user');
+                    alert('❌ Erreur lors de la lecture du fichier : ' + error.message);
                 }
-            }
-            
-            document.getElementById('emailInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') seConnecter();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseExcelData(jsonData) {
+            return jsonData.map(row => {
+                const codeClient = row['Code Client'] || row['Code'] || row['code'] || '';
+                const nomClient = row['Nom Client'] || row['Nom'] || row['nom'] || '';
+                const solde = parseFloat(row['Solde'] || row['solde'] || 0);
+                const echeance0 = parseFloat(row['0-30j'] || row['Echeance 0-30'] || 0);
+                const echeance30 = parseFloat(row['30-60j'] || row['Echeance 30-60'] || 0);
+                const echeance60 = parseFloat(row['60-90j'] || row['Echeance 60-90'] || 0);
+                const echeance90 = parseFloat(row['>90j'] || row['Echeance >90'] || 0);
+                
+                return {
+                    codeClient,
+                    nomClient,
+                    solde,
+                    echeance0,
+                    echeance30,
+                    echeance60,
+                    echeance90,
+                    echeancePlus120: echeance90,
+                    paiement: 0
+                };
             });
-        });
-    </script>
-</body>
-</html>
+        }
 
+        async function analyzeAndSaveToCloud() {
+            if (currentData.length === 0) {
+                alert('❌ Veuillez d\'abord charger un fichier Excel');
+                return;
+            }
 
-            
+            const config = getConfig();
+            document.getElementById('loadingIndicator').classList.add('active');
+
+            try {
+                                  const dataEncoded = encodeURIComponent(JSON.stringify(currentData));
+                  const url = `${API_URL}?action=importerBalance&data=${dataEncoded}&agence=${config.agence}&email=${encodeURIComponent(config.email)}&nom=${encodeURIComponent(config.userName)}`;
+                  
+                  const response = await fetch(url);
+                  const result = await response.json();
+                  
+                  document.getElementById('loadingIndicator').classList.remove('active');
+                  
+                  if (result.success) {
+                      alert(`✅ ${result.message}\n\nVersion: ${result.version}\nDate: ${result.dateImport} à ${result.heureImport}\nClients: ${result.nbClients}`);
+                      
+                      // Afficher l'analyse
+                      displayAnalysis();
+                      switchTab('analyse');
+                  } else {
+                      alert('❌ Erreur : ' + result.message);
+                  }
+              } catch (error) {
+                  document.getElementById('loadingIndicator').classList.remove('active');
+                  alert('❌ Erreur lors de la sauvegarde : ' + error.message);
+              }
+          }
+
+          function analyzeLocalOnly() {
+              if (currentData.length === 0) {
+                  alert('❌ Veuillez d\'abord charger un fichier Excel');
+                  return;
+              }
+              
+              displayAnalysis();
+              switchTab('analyse');
+          }
+
+          function displayAnalysis() {
+              document.getElementById('analysisResults').classList.remove('hidden');
+              
+              // Calculs
+              let soldesDebiteurs = 0;
+              let soldesCrediteurs = 0;
+              let clientsCritiques = 0;
+              let total0_30 = 0;
+              let total30_60 = 0;
+              let total60_90 = 0;
+              let total90plus = 0;
+
+              currentData.forEach(client => {
+                  if (client.solde > 0) {
+                      soldesDebiteurs += client.solde;
+                  } else {
+                      soldesCrediteurs += Math.abs(client.solde);
+                  }
+                  
+                  if (client.echeance90 > 0 || client.echeancePlus120 > 0) {
+                      clientsCritiques++;
+                  }
+                  
+                  total0_30 += client.echeance0 || 0;
+                  total30_60 += client.echeance30 || 0;
+                  total60_90 += client.echeance60 || 0;
+                  total90plus += (client.echeance90 || 0) + (client.echeancePlus120 || 0);
+              });
+
+              const balanceTotale = soldesDebiteurs - soldesCrediteurs;
+              const tauxRisque = soldesDebiteurs > 0 ? ((total90plus / soldesDebiteurs) * 100).toFixed(1) : 0;
+
+              // Affichage
+              document.getElementById('soldesDebiteurs').textContent = formatCurrency(soldesDebiteurs);
+              document.getElementById('soldesCrediteurs').textContent = formatCurrency(soldesCrediteurs);
+              document.getElementById('balanceTotale').textContent = formatCurrency(balanceTotale);
+              document.getElementById('clientsCritiques').textContent = clientsCritiques;
+              document.getElementById('tauxRisque').textContent = tauxRisque + '%';
+
+              // Tableau
+              displayTable();
+              
+              // Graphiques
+              displayCharts(total0_30, total30_60, total60_90, total90plus);
+          }
+
+          function displayTable() {
+              const tbody = document.getElementById('clientsTableBody');
+              tbody.innerHTML = '';
+
+              currentData.forEach((client, index) => {
+                  const risque = calculateRisk(client);
+                  const risqueBadge = getRiskBadge(risque);
+                  
+                  const row = document.createElement('tr');
+                  row.className = 'hover:bg-gray-50';
+                  row.innerHTML = `
+                      <td class="px-4 py-3">${client.codeClient}</td>
+                      <td class="px-4 py-3">${client.nomClient}</td>
+                      <td class="px-4 py-3 text-right font-semibold ${client.solde >= 0 ? 'text-red-600' : 'text-green-600'}">
+                          ${formatCurrency(client.solde)}
+                      </td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance0 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance30 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance60 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance90 || 0)}</td>
+                      <td class="px-4 py-3 text-center">${risqueBadge}</td>
+                      <td class="px-4 py-3 text-center">
+                          <button onclick="openCommentModal(${index})" class="comment-input-cell ${clientComments[client.codeClient] ? 'has-comment' : ''}">
+                              ${clientComments[client.codeClient] ? '💬 ' + clientComments[client.codeClient].length : '➕'}
+                          </button>
+                      </td>
+                  `;
+                  tbody.appendChild(row);
+              });
+          }
+
+          function calculateRisk(client) {
+              const solde = Math.abs(client.solde);
+              const plus90 = (client.echeance90 || 0) + (client.echeancePlus120 || 0);
+              
+              if (plus90 > solde * 0.5) return 'ÉLEVÉ';
+              if (plus90 > solde * 0.3) return 'MOYEN';
+              if (plus90 > 0) return 'FAIBLE';
+              return 'OK';
+          }
+
+          function getRiskBadge(risk) {
+              const badges = {
+                  'ÉLEVÉ': '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-bold">🔴 ÉLEVÉ</span>',
+                  'MOYEN': '<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-bold">🟠 MOYEN</span>',
+                  'FAIBLE': '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-bold">🟡 FAIBLE</span>',
+                  'OK': '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-bold">🟢 OK</span>'
+              };
+              return badges[risk] || badges['OK'];
+          }
+
+          function displayCharts(total0_30, total30_60, total60_90, total90plus) {
+              // Graphique par ancienneté
+              const ageCtx = document.getElementById('ageChart').getContext('2d');
+              if (ageChartInstance) ageChartInstance.destroy();
+              
+              ageChartInstance = new Chart(ageCtx, {
+                  type: 'doughnut',
+                  data: {
+                      labels: ['0-30j', '30-60j', '60-90j', '>90j'],
+                      datasets: [{
+                          data: [total0_30, total30_60, total60_90, total90plus],
+                          backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#7c3aed']
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      plugins: {
+                          legend: { position: 'bottom' }
+                      }
+                  }
+              });
+
+              // Top 10 clients
+              const topClients = [...currentData]
+                  .sort((a, b) => Math.abs(b.solde) - Math.abs(a.solde))
+                  .slice(0, 10);
+
+              const topCtx = document.getElementById('topClientsChart').getContext('2d');
+              if (topClientsChartInstance) topClientsChartInstance.destroy();
+              
+              topClientsChartInstance = new Chart(topCtx, {
+                  type: 'bar',
+                  data: {
+                      labels: topClients.map(c => c.nomClient.substring(0, 15)),
+                      datasets: [{
+                          label: 'Solde (€)',
+                          data: topClients.map(c => Math.abs(c.solde)),
+                          backgroundColor: '#3b82f6'
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      plugins: {
+                          legend: { display: false }
+                      },
+                      scales: {
+                          y: { beginAtZero: true }
+                      }
+                  }
+              });
+          }
+
+          function calculateTauxImpaye() {
+              const ca = parseFloat(document.getElementById('chiffreAffaires').value);
+              if (!ca || ca <= 0) {
+                  alert('❌ Veuillez saisir un chiffre d\'affaires valide');
+                  return;
+              }
+
+              const soldesDebiteurs = currentData.reduce((sum, c) => sum + (c.solde > 0 ? c.solde : 0), 0);
+              const taux = (soldesDebiteurs / ca) * 100;
+
+              document.getElementById('tauxImpayeResult').classList.remove('hidden');
+              document.getElementById('tauxImpayeValue').textContent = taux.toFixed(2) + '%';
+              
+              const statusEl = document.getElementById('tauxImpayeStatus');
+              if (taux < 2) {
+                  statusEl.textContent = '✅ Excellent';
+                  statusEl.className = 'text-xs mt-1 text-green-600 font-semibold';
+              } else if (taux < 5) {
+                  statusEl.textContent = '⚠️ Attention';
+                  statusEl.className = 'text-xs mt-1 text-orange-600 font-semibold';
+              } else {
+                  statusEl.textContent = '🔴 Critique';
+                  statusEl.className = 'text-xs mt-1 text-red-600 font-semibold';
+              }
+          }
+
+          // Commentaires
+          function openCommentModal(index) {
+              currentClientForComment = currentData[index];
+              
+              document.getElementById('modalClientCode').textContent = currentClientForComment.codeClient;
+              document.getElementById('modalClientName').textContent = currentClientForComment.nomClient;
+              document.getElementById('modalClientSolde').textContent = formatCurrency(currentClientForComment.solde);
+              
+              const comments = clientComments[currentClientForComment.codeClient] || [];
+              const historyDiv = document.getElementById('commentHistory');
+              
+              if (comments.length === 0) {
+                  historyDiv.innerHTML = '<p class="text-sm text-gray-500 italic">Aucun commentaire</p>';
+              } else {
+                  historyDiv.innerHTML = comments.map(c => `
+                      <div class="bg-gray-100 p-3 rounded mb-2">
+                          <div class="text-xs text-gray-600">${c.date} - ${c.author}</div>
+                          <div class="text-sm mt-1">${c.text}</div>
+                      </div>
+                  `).join('');
+              }
+              
+              document.getElementById('newCommentText').value = '';
+              document.getElementById('commentModal').classList.add('active');
+          }
+
+          function closeCommentModal() {
+              document.getElementById('commentModal').classList.remove('active');
+              currentClientForComment = null;
+          }
+
+          function saveNewComment() {
+              const text = document.getElementById('newCommentText').value.trim();
+              if (!text) {
+                  alert('❌ Veuillez saisir un commentaire');
+                  return;
+              }
+
+              const config = getConfig();
+              const comment = {
+                  date: new Date().toLocaleString('fr-FR'),
+                  author: config.userName,
+                  text: text
+              };
+
+              if (!clientComments[currentClientForComment.codeClient]) {
+                  clientComments[currentClientForComment.codeClient] = [];
+              }
+              clientComments[currentClientForComment.codeClient].push(comment);
+              
+              localStorage.setItem('olComments', JSON.stringify(clientComments));
+              
+              closeCommentModal();
+              displayTable();
+              showSaveIndicator();
+          }
+
+          // Versions
+          async function loadVersionsList() {
+              const agence = document.getElementById('filterAgence').value;
+              const container = document.getElementById('versionsList');
+              
+              container.innerHTML = '<div class="text-center py-8"><div class="animate-pulse">Chargement...</div></div>';
+
+              try {
+                  const url = agence ? `${API_URL}?action=listerVersions&agence=${agence}` : `${API_URL}?action=listerVersions`;
+                  const response = await fetch(url);
+                  const result = await response.json();
+
+                  if (result.success && result.versions.length > 0) {
+                      container.innerHTML = result.versions.map(v => `
+                          <div class="version-card" onclick="loadVersion('${v.agence}', '${v.version}')">
+                              <div class="flex justify-between items-center">
+                                  <div>
+                                      <div class="font-bold text-lg">${v.version}</div>
+                                      <div class="text-sm text-gray-600">Agence ${v.agence} - ${v.nbClients} clients</div>
+                                      <div class="text-xs text-gray-500 mt-1">📅 ${v.date} à ${v.heure} | 👤 ${v.utilisateur}</div>
+                                  </div>
+                                  <div class="text-blue-600 text-2xl">👁️</div>
+                              </div>
+                          </div>
+                      `).join('');
+                  } else {
+                      container.innerHTML = '<div class="text-center py-8 text-gray-500">Aucune version disponible</div>';
+                  }
+              } catch (error) {
+                  container.innerHTML = '<div class="text-center py-8 text-red-600">❌ Erreur de chargement</div>';
+              }
+          }
+
+          async function loadVersion(agence, version) {
+              if (!confirm(`Charger la version ${version} de l'agence ${agence} ?`)) return;
+
+              try {
+                  const response = await fetch(`${API_URL}?action=chargerVersion&agence=${agence}&version=${version}`);
+                  const result = await response.json();
+
+                  if (result.success) {
+                      currentData = result.donnees;
+                      displayAnalysis();
+                      switchTab('analyse');
+                      alert(`✅ Version ${version} chargée avec succès !`);
+                  } else {
+                      alert('❌ Erreur : ' + result.message);
+                  }
+              } catch (error) {
+                  alert('❌ Erreur de chargement : ' + error.message);
+              }
+          }
+
+          // Historique
+          async function loadHistorique() {
+              const container = document.getElementById('historiqueList');
+              container.innerHTML = '<div class="text-center py-8"><div class="animate-pulse">Chargement...</div></div>';
+
+              try {
+                  const response = await fetch(`${API_URL}?action=listerHistorique`);
+                  const result = await response.json();
+
+                  if (result.success && result.historique.length > 0) {
+                      container.innerHTML = `
+                          <div class="overflow-x-auto">
+                              <table class="w-full text-sm">
+                                  <thead class="bg-gray-100">
+                                      <tr>
+                                          <th class="px-4 py-3 text-left">Date</th>
+                                          <th class="px-4 py-3 text-left">Heure</th>
+                                          <th class="px-4 py-3 text-left">Agence</th>
+                                          <th class="px-4 py-3 text-left">Version</th>
+                                          <th class="px-4 py-3 text-left">Utilisateur</th>
+                                          <th class="px-4 py-3 text-right">Clients</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      ${result.historique.map(h => `
+                                          <tr class="border-b hover:bg-gray-50">
+                                              <td class="px-4 py-3">${h.date}</td>
+                                              <td class="px-4 py-3">${h.heure}</td>
+                                              <td class="px-4 py-3">${h.agence}</td>
+                                              <td class="px-4 py-3 font-semibold">${h.version}</td>
+                                              <td class="px-4 py-3">${h.utilisateur}</td>
+                                              <td class="px-4 py-3 text-right">${h.nbClients}</td>
+                                          </tr>
+                                      `).join('')}
+                                  </tbody>
+                              </table>
+                          </div>
+                      `;
+                  } else {
+                      container.innerHTML = '<div class="text-center py-8 text-gray-500">Aucun historique disponible</div>';
+                  }
+              } catch (error) {
+                  container.innerHTML = '<div class="text-center py-8 text-red-600">❌ Erreur de chargement</div>';
+              }
+          }
+
+          // Export Excel
+          function exportToExcel() {
+              const ws = XLSX.utils.json_to_sheet(currentData);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Balance");
+              
+              const config = getConfig();
+              const filename = `Balance_Agee_${config.agence}_${new Date().toISOString().split('T')[0]}.xlsx`;
+              XLSX.writeFile(wb, filename);
+          }
+
+          // Utilitaires
+          function formatCurrency(value) {
+              return new Intl.NumberFormat('fr-FR', {
+                  style: 'currency',
+                  currency: 'EUR'
+              }).format(value);
+          }
+
+          function showSaveIndicator() {
+              const indicator = document.getElementById('saveIndicator');
+              indicator.style.display = 'block';
+              setTimeout(() => {
+                  indicator.style.display = 'none';
+              }, 2000);
+          }
+
+          // Charger les commentaires au démarrage
+          const savedComments = localStorage.getItem('olComments');
+          if (savedComments) {
+              clientComments = JSON.parse(savedComments);
+          }
+      </script>
+  </body>
+  </html>
