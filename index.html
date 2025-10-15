@@ -481,6 +481,7 @@
 
         let currentUser = null;
         let currentBalances = [];
+        let currentBalancesFiltered = [];
         let currentClient = null;
         let ageChartInstance = null;
         let riskChartInstance = null;
@@ -507,6 +508,17 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // ✅ CORRECTION : Créer agencesArray à partir de la chaîne agences
+                    if (data.agences && !data.agencesArray) {
+                        // Si agences est une chaîne comme "00,01,02"
+                        data.agencesArray = data.agences.split(',').map(a => a.trim());
+                    }
+                    
+                    // Vérification de sécurité supplémentaire
+                    if (!data.agencesArray || !Array.isArray(data.agencesArray)) {
+                        data.agencesArray = [];
+                    }
+                    
                     currentUser = data;
                     localStorage.setItem('balanceOL_user', JSON.stringify(data));
                     afficherEcranPrincipal();
@@ -530,10 +542,14 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainScreen').classList.remove('hidden');
             
+            // ✅ CORRECTION : Vérifier et créer agencesArray si nécessaire
+            if (currentUser.agences && !currentUser.agencesArray) {
+                currentUser.agencesArray = currentUser.agences.split(',').map(a => a.trim());
+            }
+            
             document.getElementById('userName').textContent = currentUser.nom;
             document.getElementById('userAgences').textContent = currentUser.agences;
-            
-            initialiserAgences();
+                        initialiserAgences();
             changerOnglet('import');
         }
 
@@ -549,6 +565,16 @@
             
             agenceSelect.innerHTML = '<option value="">-- Choisir une agence --</option>';
             filterAgence.innerHTML = '<option value="">Toutes les agences</option>';
+            
+            // ✅ CORRECTION : Vérification de sécurité
+            if (!currentUser.agencesArray || !Array.isArray(currentUser.agencesArray)) {
+                console.error('agencesArray non défini ou invalide');
+                if (currentUser.agences) {
+                    currentUser.agencesArray = currentUser.agences.split(',').map(a => a.trim());
+                } else {
+                    currentUser.agencesArray = [];
+                }
+            }
             
             currentUser.agencesArray.forEach(code => {
                 const nom = AGENCES_MAP[code] || code;
@@ -1223,8 +1249,24 @@
         window.addEventListener('load', () => {
             const savedUser = localStorage.getItem('balanceOL_user');
             if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                afficherEcranPrincipal();
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    
+                    // ✅ CORRECTION : Vérifier et créer agencesArray lors du chargement depuis localStorage
+                    if (currentUser.agences && !currentUser.agencesArray) {
+                        currentUser.agencesArray = currentUser.agences.split(',').map(a => a.trim());
+                    }
+                    
+                    // Vérification de sécurité supplémentaire
+                    if (!currentUser.agencesArray || !Array.isArray(currentUser.agencesArray)) {
+                        currentUser.agencesArray = [];
+                    }
+                    
+                    afficherEcranPrincipal();
+                } catch (error) {
+                    console.error('Erreur lors du chargement de l\'utilisateur:', error);
+                    localStorage.removeItem('balanceOL_user');
+                }
             }
             
             document.getElementById('emailInput').addEventListener('keypress', (e) => {
@@ -1234,3 +1276,6 @@
     </script>
 </body>
 </html>
+
+
+            
