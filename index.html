@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyseur de Balances Âgées - Olympic Location</title>
+    <title>Balance Âgée - Olympic Location</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -54,24 +54,6 @@
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
-        }
-        .comment-input-cell {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            background-color: #f9fafb;
-        }
-        .comment-input-cell:hover {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-        }
-        .comment-input-cell.has-comment {
-            background-color: #fef3c7;
-            border-color: #f59e0b;
-            font-weight: 500;
         }
         .save-indicator {
             position: fixed;
@@ -130,57 +112,73 @@
         </div>
     </div>
 
-    <!-- Modal Commentaires -->
-    <div id="commentModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">💬 Commentaires Client</h3>
-            <div class="bg-blue-50 p-3 rounded mb-4">
-                <p class="text-sm"><strong>Code:</strong> <span id="modalClientCode"></span></p>
-                <p class="text-sm"><strong>Nom:</strong> <span id="modalClientName"></span></p>
-                <p class="text-sm"><strong>Solde:</strong> <span id="modalClientSolde"></span></p>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Historique des commentaires :</label>
-                <div id="commentHistory" class="max-h-48 overflow-y-auto"></div>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Nouveau commentaire :</label>
-                <textarea id="newCommentText" class="w-full border rounded px-3 py-2" rows="3" placeholder="Entrez votre commentaire..."></textarea>
-            </div>
-            
-            <div class="flex justify-end space-x-3">
-                <button onclick="closeCommentModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
-                    Annuler
-                </button>
-                <button onclick="saveNewComment()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Enregistrer
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- En-tête -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">🏦 Analyseur de Balances Âgées</h1>
-            <p class="text-gray-600">Olympic Location - Version Cloud avec Google Apps Script</p>
+            <p class="text-gray-600">Olympic Location - Version Cloud</p>
+            <div id="userInfo" class="mt-2 text-sm text-gray-500"></div>
         </div>
 
         <!-- Navigation par onglets -->
         <div class="bg-white rounded-lg shadow-md mb-8">
-            <div class="flex border-b">
-                <button class="tab-button active" onclick="switchTab('import')">📤 Import</button>
+            <div class="flex border-b overflow-x-auto">
+                <button class="tab-button active" onclick="switchTab('config')">⚙️ Configuration</button>
+                <button class="tab-button" onclick="switchTab('import')">📤 Import</button>
                 <button class="tab-button" onclick="switchTab('analyse')">📊 Analyse</button>
                 <button class="tab-button" onclick="switchTab('versions')">📁 Versions</button>
                 <button class="tab-button" onclick="switchTab('historique')">📜 Historique</button>
-                <button class="tab-button" onclick="switchTab('config')">⚙️ Configuration</button>
+            </div>
+
+            <!-- Onglet Configuration -->
+            <div id="tab-config" class="tab-content active p-6">
+                <h2 class="text-xl font-semibold mb-4">⚙️ Configuration</h2>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <p class="text-sm text-yellow-800">
+                        <strong>⚠️ Important :</strong> Configurez l'URL de votre Google Apps Script ci-dessous
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">URL Google Apps Script :</label>
+                        <input type="text" id="apiUrl" class="w-full border rounded px-3 py-2" placeholder="https://script.google.com/macros/s/...">
+                        <p class="text-xs text-gray-500 mt-1">L'URL de déploiement de votre script Apps Script</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Votre email :</label>
+                        <input type="email" id="userEmail" class="w-full border rounded px-3 py-2" placeholder="prenom@olympiclocation.com">
+                    </div>
+                    
+                    <button onclick="testConnection()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                        🔌 Tester la connexion
+                    </button>
+                    
+                    <div id="connectionStatus" class="hidden mt-4"></div>
+                </div>
             </div>
 
             <!-- Onglet Import -->
-            <div id="tab-import" class="tab-content active p-6">
-                <h2 class="text-xl font-semibold mb-4">📤 Charger votre fichier Excel</h2>
+            <div id="tab-import" class="tab-content p-6">
+                <h2 class="text-xl font-semibold mb-4">📤 Importer une balance</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionner l'agence :</label>
+                    <select id="agenceSelect" class="w-full border rounded px-3 py-2">
+                        <option value="">-- Choisir une agence --</option>
+                        <option value="00">00 - Gèze</option>
+                        <option value="01">01 - 5 Av</option>
+                        <option value="02">02 - Gare St Charles</option>
+                        <option value="03">03 - Aubagne</option>
+                        <option value="06">06 - La Valentine</option>
+                        <option value="09">09 - Plombières</option>
+                        <option value="12">12 - La Garde</option>
+                        <option value="13">13 - La Ciotat</option>
+                        <option value="08">08 - Toulon</option>
+                    </select>
+                </div>
                 
                 <div id="dropZone" class="drop-zone rounded-lg p-8 text-center cursor-pointer mb-4">
                     <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,31 +197,46 @@
                     <p class="text-sm text-green-600">Lignes détectées : <span id="rowCount"></span></p>
                 </div>
 
-                <div class="flex space-x-4">
-                    <button onclick="analyzeAndSaveToCloud()" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
-                        💾 Analyser et Sauvegarder dans le Cloud
-                    </button>
-                    <button onclick="analyzeLocalOnly()" class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 font-semibold">
-                        👁️ Analyser localement (sans sauvegarder)
-                    </button>
-                </div>
+                <button onclick="importerBalance()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                    💾 Importer dans le Cloud
+                </button>
 
                 <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 class="font-semibold text-blue-800 mb-2">💡 Format attendu :</h3>
                     <ul class="text-sm text-blue-700 space-y-1">
-                        <li>• <strong>Code Client</strong> : Identifiant unique du client</li>
+                        <li>• <strong>Code Client</strong> : Identifiant unique</li>
                         <li>• <strong>Nom Client</strong> : Raison sociale</li>
-                        <li>• <strong>Solde</strong> : Solde total (positif = débiteur, négatif = créditeur)</li>
-                        <li>• <strong>Échéance 0-30j, 30-60j, 60-90j, >90j</strong> : Montants par tranche d'ancienneté</li>
+                        <li>• <strong>Solde</strong> : Solde total</li>
+                        <li>• <strong>Échéances</strong> : 0-30j, 30-60j, 60-90j, 90-120j, >120j</li>
+                        <li>• <strong>Paiement</strong> : Montant des paiements</li>
                     </ul>
                 </div>
             </div>
 
             <!-- Onglet Analyse -->
             <div id="tab-analyse" class="tab-content p-6">
+                <div class="mb-4 flex space-x-4">
+                    <select id="analyseAgence" class="flex-1 border rounded px-3 py-2">
+                        <option value="">-- Choisir une agence --</option>
+                        <option value="00">00 - Gèze</option>
+                        <option value="01">01 - 5 Av</option>
+                        <option value="02">02 - Gare St Charles</option>
+                        <option value="03">03 - Aubagne</option>
+                        <option value="06">06 - La Valentine</option>
+                        <option value="09">09 - Plombières</option>
+                        <option value="12">12 - La Garde</option>
+                        <option value="13">13 - La Ciotat</option>
+                        <option value="08">08 - Toulon</option>
+                    </select>
+                    <select id="analyseVersion" class="flex-1 border rounded px-3 py-2">
+                        <option value="latest">Dernière version</option>
+                    </select>
+                    <button onclick="chargerEtAnalyser()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                        📊 Charger
+                    </button>
+                </div>
+                
                 <div id="analysisResults" class="hidden">
-                    <h2 class="text-xl font-semibold mb-4">📊 Résultats de l'analyse</h2>
-                    
                     <!-- KPIs -->
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                         <div class="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -239,11 +252,11 @@
                             <p class="text-2xl font-bold text-blue-700" id="balanceTotale">0 €</p>
                         </div>
                         <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                            <p class="text-sm text-orange-600 mb-1">Clients Critiques</p>
+                            <p class="text-sm text-orange-600 mb-1">Clients à Risque</p>
                             <p class="text-2xl font-bold text-orange-700" id="clientsCritiques">0</p>
                         </div>
                         <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                            <p class="text-sm text-purple-600 mb-1">Taux de Risque</p>
+                            <p class="text-sm text-purple-600 mb-1">Taux >90j</p>
                             <p class="text-2xl font-bold text-purple-700" id="tauxRisque">0%</p>
                         </div>
                     </div>
@@ -260,7 +273,7 @@
                         </div>
                     </div>
 
-                    <!-- Tableau des clients -->
+                    <!-- Tableau -->
                     <div class="bg-white border rounded-lg overflow-hidden">
                         <div class="p-4 bg-gray-50 border-b">
                             <h3 class="font-semibold">Liste des clients</h3>
@@ -275,9 +288,10 @@
                                         <th class="px-4 py-3 text-right">0-30j</th>
                                         <th class="px-4 py-3 text-right">30-60j</th>
                                         <th class="px-4 py-3 text-right">60-90j</th>
-                                        <th class="px-4 py-3 text-right">>90j</th>
+                                        <th class="px-4 py-3 text-right">90-120j</th>
+                                        <th class="px-4 py-3 text-right">>120j</th>
+                                        <th class="px-4 py-3 text-right">Paiement</th>
                                         <th class="px-4 py-3 text-center">Risque</th>
-                                        <th class="px-4 py-3 text-center">Commentaires</th>
                                     </tr>
                                 </thead>
                                 <tbody id="clientsTableBody"></tbody>
@@ -302,12 +316,18 @@
                 <h2 class="text-xl font-semibold mb-4">📁 Versions sauvegardées</h2>
                 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Filtrer par agence :</label>
-                    <select id="filterAgence" onchange="loadVersionsList()" class="border rounded px-3 py-2">
-                        <option value="">Toutes les agences</option>
-                        <option value="Marseille">Marseille</option>
-                        <option value="Paris">Paris</option>
-                        <option value="Lyon">Lyon</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agence :</label>
+                    <select id="versionsAgence" onchange="chargerVersions()" class="w-full border rounded px-3 py-2">
+                        <option value="">-- Choisir une agence --</option>
+                        <option value="00">00 - Gèze</option>
+                        <option value="01">01 - 5 Av</option>
+                        <option value="02">02 - Gare St Charles</option>
+                        <option value="03">03 - Aubagne</option>
+                        <option value="06">06 - La Valentine</option>
+                        <option value="09">09 - Plombières</option>
+                        <option value="12">12 - La Garde</option>
+                        <option value="13">13 - La Ciotat</option>
+                        <option value="08">08 - Toulon</option>
                     </select>
                 </div>
                 
@@ -317,52 +337,10 @@
             <!-- Onglet Historique -->
             <div id="tab-historique" class="tab-content p-6">
                 <h2 class="text-xl font-semibold mb-4">📜 Historique des imports</h2>
-                <button onclick="loadHistorique()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                <button onclick="chargerHistorique()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     🔄 Actualiser
                 </button>
                 <div id="historiqueList"></div>
-            </div>
-
-            <!-- Onglet Configuration -->
-            <div id="tab-config" class="tab-content p-6">
-                <h2 class="text-xl font-semibold mb-4">⚙️ Configuration</h2>
-                
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                    <p class="text-sm text-yellow-800">
-                        <strong>⚠️ Important :</strong> Configurez l'URL de votre Google Apps Script ci-dessous
-                    </p>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">URL Google Apps Script :</label>
-                        <input type="text" id="apiUrl" class="w-full border rounded px-3 py-2" placeholder="https://script.google.com/macros/s/...">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Votre nom :</label>
-                        <input type="text" id="userName" class="w-full border rounded px-3 py-2" placeholder="Prénom Nom">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email :</label>
-                        <input type="email" id="userEmail" class="w-full border rounded px-3 py-2" placeholder="email@example.com">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Agence :</label>
-                        <select id="userAgence" class="w-full border rounded px-3 py-2">
-                            <option value="">Sélectionner...</option>
-                            <option value="Marseille">Marseille</option>
-                            <option value="Paris">Paris</option>
-                            <option value="Lyon">Lyon</option>
-                        </select>
-                    </div>
-                    
-                    <button onclick="saveConfig()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
-                        💾 Enregistrer la configuration
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -370,77 +348,99 @@
     <script>
         // ========== VARIABLES GLOBALES ==========
         let currentData = [];
-        let clientComments = {};
-        let currentClientForComment = null;
+        let analysisData = [];
         let ageChartInstance = null;
         let topClientsChartInstance = null;
         let API_URL = '';
+        let USER_EMAIL = '';
+        let USER_NAME = '';
 
         // ========== INITIALISATION ==========
         window.onload = function() {
             loadConfig();
-            loadCommentsFromLocalStorage();
             setupFileHandlers();
-            
-            // Charger les versions au démarrage
-            if (API_URL) {
-                loadVersionsList();
-            }
         };
 
         // ========== CONFIGURATION ==========
         function loadConfig() {
-            const config = localStorage.getItem('olConfig');
+            const config = localStorage.getItem('olBalanceConfig');
             if (config) {
                 const data = JSON.parse(config);
                 document.getElementById('apiUrl').value = data.apiUrl || '';
-                document.getElementById('userName').value = data.userName || '';
                 document.getElementById('userEmail').value = data.email || '';
-                document.getElementById('userAgence').value = data.agence || '';
                 API_URL = data.apiUrl || '';
+                USER_EMAIL = data.email || '';
+                USER_NAME = data.name || '';
+                
+                if (USER_EMAIL) {
+                    document.getElementById('userInfo').textContent = `Connecté en tant que : ${USER_EMAIL}`;
+                }
             }
         }
 
-        function saveConfig() {
-            const config = {
-                apiUrl: document.getElementById('apiUrl').value.trim(),
-                userName: document.getElementById('userName').value.trim(),
-                email: document.getElementById('userEmail').value.trim(),
-                agence: document.getElementById('userAgence').value
-            };
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
             
-            if (!config.apiUrl) {
+            if (!apiUrl) {
                 alert('❌ Veuillez saisir l\'URL de votre Google Apps Script');
                 return;
             }
             
-            localStorage.setItem('olConfig', JSON.stringify(config));
-            API_URL = config.apiUrl;
-            alert('✅ Configuration enregistrée !');
-            showSaveIndicator();
-        }
-
-        function getConfig() {
-            const config = localStorage.getItem('olConfig');
-            return config ? JSON.parse(config) : {};
+            if (!email) {
+                alert('❌ Veuillez saisir votre email');
+                return;
+            }
+            
+            document.getElementById('loadingIndicator').classList.add('active');
+            
+            try {
+                const response = await fetch(`${apiUrl}?action=test`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Sauvegarder la config
+                    const config = {
+                        apiUrl: apiUrl,
+                        email: email,
+                        name: email.split('@')[0]
+                    };
+                    localStorage.setItem('olBalanceConfig', JSON.stringify(config));
+                    API_URL = apiUrl;
+                    USER_EMAIL = email;
+                    USER_NAME = config.name;
+                    
+                    document.getElementById('connectionStatus').className = 'bg-green-50 border border-green-200 rounded-lg p-4';
+                    document.getElementById('connectionStatus').innerHTML = `
+                        <p class="text-green-800 font-semibold">✅ Connexion réussie !</p>
+                        <p class="text-sm text-green-600 mt-1">${result.message}</p>
+                    `;
+                    document.getElementById('connectionStatus').classList.remove('hidden');
+                    document.getElementById('userInfo').textContent = `Connecté en tant que : ${email}`;
+                    
+                    showSaveIndicator();
+                } else {
+                    throw new Error('Réponse invalide du serveur');
+                }
+            } catch (error) {
+                document.getElementById('connectionStatus').className = 'bg-red-50 border border-red-200 rounded-lg p-4';
+                document.getElementById('connectionStatus').innerHTML = `
+                    <p class="text-red-800 font-semibold">❌ Erreur de connexion</p>
+                    <p class="text-sm text-red-600 mt-1">${error.message}</p>
+                `;
+                document.getElementById('connectionStatus').classList.remove('hidden');
+            } finally {
+                document.getElementById('loadingIndicator').classList.remove('active');
+            }
         }
 
         // ========== GESTION DES ONGLETS ==========
         function switchTab(tabName) {
-            // Désactiver tous les onglets
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            // Activer l'onglet sélectionné
             event.target.classList.add('active');
             document.getElementById('tab-' + tabName).classList.add('active');
-            
-            // Charger les données si nécessaire
-            if (tabName === 'versions') {
-                loadVersionsList();
-            } else if (tabName === 'historique') {
-                loadHistorique();
-            }
         }
 
         // ========== GESTION DES FICHIERS ==========
@@ -471,8 +471,6 @@
         }
 
         function handleFile(file) {
-            console.log('📁 Fichier chargé:', file.name);
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -481,23 +479,18 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                     
-                    console.log('📊 Données brutes:', jsonData.slice(0, 5));
-                    
                     currentData = parseExcelData(jsonData);
                     
                     if (currentData.length === 0) {
-                        alert('❌ Aucune donnée détectée. Vérifiez les colonnes de votre fichier.');
+                        alert('❌ Aucune donnée détectée. Vérifiez le format de votre fichier.');
                         return;
                     }
-                    
-                    console.log('✅ Données parsées:', currentData.slice(0, 3));
                     
                     document.getElementById('fileInfo').classList.remove('hidden');
                     document.getElementById('fileName').textContent = file.name;
                     document.getElementById('rowCount').textContent = currentData.length;
                     
                 } catch (error) {
-                    console.error('❌ Erreur:', error);
                     alert('❌ Erreur lors de la lecture du fichier : ' + error.message);
                 }
             };
@@ -508,625 +501,524 @@
             if (data.length < 2) return [];
             
             const headers = data[0].map(h => String(h).toLowerCase().trim());
-            console.log('📋 En-têtes détectés:', headers);
             
-            // Recherche flexible des colonnes
-            const codeIndex = headers.findIndex(h => h.includes('code') || h.includes('client'));
+            const codeIndex = headers.findIndex(h => h.includes('code'));
             const nomIndex = headers.findIndex(h => h.includes('nom') || h.includes('raison'));
             const soldeIndex = headers.findIndex(h => h.includes('solde') && !h.includes('échéance'));
-            const e0Index = headers.findIndex(h => h.includes('0') || h.includes('courant'));
-            const e30Index = headers.findIndex(h => h.includes('30'));
-            const e60Index = headers.findIndex(h => h.includes('60'));
-            const e90Index = headers.findIndex(h => h.includes('90') || h.includes('120') || h.includes('+'));
+            const e0Index = headers.findIndex(h => (h.includes('0') && h.includes('30')) || h.includes('courant'));
+            const e30Index = headers.findIndex(h => h.includes('30') && h.includes('60'));
+            const e60Index = headers.findIndex(h => h.includes('60') && h.includes('90'));
+            const e90Index = headers.findIndex(h => h.includes('90') && h.includes('120'));
+            const e120Index = headers.findIndex(h => h.includes('120') || (h.includes('>') && h.includes('120')));
+            const paiementIndex = headers.findIndex(h => h.includes('paiement'));
             
-            console.log('🔍 Index trouvés:', { codeIndex, nomIndex, soldeIndex, e0Index, e30Index, e60Index, e90Index });
-            
-            if (codeIndex === -1 || nomIndex === -1 || soldeIndex === -1) {
-                console.error('❌ Colonnes manquantes');
-                return [];
-            }
-            
-            return data.slice(1).map(row => {
-                const codeClient = row[codeIndex];
-                const nomClient = row[nomIndex];
-                const solde = parseFloat(row[soldeIndex] || 0);
-                const echeance0 = parseFloat(row[e0Index] || 0);
-                const echeance30 = parseFloat(row[e30Index] || 0);
-                const echeance60 = parseFloat(row[e60Index] || 0);
-                const echeance90 = parseFloat(row[e90Index] || 0);
-                
-                return {
-                    codeClient: String(codeClient).trim(),
-                    nomClient: String(nomClient).trim(),
-                    solde: solde,
-                    echeance0: echeance0,
-                    echeance30: echeance30,
-                    echeance60: echeance60,
-                    echeance90: echeance90,
-                    echeancePlus120: 0
-                };
-            }).filter(client => client.codeClient && client.nomClient);
+            return data.slice(1).map(row => ({
+                codeClient: String(row[codeIndex] || '').trim(),
+                nomClient: String(row[nomIndex] || '').trim(),
+                solde: parseFloat(row[soldeIndex]) || 0,
+                echeance0: parseFloat(row[e0Index]) || 0,
+                echeance30: parseFloat(row[e30Index]) || 0,
+                echeance60: parseFloat(row[e60Index]) || 0,
+                echeance90: parseFloat(row[e90Index]) || 0,
+                echeancePlus120: parseFloat(row[e120Index]) || 0,
+                paiement: parseFloat(row[paiementIndex]) || 0
+            })).filter(c => c.codeClient && c.nomClient);
         }
 
-        // ========== ANALYSE ET SAUVEGARDE ==========
-        async function analyzeAndSaveToCloud() {
+        // ========== IMPORT ==========
+        async function importerBalance() {
+            if (!API_URL) {
+                alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
+                switchTab('config');
+                return;
+            }
+            
+            const agence = document.getElementById('agenceSelect').value;
+            if (!agence) {
+                alert('❌ Veuillez sélectionner une agence');
+                return;
+            }
+            
             if (currentData.length === 0) {
                 alert('❌ Veuillez d\'abord charger un fichier Excel');
                 return;
             }
-
-            const config = getConfig();
-            if (!config.userName || !config.email || !config.agence) {
-                alert('❌ Veuillez d\'abord configurer vos informations (nom, email, agence)');
-                switchTab('config');
-                return;
-            }
-
-            if (!API_URL) {
-                alert('❌ Veuillez configurer l\'URL de votre Google Apps Script');
-                switchTab('config');
-                return;
-            }
-
+            
             document.getElementById('loadingIndicator').classList.add('active');
-
+            
             try {
                 const payload = {
                     action: 'importerBalance',
                     data: currentData,
-                    agence: config.agence,
-                    email: config.email,
-                    nom: config.userName
+                    agence: agence,
+                    email: USER_EMAIL,
+                    nom: USER_NAME
                 };
-                
-                console.log('📤 Envoi vers API...');
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                                              body: JSON.stringify(payload)
-                      });
-                      
-                      console.log('✅ Données envoyées au serveur');
-                      
-                      // Avec no-cors, on ne peut pas lire la réponse, donc on suppose que ça a marché
-                      showSaveIndicator();
-                      alert('✅ Balance sauvegardée avec succès dans le cloud !');
-                      
-                      // Afficher l'analyse locale
-                      analyzeLocalOnly();
-                      
-                      // Recharger la liste des versions
-                      setTimeout(() => loadVersionsList(), 1000);
-                      
-                  } catch (error) {
-                      console.error('❌ Erreur:', error);
-                      alert('❌ Erreur lors de la sauvegarde : ' + error.message);
-                  } finally {
-                      document.getElementById('loadingIndicator').classList.remove('active');
-                  }
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`✅ ${result.message}\nVersion: ${result.version}\nNombre de clients: ${result.nbClients}`);
+                    showSaveIndicator();
+                    
+                    // Réinitialiser
+                    currentData = [];
+                    document.getElementById('fileInfo').classList.add('hidden');
+                    document.getElementById('fileInput').value = '';
+                } else {
+                    alert('❌ Erreur : ' + result.message);
+                                  
+              } catch (error) {
+                  console.error('❌ Erreur:', error);
+                  alert('❌ Erreur lors de l\'import : ' + error.message);
+              } finally {
+                  document.getElementById('loadingIndicator').classList.remove('active');
               }
+          }
 
-              function analyzeLocalOnly() {
-                  if (currentData.length === 0) {
-                      alert('❌ Veuillez d\'abord charger un fichier Excel');
-                      return;
-                  }
-
-                  // Calculs
-                  const soldesDebiteurs = currentData.filter(c => c.solde > 0).reduce((sum, c) => sum + c.solde, 0);
-                  const soldesCrediteurs = Math.abs(currentData.filter(c => c.solde < 0).reduce((sum, c) => sum + c.solde, 0));
-                  const balanceTotale = soldesDebiteurs - soldesCrediteurs;
-                  const clientsCritiques = currentData.filter(c => c.echeance90 > 1000 || c.solde > 10000).length;
-                  const tauxRisque = soldesDebiteurs > 0 ? ((currentData.reduce((sum, c) => sum + c.echeance90, 0) / soldesDebiteurs) * 100).toFixed(1) : 0;
-
-                  // Afficher les KPIs
-                  document.getElementById('soldesDebiteurs').textContent = formatCurrency(soldesDebiteurs);
-                  document.getElementById('soldesCrediteurs').textContent = formatCurrency(soldesCrediteurs);
-                  document.getElementById('balanceTotale').textContent = formatCurrency(balanceTotale);
-                  document.getElementById('clientsCritiques').textContent = clientsCritiques;
-                  document.getElementById('tauxRisque').textContent = tauxRisque + '%';
-
-                  // Afficher le tableau
-                  displayClientsTable();
-
-                  // Afficher les graphiques
-                  displayCharts();
-
-                  // Afficher la section résultats
-                  document.getElementById('analysisResults').classList.remove('hidden');
+          // ========== CHARGEMENT ET ANALYSE ==========
+          async function chargerEtAnalyser() {
+              if (!API_URL) {
+                  alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
+                  switchTab('config');
+                  return;
+              }
+              
+              const agence = document.getElementById('analyseAgence').value;
+              const version = document.getElementById('analyseVersion').value;
+              
+              if (!agence) {
+                  alert('❌ Veuillez sélectionner une agence');
+                  return;
+              }
+              
+              document.getElementById('loadingIndicator').classList.add('active');
+              
+              try {
+                  const response = await fetch(`${API_URL}?action=chargerBalance&agence=${agence}&version=${version}`);
+                  const result = await response.json();
                   
-                  // Basculer vers l'onglet analyse
-                  switchTab('analyse');
-              }
-
-              function displayClientsTable() {
-                  const tbody = document.getElementById('clientsTableBody');
-                  tbody.innerHTML = '';
-
-                  // Trier par solde décroissant
-                  const sortedData = [...currentData].sort((a, b) => b.solde - a.solde);
-
-                  sortedData.forEach(client => {
-                      const row = document.createElement('tr');
-                      row.className = 'border-b hover:bg-gray-50';
-
-                      // Déterminer le niveau de risque
-                      let risqueClass = 'bg-green-100 text-green-800';
-                      let risqueText = 'Faible';
-                      if (client.echeance90 > 5000 || client.solde > 20000) {
-                          risqueClass = 'bg-red-100 text-red-800';
-                          risqueText = 'Élevé';
-                      } else if (client.echeance60 > 3000 || client.solde > 10000) {
-                          risqueClass = 'bg-orange-100 text-orange-800';
-                          risqueText = 'Moyen';
+                  if (result.success) {
+                      analysisData = result.clients || [];
+                      
+                      if (analysisData.length === 0) {
+                          alert('⚠️ Aucune donnée disponible pour cette agence/version');
+                          return;
                       }
-
-                      // Vérifier si le client a des commentaires
-                      const hasComments = clientComments[client.codeClient] && clientComments[client.codeClient].length > 0;
-                      const commentClass = hasComments ? 'has-comment' : '';
-                      const commentText = hasComments ? `💬 ${clientComments[client.codeClient].length}` : '➕ Ajouter';
-
-                      row.innerHTML = `
-                          <td class="px-4 py-3 font-mono text-sm">${client.codeClient}</td>
-                          <td class="px-4 py-3">${client.nomClient}</td>
-                          <td class="px-4 py-3 text-right font-semibold ${client.solde > 0 ? 'text-red-600' : 'text-green-600'}">
-                              ${formatCurrency(client.solde)}
-                          </td>
-                          <td class="px-4 py-3 text-right">${formatCurrency(client.echeance0)}</td>
-                          <td class="px-4 py-3 text-right">${formatCurrency(client.echeance30)}</td>
-                          <td class="px-4 py-3 text-right">${formatCurrency(client.echeance60)}</td>
-                          <td class="px-4 py-3 text-right">${formatCurrency(client.echeance90)}</td>
-                          <td class="px-4 py-3 text-center">
-                              <span class="px-2 py-1 rounded text-xs font-semibold ${risqueClass}">${risqueText}</span>
-                          </td>
-                          <td class="px-4 py-3 text-center">
-                              <div class="comment-input-cell ${commentClass}" onclick="openCommentModal('${client.codeClient}', '${client.nomClient}', ${client.solde})">
-                                  ${commentText}
-                              </div>
-                          </td>
-                      `;
-                      tbody.appendChild(row);
-                  });
+                      
+                      analyserDonnees();
+                      document.getElementById('analysisResults').classList.remove('hidden');
+                  } else {
+                      alert('❌ Erreur : ' + result.message);
+                  }
+                  
+              } catch (error) {
+                  console.error('❌ Erreur:', error);
+                  alert('❌ Erreur lors du chargement : ' + error.message);
+              } finally {
+                  document.getElementById('loadingIndicator').classList.remove('active');
               }
+          }
 
-              function displayCharts() {
-                  // Graphique par ancienneté
-                  const totalE0 = currentData.reduce((sum, c) => sum + c.echeance0, 0);
-                  const totalE30 = currentData.reduce((sum, c) => sum + c.echeance30, 0);
-                  const totalE60 = currentData.reduce((sum, c) => sum + c.echeance60, 0);
-                  const totalE90 = currentData.reduce((sum, c) => sum + c.echeance90, 0);
+          function analyserDonnees() {
+              // Calcul des KPIs
+              const soldesDebiteurs = analysisData.filter(c => c.solde > 0).reduce((sum, c) => sum + c.solde, 0);
+              const soldesCrediteurs = Math.abs(analysisData.filter(c => c.solde < 0).reduce((sum, c) => sum + c.solde, 0));
+              const balanceTotale = soldesDebiteurs - soldesCrediteurs;
+              
+              // Clients à risque : >90j > 1000€ OU solde > 10000€
+              const clientsCritiques = analysisData.filter(c => 
+                  (c.echeance90 || 0) + (c.echeancePlus120 || 0) > 1000 || c.solde > 10000
+              ).length;
+              
+              // Taux de risque : montant >90j / total débiteurs
+              const montantPlus90 = analysisData.reduce((sum, c) => 
+                  sum + (c.echeance90 || 0) + (c.echeancePlus120 || 0), 0
+              );
+              const tauxRisque = soldesDebiteurs > 0 ? ((montantPlus90 / soldesDebiteurs) * 100).toFixed(1) : 0;
 
-                  const ctxAge = document.getElementById('ageChart').getContext('2d');
-                  if (ageChartInstance) ageChartInstance.destroy();
-                  ageChartInstance = new Chart(ctxAge, {
-                      type: 'doughnut',
-                      data: {
-                          labels: ['0-30j', '30-60j', '60-90j', '>90j'],
-                          datasets: [{
-                              data: [totalE0, totalE30, totalE60, totalE90],
-                              backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#7c3aed']
-                          }]
-                      },
-                      options: {
-                          responsive: true,
-                          maintainAspectRatio: true,
-                          plugins: {
-                              legend: { position: 'bottom' }
-                          }
-                      }
-                  });
+              // Afficher les KPIs
+              document.getElementById('soldesDebiteurs').textContent = formatCurrency(soldesDebiteurs);
+              document.getElementById('soldesCrediteurs').textContent = formatCurrency(soldesCrediteurs);
+              document.getElementById('balanceTotale').textContent = formatCurrency(balanceTotale);
+              document.getElementById('clientsCritiques').textContent = clientsCritiques;
+              document.getElementById('tauxRisque').textContent = tauxRisque + '%';
 
-                  // Top 10 clients
-                  const top10 = [...currentData]
-                      .filter(c => c.solde > 0)
-                      .sort((a, b) => b.solde - a.solde)
-                      .slice(0, 10);
+              // Afficher le tableau
+              displayClientsTable();
 
-                  const ctxTop = document.getElementById('topClientsChart').getContext('2d');
-                  if (topClientsChartInstance) topClientsChartInstance.destroy();
-                  topClientsChartInstance = new Chart(ctxTop, {
-                      type: 'bar',
-                      data: {
-                          labels: top10.map(c => c.nomClient.substring(0, 20)),
-                          datasets: [{
-                              label: 'Solde (€)',
-                              data: top10.map(c => c.solde),
-                              backgroundColor: '#3b82f6'
-                          }]
-                      },
-                      options: {
-                          responsive: true,
-                          maintainAspectRatio: true,
-                          indexAxis: 'y',
-                          plugins: {
-                              legend: { display: false }
-                          },
-                          scales: {
-                              x: {
-                                  beginAtZero: true,
-                                  ticks: {
-                                      callback: function(value) {
-                                          return formatCurrency(value);
-                                      }
+              // Afficher les graphiques
+              displayCharts();
+          }
+
+          function displayClientsTable() {
+              const tbody = document.getElementById('clientsTableBody');
+              tbody.innerHTML = '';
+
+              // Trier par solde décroissant
+              const sortedData = [...analysisData].sort((a, b) => b.solde - a.solde);
+
+              sortedData.forEach(client => {
+                  const row = document.createElement('tr');
+                  row.className = 'border-b hover:bg-gray-50';
+
+                  // Déterminer le niveau de risque
+                  const montantPlus90 = (client.echeance90 || 0) + (client.echeancePlus120 || 0);
+                  let risqueClass = 'bg-green-100 text-green-800';
+                  let risqueText = 'Faible';
+                  
+                  if (montantPlus90 > 5000 || client.solde > 20000) {
+                      risqueClass = 'bg-red-100 text-red-800';
+                      risqueText = 'Élevé';
+                  } else if (montantPlus90 > 3000 || client.solde > 10000) {
+                      risqueClass = 'bg-orange-100 text-orange-800';
+                      risqueText = 'Moyen';
+                  }
+
+                  row.innerHTML = `
+                      <td class="px-4 py-3 font-mono text-sm">${client.codeClient}</td>
+                      <td class="px-4 py-3">${client.nomClient}</td>
+                      <td class="px-4 py-3 text-right font-semibold ${client.solde > 0 ? 'text-red-600' : 'text-green-600'}">
+                          ${formatCurrency(client.solde)}
+                      </td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance0 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance30 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance60 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeance90 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.echeancePlus120 || 0)}</td>
+                      <td class="px-4 py-3 text-right">${formatCurrency(client.paiement || 0)}</td>
+                      <td class="px-4 py-3 text-center">
+                          <span class="px-2 py-1 rounded text-xs font-semibold ${risqueClass}">${risqueText}</span>
+                      </td>
+                  `;
+                  tbody.appendChild(row);
+              });
+          }
+
+          function displayCharts() {
+              // Graphique par ancienneté
+              const totalE0 = analysisData.reduce((sum, c) => sum + (c.echeance0 || 0), 0);
+              const totalE30 = analysisData.reduce((sum, c) => sum + (c.echeance30 || 0), 0);
+              const totalE60 = analysisData.reduce((sum, c) => sum + (c.echeance60 || 0), 0);
+              const totalE90 = analysisData.reduce((sum, c) => sum + (c.echeance90 || 0), 0);
+              const totalE120 = analysisData.reduce((sum, c) => sum + (c.echeancePlus120 || 0), 0);
+
+              const ctxAge = document.getElementById('ageChart').getContext('2d');
+              if (ageChartInstance) ageChartInstance.destroy();
+              ageChartInstance = new Chart(ctxAge, {
+                  type: 'doughnut',
+                  data: {
+                      labels: ['0-30j', '30-60j', '60-90j', '90-120j', '>120j'],
+                      datasets: [{
+                          data: [totalE0, totalE30, totalE60, totalE90, totalE120],
+                          backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#7c3aed']
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: true,
+                      plugins: {
+                          legend: { position: 'bottom' },
+                          tooltip: {
+                              callbacks: {
+                                  label: function(context) {
+                                      return context.label + ': ' + formatCurrency(context.raw);
                                   }
                               }
                           }
                       }
-                  });
-              }
-
-              // ========== GESTION DES COMMENTAIRES ==========
-              function openCommentModal(codeClient, nomClient, solde) {
-                  currentClientForComment = codeClient;
-                  
-                  document.getElementById('modalClientCode').textContent = codeClient;
-                  document.getElementById('modalClientName').textContent = nomClient;
-                  document.getElementById('modalClientSolde').textContent = formatCurrency(solde);
-                  
-                  // Charger l'historique des commentaires
-                  displayCommentHistory(codeClient);
-                  
-                  // Vider le champ de nouveau commentaire
-                  document.getElementById('newCommentText').value = '';
-                  
-                  // Pré-remplir le nom de l'auteur
-                  const config = getConfig();
-                  document.getElementById('commentAuthor').value = config.userName || '';
-                  
-                  document.getElementById('commentModal').classList.add('active');
-              }
-
-              function closeCommentModal() {
-                  document.getElementById('commentModal').classList.remove('active');
-                  currentClientForComment = null;
-              }
-
-              function displayCommentHistory(codeClient) {
-                  const historyDiv = document.getElementById('commentHistory');
-                  const comments = clientComments[codeClient] || [];
-                  
-                  if (comments.length === 0) {
-                      historyDiv.innerHTML = '<p class="text-sm text-gray-500 italic">Aucun commentaire pour ce client</p>';
-                      return;
                   }
-                  
-                  historyDiv.innerHTML = comments.map((comment, index) => `
-                      <div class="comment-history-item">
-                          <button class="comment-delete-btn" onclick="deleteComment('${codeClient}', ${index})">🗑️</button>
-                          <div class="author">${comment.author}</div>
-                          <div class="timestamp">${new Date(comment.timestamp).toLocaleString('fr-FR')}</div>
-                          <div class="text">${comment.text}</div>
-                      </div>
-                  `).join('');
-              }
+              });
 
-              function saveNewComment() {
-                  const author = document.getElementById('commentAuthor').value.trim();
-                  const text = document.getElementById('newCommentText').value.trim();
-                  
-                  if (!author) {
-                      alert('❌ Veuillez saisir votre nom');
-                      return;
-                  }
-                  
-                  if (!text) {
-                      alert('❌ Veuillez saisir un commentaire');
-                      return;
-                  }
-                  
-                  if (!clientComments[currentClientForComment]) {
-                      clientComments[currentClientForComment] = [];
-                  }
-                  
-                  clientComments[currentClientForComment].push({
-                      author: author,
-                      text: text,
-                      timestamp: new Date().toISOString()
-                  });
-                  
-                  // Sauvegarder dans localStorage
-                  saveCommentsToLocalStorage();
-                  
-                  // Sauvegarder dans le cloud
-                  saveCommentToCloud(currentClientForComment, author, text);
-                  
-                  // Actualiser l'affichage
-                  displayCommentHistory(currentClientForComment);
-                  displayClientsTable();
-                  
-                  // Vider le champ
-                  document.getElementById('newCommentText').value = '';
-                  
-                  showSaveIndicator();
-              }
+              // Top 10 clients
+              const top10 = [...analysisData]
+                  .filter(c => c.solde > 0)
+                  .sort((a, b) => b.solde - a.solde)
+                  .slice(0, 10);
 
-              function deleteComment(codeClient, index) {
-                  if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
-                      return;
-                  }
-                  
-                  clientComments[codeClient].splice(index, 1);
-                  
-                  if (clientComments[codeClient].length === 0) {
-                      delete clientComments[codeClient];
-                  }
-                  
-                  saveCommentsToLocalStorage();
-                  displayCommentHistory(codeClient);
-                  displayClientsTable();
-                  
-                  showSaveIndicator();
-              }
-
-              async function saveCommentToCloud(codeClient, author, text) {
-                  if (!API_URL) return;
-                  
-                  try {
-                      const config = getConfig();
-                      const payload = {
-                          action: 'ajouterCommentaire',
-                          codeClient: codeClient,
-                          commentaire: text,
-                          auteur: author,
-                          agence: config.agence
-                      };
-                      
-                      await fetch(API_URL, {
-                          method: 'POST',
-                          mode: 'no-cors',
-                          headers: {
-                              'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify(payload)
-                      });
-                      
-                      console.log('✅ Commentaire sauvegardé dans le cloud');
-                  } catch (error) {
-                      console.error('❌ Erreur sauvegarde commentaire:', error);
-                  }
-              }
-
-              function saveCommentsToLocalStorage() {
-                  localStorage.setItem('olClientComments', JSON.stringify(clientComments));
-              }
-
-              function loadCommentsFromLocalStorage() {
-                  const saved = localStorage.getItem('olClientComments');
-                  if (saved) {
-                      clientComments = JSON.parse(saved);
-                  }
-              }
-
-              // ========== GESTION DES VERSIONS ==========
-              async function loadVersionsList() {
-                  if (!API_URL) {
-                      document.getElementById('versionsList').innerHTML = `
-                          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                              <p class="text-yellow-800">⚠️ Veuillez configurer l'URL de votre Google Apps Script</p>
-                          </div>
-                      `;
-                      return;
-                  }
-                  
-                  document.getElementById('loadingIndicator').classList.add('active');
-                  
-                  try {
-                      const filterAgence = document.getElementById('filterAgence').value;
-                      
-                      const payload = {
-                          action: 'listerVersions',
-                          agence: filterAgence || undefined
-                      };
-                      
-                      const response = await fetch(API_URL + '?action=listerVersions&agence=' + encodeURIComponent(filterAgence), {
-                          method: 'GET'
-                      });
-                      
-                      const result = await response.json();
-                      
-                      if (result.success && result.versions) {
-                          displayVersionsList(result.versions);
-                      } else {
-                          document.getElementById('versionsList').innerHTML = `
-                              <div class="bg-gray-50 border rounded-lg p-4">
-                                  <p class="text-gray-600">Aucune version trouvée</p>
-                              </div>
-                          `;
+              const ctxTop = document.getElementById('topClientsChart').getContext('2d');
+              if (topClientsChartInstance) topClientsChartInstance.destroy();
+              topClientsChartInstance = new Chart(ctxTop, {
+                  type: 'bar',
+                  data: {
+                      labels: top10.map(c => c.nomClient.substring(0, 20)),
+                      datasets: [{
+                          label: 'Solde (€)',
+                          data: top10.map(c => c.solde),
+                          backgroundColor: '#3b82f6'
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: true,
+                      indexAxis: 'y',
+                      plugins: {
+                          legend: { display: false },
+                          tooltip: {
+                              callbacks: {
+                                  label: function(context) {
+                                      return formatCurrency(context.raw);
+                                  }
+                              }
+                          }
+                      },
+                      scales: {
+                          x: {
+                              beginAtZero: true,
+                              ticks: {
+                                  callback: function(value) {
+                                      return formatCurrency(value);
+                                  }
+                              }
+                          }
                       }
-                  } catch (error) {
-                      console.error('❌ Erreur chargement versions:', error);
-                      document.getElementById('versionsList').innerHTML = `
-                          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                              <p class="text-red-800">❌ Erreur lors du chargement des versions</p>
-                          </div>
-                      `;
-                  } finally {
-                      document.getElementById('loadingIndicator').classList.remove('active');
                   }
-              }
+              });
+          }
 
-              function displayVersionsList(versions) {
-                  const container = document.getElementById('versionsList');
+          // ========== GESTION DES VERSIONS ==========
+          async function chargerVersions() {
+              if (!API_URL) {
+                  alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
+                  return;
+              }
+              
+              const agence = document.getElementById('versionsAgence').value;
+              
+              if (!agence) {
+                  document.getElementById('versionsList').innerHTML = `
+                      <div class="bg-gray-50 border rounded-lg p-4">
+                          <p class="text-gray-600">Veuillez sélectionner une agence</p>
+                      </div>
+                  `;
+                  return;
+              }
+              
+              document.getElementById('loadingIndicator').classList.add('active');
+              
+              try {
+                  const response = await fetch(`${API_URL}?action=listerVersions&agence=${agence}`);
+                  const result = await response.json();
                   
-                  if (versions.length === 0) {
-                      container.innerHTML = `
+                  if (result.success && result.versions) {
+                      displayVersionsList(result.versions);
+                      
+                      // Mettre à jour le select de l'onglet analyse
+                      const selectAnalyse = document.getElementById('analyseVersion');
+                      selectAnalyse.innerHTML = '<option value="latest">Dernière version</option>';
+                      result.versions.forEach(v => {
+                          const option = document.createElement('option');
+                          option.value = v.version;
+                          option.textContent = `${v.version} - ${v.date} ${v.heure}`;
+                          selectAnalyse.appendChild(option);
+                      });
+                  } else {
+                      document.getElementById('versionsList').innerHTML = `
                           <div class="bg-gray-50 border rounded-lg p-4">
-                              <p class="text-gray-600">Aucune version trouvée</p>
+                              <p class="text-gray-600">Aucune version trouvée pour cette agence</p>
                           </div>
                       `;
-                      return;
                   }
-                  
-                  container.innerHTML = versions.map(version => `
-                      <div class="version-card" onclick="loadVersion('${version.id}')">
-                          <div class="flex justify-between items-start mb-2">
-                              <div>
-                                  <h3 class="font-semibold text-lg">${version.agence || 'Non spécifié'}</h3>
-                                  <p class="text-sm text-gray-600">Par ${version.auteur || 'Inconnu'}</p>
-                              </div>
-                              <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  ${new Date(version.date).toLocaleDateString('fr-FR')}
-                              </span>
-                          </div>
-                          <div class="grid grid-cols-3 gap-2 text-sm">
-                              <div>
-                                  <span class="text-gray-600">Clients:</span>
-                                  <span class="font-semibold ml-1">${version.nbClients || 0}</span>
-                              </div>
-                              <div>
-                                  <span class="text-gray-600">Balance:</span>
-                                  <span class="font-semibold ml-1">${formatCurrency(version.balanceTotale || 0)}</span>
-                              </div>
-                              <div>
-                                  <span class="text-gray-600">Risque:</span>
-                                  <span class="font-semibold ml-1">${version.tauxRisque || 0}%</span>
-                              </div>
-                          </div>
+              } catch (error) {
+                  console.error('❌ Erreur:', error);
+                  document.getElementById('versionsList').innerHTML = `
+                      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <p class="text-red-800">❌ Erreur lors du chargement des versions</p>
                       </div>
-                  `).join('');
+                  `;
+              } finally {
+                  document.getElementById('loadingIndicator').classList.remove('active');
               }
+          }
 
-              async function loadVersion(versionId) {
-                  if (!confirm('Charger cette version ?')) return;
-                  
-                  document.getElementById('loadingIndicator').classList.add('active');
-                  
-                  try {
-                      const response = await fetch(API_URL + '?action=chargerVersion&id=' + versionId, {
-                          method: 'GET'
-                      });
-                      
-                      const result = await response.json();
-                      
-                      if (result.success && result.data) {
-                          currentData = result.data;
-                          analyzeLocalOnly();
-                          alert('✅ Version chargée avec succès !');
-                      } else {
-                          alert('❌ Erreur lors du chargement de la version');
-                      }
-                  } catch (error) {
-                      console.error('❌ Erreur:', error);
-                      alert('❌ Erreur lors du chargement : ' + error.message);
-                  } finally {
-                      document.getElementById('loadingIndicator').classList.remove('active');
-                  }
+          function displayVersionsList(versions) {
+              const container = document.getElementById('versionsList');
+              
+              if (versions.length === 0) {
+                  container.innerHTML = `
+                      <div class="bg-gray-50 border rounded-lg p-4">
+                          <p class="text-gray-600">Aucune version trouvée</p>
+                      </div>
+                  `;
+                  return;
               }
-
-              // ========== HISTORIQUE ==========
-              async function loadHistorique() {
-                  if (!API_URL) {
-                      document.getElementById('historiqueList').innerHTML = `
-                          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                              <p class="text-yellow-800">⚠️ Veuillez configurer l'URL de votre Google Apps Script</p>
+              
+              container.innerHTML = versions.map(version => `
+                  <div class="version-card" onclick="chargerVersionSpecifique('${version.agence}', '${version.version}')">
+                      <div class="flex justify-between items-start mb-2">
+                          <div>
+                              <h3 class="font-semibold text-lg">${version.version}</h3>
+                              <p class="text-sm text-gray-600">Par ${version.utilisateur || 'Inconnu'}</p>
                           </div>
-                      `;
-                      return;
-                  }
-                  
-                  document.getElementById('loadingIndicator').classList.add('active');
-                  
-                  try {
-                      const response = await fetch(API_URL + '?action=historique', {
-                          method: 'GET'
-                      });
-                      
-                      const result = await response.json();
-                      
-                      if (result.success && result.historique) {
-                          displayHistorique(result.historique);
-                      }
-                  } catch (error) {
-                      console.error('❌ Erreur:', error);
-                  } finally {
-                      document.getElementById('loadingIndicator').classList.remove('active');
-                  }
-              }
+                          <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                              ${version.date} ${version.heure}
+                          </span>
+                      </div>
+                      <div class="text-sm text-gray-600">
+                          <span>📊 ${version.nbClients || 0} clients</span>
+                      </div>
+                  </div>
+              `).join('');
+          }
 
-              function displayHistorique(historique) {
-                  const container = document.getElementById('historiqueList');
+          async function chargerVersionSpecifique(agence, version) {
+              if (!confirm(`Charger la version ${version} de l'agence ${agence} ?`)) return;
+              
+              document.getElementById('analyseAgence').value = agence;
+              document.getElementById('analyseVersion').value = version;
+              
+              switchTab('analyse');
+              
+              await chargerEtAnalyser();
+          }
+
+          // ========== HISTORIQUE ==========
+          async function chargerHistorique() {
+              if (!API_URL) {
+                  alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
+                  return;
+              }
+              
+              document.getElementById('loadingIndicator').classList.add('active');
+              
+              try {
+                  const response = await fetch(`${API_URL}?action=getHistorique`);
+                  const result = await response.json();
                   
-                  if (historique.length === 0) {
-                      container.innerHTML = `
+                  if (result.success && result.historique) {
+                      displayHistorique(result.historique);
+                  } else {
+                      document.getElementById('historiqueList').innerHTML = `
                           <div class="bg-gray-50 border rounded-lg p-4">
                               <p class="text-gray-600">Aucun historique disponible</p>
                           </div>
                       `;
-                      return;
                   }
-                  
-                  container.innerHTML = `
-                      <div class="overflow-x-auto">
-                          <table class="w-full text-sm">
-                              <thead class="bg-gray-100">
-                                  <tr>
-                                      <th class="px-4 py-3 text-left">Date</th>
-                                      <th class="px-4 py-3 text-left">Action</th>
-                                      <th class="px-4 py-3 text-left">Utilisateur</th>
-                                      <th class="px-4 py-3 text-left">Agence</th>
-                                      <th class="px-4 py-3 text-left">Détails</th>
-                                  </tr>
-                              </thead>
-                              <tbody>
-                                  ${historique.map(h => `
-                                      <tr class="border-b hover:bg-gray-50">
-                                          <td class="px-4 py-3">${new Date(h.date).toLocaleString('fr-FR')}</td>
-                                          <td class="px-4 py-3">${h.action}</td>
-                                          <td class="px-4 py-3">${h.utilisateur}</td>
-                                          <td class="px-4 py-3">${h.agence}</td>
-                                          <td class="px-4 py-3 text-gray-600">${h.details || '-'}</td>
-                                      </tr>
-                                  `).join('')}
-                              </tbody>
-                          </table>
+              } catch (error) {
+                  console.error('❌ Erreur:', error);
+                  document.getElementById('historiqueList').innerHTML = `
+                      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <p class="text-red-800">❌ Erreur lors du chargement de l'historique</p>
                       </div>
                   `;
+              } finally {
+                  document.getElementById('loadingIndicator').classList.remove('active');
               }
+          }
 
-              // ========== EXPORT ==========
-              function exportToExcel() {
-                  if (currentData.length === 0) {
-                      alert('❌ Aucune donnée à exporter');
-                      return;
+          function displayHistorique(historique) {
+              const container = document.getElementById('historiqueList');
+              
+              if (historique.length === 0) {
+                  container.innerHTML = `
+                      <div class="bg-gray-50 border rounded-lg p-4">
+                          <p class="text-gray-600">Aucun historique disponible</p>
+                      </div>
+                  `;
+                  return;
+              }
+              
+              container.innerHTML = `
+                  <div class="overflow-x-auto bg-white border rounded-lg">
+                      <table class="w-full text-sm">
+                          <thead class="bg-gray-100">
+                              <tr>
+                                  <th class="px-4 py-3 text-left">Date</th>
+                                  <th class="px-4 py-3 text-left">Heure</th>
+                                  <th class="px-4 py-3 text-left">Agence</th>
+                                  <th class="px-4 py-3 text-left">Version</th>
+                                  <th class="px-4 py-3 text-left">Utilisateur</th>
+                                  <th class="px-4 py-3 text-right">Nb Clients</th>
+                                  <th class="px-4 py-3 text-left">Action</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              ${historique.map(h => `
+                                  <tr class="border-b hover:bg-gray-50">
+                                      <td class="px-4 py-3">${h.date}</td>
+                                      <td class="px-4 py-3">${h.heure}</td>
+                                      <td class="px-4 py-3">${h.agence}</td>
+                                      <td class="px-4 py-3 font-mono">${h.version}</td>
+                                      <td class="px-4 py-3">${h.utilisateur}</td>
+                                      <td class="px-4 py-3 text-right">${h.nbClients}</td>
+                                      <td class="px-4 py-3">${h.action}</td>
+                                  </tr>
+                              `).join('')}
+                          </tbody>
+                      </table>
+                  </div>
+              `;
+          }
+
+          // ========== EXPORT ==========
+          function exportToExcel() {
+              if (analysisData.length === 0) {
+                  alert('❌ Aucune donnée à exporter');
+                  return;
+              }
+              
+              const ws = XLSX.utils.json_to_sheet(analysisData.map(c => ({
+                  'Code Client': c.codeClient,
+                  'Nom Client': c.nomClient,
+                  'Solde': c.solde,
+                  '0-30j': c.echeance0 || 0,
+                  '30-60j': c.echeance30 || 0,
+                  '60-90j': c.echeance60 || 0,
+                  '90-120j': c.echeance90 || 0,
+                  '>120j': c.echeancePlus120 || 0,
+                  'Paiement': c.paiement || 0
+              })));
+              
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Balance Âgée');
+              
+              const agence = document.getElementById('analyseAgence').value;
+              const version = document.getElementById('analyseVersion').value;
+              const fileName = `Balance_Agee_${agence}_${version}_${new Date().toISOString().split('T')[0]}.xlsx`;
+              XLSX.writeFile(wb, fileName);
+          }
+
+          // ========== UTILITAIRES ==========
+          function formatCurrency(value) {
+              return new Intl.NumberFormat('fr-FR', {
+                  style: 'currency',
+                  currency: 'EUR',
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+              }).format(value);
+          }
+
+          function showSaveIndicator() {
+              const indicator = document.getElementById('saveIndicator');
+              indicator.style.display = 'block';
+              setTimeout(() => {
+                  indicator.style.display = 'none';
+              }, 2000);
+          }
+
+          // ========== GESTION DES CLICS SUR LES ONGLETS ==========
+          document.querySelectorAll('.tab-button').forEach(button => {
+              button.addEventListener('click', function() {
+                  const tabName = this.textContent.trim().split(' ')[1].toLowerCase();
+                  if (tabName === 'versions') {
+                      // Charger automatiquement si une agence est sélectionnée
+                      const agence = document.getElementById('versionsAgence').value;
+                      if (agence) {
+                          chargerVersions();
+                      }
+                  } else if (tabName === 'historique') {
+                      chargerHistorique();
                   }
-                  
-                  const ws = XLSX.utils.json_to_sheet(currentData.map(c => ({
-                      'Code Client': c.codeClient,
-                      'Nom Client': c.nomClient,
-                      'Solde': c.solde,
-                      '0-30j': c.echeance0,
-                      '30-60j': c.echeance30,
-                      '60-90j': c.echeance60,
-                      '>90j': c.echeance90,
-                      'Commentaires': clientComments[c.codeClient] ? clientComments[c.codeClient].length : 0
-                  })));
-                  
-                  const wb = XLSX.utils.book_new();
-                  XLSX.utils.book_append_sheet(wb, ws, 'Balance Âgée');
-                  
-                  const fileName = `Balance_Agee_${new Date().toISOString().split('T')[0]}.xlsx`;
-                  XLSX.writeFile(wb, fileName);
-              }
-
-              // ========== UTILITAIRES ==========
-              function formatCurrency(value) {
-                  return new Intl.NumberFormat('fr-FR', {
-                      style: 'currency',
-                      currency: 'EUR'
-                  }).format(value);
-              }
-
-              function showSaveIndicator() {
-                  const indicator = document.getElementById('saveIndicator');
-                  indicator.style.display = 'block';
-                  setTimeout(() => {
-                      indicator.style.display = 'none';
-                  }, 2000);
-              }
-          </script>
-      </body>
-      </html>
+              });
+          });
+      </script>
+  </body>
+  </html>
