@@ -435,13 +435,37 @@
         }
 
         // ========== GESTION DES ONGLETS ==========
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById('tab-' + tabName).classList.add('active');
+        // ========== GESTION DES ONGLETS ==========
+function switchTab(tabName) {
+    // Retirer la classe active de tous les boutons et contenus
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Trouver le bouton cliqué par son texte
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(btn => {
+        const btnText = btn.textContent.toLowerCase();
+        if (btnText.includes(tabName.toLowerCase())) {
+            btn.classList.add('active');
         }
+    });
+    
+    // Activer le contenu correspondant
+    const tabContent = document.getElementById('tab-' + tabName);
+    if (tabContent) {
+        tabContent.classList.add('active');
+        
+        // Actions spécifiques selon l'onglet
+        if (tabName === 'versions') {
+            const agence = document.getElementById('versionsAgence').value;
+            if (agence) {
+                chargerVersions();
+            }
+        } else if (tabName === 'historique') {
+            chargerHistorique();
+        }
+    }
+}
 
         // ========== GESTION DES FICHIERS ==========
         function setupFileHandlers() {
@@ -1023,4 +1047,5 @@
       </script>
   </body>
   </html>
+
 
