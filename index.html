@@ -471,98 +471,185 @@
     }
 
     async function lireFichierExcel(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
         
-        reader.onload = function(e) {
-          try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            
-            console.log('📊 Parsing Excel - Nombre de lignes:', workbook.SheetNames.length);
-            
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-            
-            if (jsonData.length < 2) {
-              reject(new Error('Fichier vide ou invalide'));
-              return;
-            }
+        console.log('📊 Parsing Excel - Feuilles:', workbook.SheetNames);
+        
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
+          header: 1,
+          defval: '',
+          blankrows: false
+        });
+        
+        console.log('📊 Nombre total de lignes:', jsonData.length);
+        console.log('📊 Première ligne:', jsonData[0]);
+        console.log('📊 Deuxième ligne:', jsonData[1]);
+        
+        if (jsonData.length < 3) {
+          reject(new Error('Fichier vide ou invalide (moins de 3 lignes)'));
+          return;
+        }
 
-            const headers = jsonData[0].map(h => String(h).toLowerCase().trim());
-            console.log('📋 En-têtes bruts:', jsonData[0]);
-            console.log('📋 En-têtes normalisés:', headers);
-
-            const colonnes = {
-              compte: headers.findIndex(h => h.includes('compte') || h.includes('code')),
-              intitule: headers.findIndex(h => h.includes('intitulé') || h.includes('intitule') || h.includes('nom')),
-              solde: headers.findIndex(h => h.includes('solde')),
-              e120plus: headers.findIndex(h => h.includes('120') || h.includes('+120')),
-              e90_119: headers.findIndex(h => h.includes('90') && h.includes('119')),
-              e60_89: headers.findIndex(h => h.includes('60') && h.includes('89')),
-              e30_59: headers.findIndex(h => h.includes('30') && h.includes('59')),
-              e0_29: headers.findIndex(h => h.includes('0') && h.includes('29')),
-              paiement: headers.findIndex(h => h.includes('paiement'))
-            };
-
-            Object.entries(colonnes).forEach(([key, index]) => {
-              if (index !== -1) {
-                console.log(`✅ Colonne "${key}" trouvée à l'index ${index}`);
-              }
-            });
-
-            const clients = [];
-            
-            for (let i = 1; i < jsonData.length; i++) {
-              const row = jsonData[i];
-              
-              const compte = colonnes.compte !== -1 ? String(row[colonnes.compte] || '').trim() : '';
-              const intitule = colonnes.intitule !== -1 ? String(row[colonnes.intitule] || '').trim() : '';
-              const solde = colonnes.solde !== -1 ? parseFloat(row[colonnes.solde]) || 0 : 0;
-
-              if (!compte || compte === '' || solde === 0) {
-                continue;
-              }
-
-              const client = {
-                code: compte,
-                nom: intitule,
-                solde: solde,
-                e0_29: colonnes.e0_29 !== -1 ? parseFloat(row[colonnes.e0_29]) || 0 : 0,
-                e30_59: colonnes.e30_59 !== -1 ? parseFloat(row[colonnes.e30_59]) || 0 : 0,
-                e60_89: colonnes.e60_89 !== -1 ? parseFloat(row[colonnes.e60_89]) || 0 : 0,
-                e90_119: colonnes.e90_119 !== -1 ? parseFloat(row[colonnes.e90_119]) || 0 : 0,
-                e120plus: colonnes.e120plus !== -1 ? parseFloat(row[colonnes.e120plus]) || 0 : 0,
-                paiement: colonnes.paiement !== -1 ? parseFloat(row[colonnes.paiement]) || 0 : 0
-              };
-
-              console.log(`📊 Client ${i}:`, client);
-              clients.push(client);
-            }
-
-            console.log('✅', clients.length, 'clients valides détectés');
-
-            resolve({
-              clients: clients,
-              metadata: {
-                nbLignes: jsonData.length - 1,
-                nbClients: clients.length
-              }
-            });
-
-          } catch (error) {
-            console.error('❌ Erreur parsing Excel:', error);
-            reject(error);
+        // DÉTECTION AUTOMATIQUE DE LA LIGNE D'EN-TÊTES
+        let headerRowIndex = 0;
+        
+        // Chercher la ligne qui contient "Compte" et "Intitulé"
+        for (let i = 0; i < Math.min(5, jsonData.length); i++) {
+          const row = jsonData[i];
+          const rowStr = row.join('|').toLowerCase();
+          
+          if (rowStr.includes('compte') && rowStr.includes('intitulé')) {
+            headerRowIndex = i;
+            console.log('✅ En-têtes détectés à la ligne', i + 1);
+            break;
           }
+        }
+
+        const headers = jsonData[headerRowIndex].map(h => 
+          String(h || '')
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .replace(/\n/g, ' ')
+            .trim()
+        );
+        
+        console.log('📋 En-têtes normalisés:', headers);
+
+        // MAPPING DES COLONNES
+        const colonnes = {
+          compte: headers.findIndex(h => 
+            h.includes('compte') || h === 'compte'
+          ),
+          intitule: headers.findIndex(h => 
+            h.includes('intitulé') || h.includes('intitule') || h.includes('nom')
+          ),
+          solde: headers.findIndex(h => 
+            h === 'solde' || h.includes('solde')
+          ),
+          e120plus: headers.findIndex(h => 
+            h.includes('120') || h.includes('+120') || (h.includes('echue') && h.includes('120'))
+          ),
+          e90_119: headers.findIndex(h => 
+            (h.includes('90') && h.includes('119')) || (h.includes('echue') && h.includes('90'))
+          ),
+          e60_89: headers.findIndex(h => 
+            (h.includes('60') && h.includes('89')) || (h.includes('echue') && h.includes('60'))
+          ),
+          e30_59: headers.findIndex(h => 
+            (h.includes('30') && h.includes('59')) || (h.includes('echue') && h.includes('30'))
+          ),
+          e0_29: headers.findIndex(h => 
+            (h.includes('0') && h.includes('29')) || (h.includes('echue') && h.includes('0'))
+          ),
+          paiement: headers.findIndex(h => 
+            h.includes('paiement')
+          )
         };
 
-        reader.onerror = function(error) {
-          reject(error);
-        };
+        console.log('📊 Mapping des colonnes:', colonnes);
 
-        reader.readAsArrayBuffer(file);
-      });
-    }
+        // Vérification des colonnes obligatoires
+        if (colonnes.compte === -1) {
+          reject(new Error('Colonne "Compte" non trouvée'));
+          return;
+        }
+        if (colonnes.intitule === -1) {
+          reject(new Error('Colonne "Intitulé" non trouvée'));
+          return;
+        }
+        if (colonnes.solde === -1) {
+          reject(new Error('Colonne "Solde" non trouvée'));
+          return;
+        }
+
+        const clients = [];
+        
+        // Commencer APRÈS la ligne d'en-têtes
+        for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
+          const row = jsonData[i];
+          
+          // Ignorer les lignes vides
+          if (!row || row.length === 0 || row.every(cell => !cell || cell === '')) {
+            continue;
+          }
+          
+          const compte = String(row[colonnes.compte] || '').trim();
+          const intitule = String(row[colonnes.intitule] || '').trim();
+          
+          // Ignorer si pas de compte
+          if (!compte || compte === '') {
+            console.log(`⚠️ Ligne ${i + 1} ignorée: pas de compte`);
+            continue;
+          }
+
+          // Parser les montants (gérer les valeurs négatives et vides)
+          const parseMontant = (val) => {
+            if (!val || val === '') return 0;
+            const num = parseFloat(String(val).replace(/,/g, '.').replace(/\s/g, ''));
+            return isNaN(num) ? 0 : num;
+          };
+
+          const solde = parseMontant(row[colonnes.solde]);
+          const e0_29 = colonnes.e0_29 !== -1 ? parseMontant(row[colonnes.e0_29]) : 0;
+          const e30_59 = colonnes.e30_59 !== -1 ? parseMontant(row[colonnes.e30_59]) : 0;
+          const e60_89 = colonnes.e60_89 !== -1 ? parseMontant(row[colonnes.e60_89]) : 0;
+          const e90_119 = colonnes.e90_119 !== -1 ? parseMontant(row[colonnes.e90_119]) : 0;
+          const e120plus = colonnes.e120plus !== -1 ? parseMontant(row[colonnes.e120plus]) : 0;
+          const paiement = colonnes.paiement !== -1 ? parseMontant(row[colonnes.paiement]) : 0;
+
+          const client = {
+            code: compte,
+            nom: intitule,
+            solde: solde,
+            e0_29: e0_29,
+            e30_59: e30_59,
+            e60_89: e60_89,
+            e90_119: e90_119,
+            e120plus: e120plus,
+            paiement: paiement
+          };
+
+          console.log(`✅ Client ${clients.length + 1}: ${compte} - ${intitule} - Solde: ${solde}€`);
+          clients.push(client);
+        }
+
+        console.log('✅ TOTAL:', clients.length, 'clients valides détectés');
+
+        if (clients.length === 0) {
+          reject(new Error('Aucun client valide trouvé dans le fichier'));
+          return;
+        }
+
+        resolve({
+          clients: clients,
+          metadata: {
+            nbLignesTotal: jsonData.length,
+            nbClients: clients.length,
+            headerRow: headerRowIndex + 1
+          }
+        });
+
+      } catch (error) {
+        console.error('❌ Erreur parsing Excel:', error);
+        reject(error);
+      }
+    };
+
+    reader.onerror = function(error) {
+      reject(error);
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 
     // ============================================
     // CONSULTATION
@@ -797,3 +884,4 @@
     </script>
   </body>
   </html>
+
