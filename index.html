@@ -4,8 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Balance Âgée - Olympic Location</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Tailwind CSS via CDN Play (meilleur pour production que cdn.tailwindcss.com) -->
+  <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwindcss.js"></script>
+  
+  <!-- SheetJS pour Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
   <style>
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -22,6 +27,7 @@
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    
     .spinner {
       border: 3px solid #f3f3f3;
       border-top: 3px solid #3b82f6;
@@ -30,22 +36,35 @@
       height: 40px;
       animation: spin 1s linear infinite;
     }
+    
     .tab-active {
-      background-color: #3b82f6;
-      color: white;
+      background-color: #3b82f6 !important;
+      color: white !important;
     }
+    
     .fade-in {
       animation: fadeIn 0.3s ease-in;
     }
+    
     .table-container {
       max-height: 600px;
       overflow-y: auto;
     }
+    
     .sticky-header th {
       position: sticky;
       top: 0;
       background-color: #1e40af;
       z-index: 10;
+    }
+    
+    /* Notifications */
+    .notification {
+      animation: slideIn 0.3s ease;
+    }
+    
+    .notification.slide-out {
+      animation: slideOut 0.3s ease;
     }
   </style>
 </head>
@@ -62,7 +81,7 @@
         <div id="userInfo" class="text-right hidden">
           <p class="font-semibold" id="userName"></p>
           <p class="text-sm text-blue-200" id="userEmail"></p>
-          <button onclick="logout()" class="mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded text-sm">
+          <button onclick="logout()" class="mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded text-sm transition">
             Déconnexion
           </button>
         </div>
@@ -80,13 +99,24 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
           <input type="email" id="emailInput" placeholder="votre.email@olympiclocation.com"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onkeypress="if(event.key==='Enter') login()">
         </div>
         <button onclick="login()" 
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
           Se connecter
         </button>
         <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"></div>
+      </div>
+      
+      <!-- Section de test de connexion -->
+      <div class="mt-8 pt-6 border-t border-gray-200">
+        <p class="text-sm text-gray-600 mb-3">🔧 Tester la connexion API</p>
+        <button onclick="testerConnexionInitiale()" 
+          class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg transition duration-200 text-sm">
+          Tester l'API
+        </button>
+        <div id="testMessage" class="mt-3 text-sm"></div>
       </div>
     </div>
 
@@ -269,8 +299,9 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">URL de l'API Worker</label>
               <input type="text" id="apiUrlInput" 
-                placeholder="https://twilight-resonance-5291.julien-olympiclocation.workers.dev"
+                placeholder="https://votre-worker.workers.dev"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <p class="mt-2 text-xs text-gray-500">💡 Trouvez votre URL dans Cloudflare Dashboard → Workers & Pages</p>
             </div>
 
             <div class="flex gap-4">
@@ -297,7 +328,8 @@
 // CONFIGURATION API
 // ============================================
 const API_CONFIG = {
-    workerUrl: 'https://twilight-resonance-5291.julienolympic.workers.dev',
+    // ⚠️ REMPLACEZ PAR VOTRE URL WORKER CLOUDFLARE
+    workerUrl: 'https://twilight-resonance-5291.julien-olympiclocation.workers.dev',
     
     agencesMap: {
         '00': 'Gèze',
@@ -322,21 +354,70 @@ let currentData = null;
 // ============================================
 window.onload = function() {
   console.log('🚀 Application démarrée');
+  console.log('📡 URL API:', API_CONFIG.workerUrl);
   
   // Charger config
   const savedUrl = localStorage.getItem('apiUrl');
   if (savedUrl) {
     API_CONFIG.workerUrl = savedUrl;
     document.getElementById('apiUrlInput').value = savedUrl;
+    console.log('✅ URL chargée depuis localStorage:', savedUrl);
+  } else {
+    document.getElementById('apiUrlInput').value = API_CONFIG.workerUrl;
   }
 
   // Vérifier session
   const savedUser = localStorage.getItem('currentUser');
   if (savedUser) {
     currentUser = JSON.parse(savedUser);
+    console.log('✅ Session restaurée:', currentUser.email);
     afficherMainApp();
   }
 };
+
+// ============================================
+// TEST DE CONNEXION INITIAL
+// ============================================
+async function testerConnexionInitiale() {
+  const testDiv = document.getElementById('testMessage');
+  testDiv.innerHTML = '<p class="text-blue-600">🔄 Test en cours...</p>';
+  
+  try {
+    console.log('🧪 Test de connexion vers:', API_CONFIG.workerUrl);
+    
+    const response = await fetch(`${API_CONFIG.workerUrl}?action=test`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('📥 Réponse HTTP:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Données reçues:', data);
+    
+    testDiv.innerHTML = `
+      <div class="p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+        ✅ Connexion réussie !<br>
+        <span class="text-xs">Status: ${data.status || 'OK'}</span>
+      </div>
+    `;
+    
+  } catch (error) {
+    console.error('❌ Erreur de connexion:', error);
+    testDiv.innerHTML = `
+      <div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        ❌ Erreur: ${error.message}<br>
+        <span class="text-xs">Vérifiez l'URL du Worker dans Cloudflare</span>
+      </div>
+    `;
+  }
+}
 
 // ============================================
 // AUTHENTIFICATION
@@ -345,21 +426,33 @@ async function login() {
   const email = document.getElementById('emailInput').value.trim();
   
   if (!email) {
-    showMessage('loginError', 'Veuillez entrer votre email', 'error');
+    document.getElementById('loginError').textContent = 'Veuillez entrer votre email';
     document.getElementById('loginError').classList.remove('hidden');
     return;
   }
 
   try {
+    console.log('🔐 Tentative de connexion:', email);
     showLoading('Authentification en cours...');
     
-    const response = await fetch(`${API_CONFIG.workerUrl}?action=authentifier&email=${encodeURIComponent(email)}`);
+    const url = `${API_CONFIG.workerUrl}?action=authentifier&email=${encodeURIComponent(email)}`;
+    console.log('📡 URL appelée:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('📥 Réponse HTTP:', response.status);
     
     if (!response.ok) {
-      throw new Error('Erreur réseau');
+      throw new Error(`Erreur HTTP ${response.status}`);
     }
     
     const result = await response.json();
+    console.log('✅ Résultat authentification:', result);
     
     hideLoading();
     
@@ -377,6 +470,7 @@ async function login() {
     }
     
   } catch (error) {
+    console.error('❌ Erreur login:', error);
     hideLoading();
     document.getElementById('loginError').textContent = 'Erreur de connexion : ' + error.message;
     document.getElementById('loginError').classList.remove('hidden');
@@ -422,7 +516,7 @@ function remplirAgences() {
 // GESTION DES ONGLETS
 // ============================================
 function switchTab(tabName) {
-  console.log('Switching to tab:', tabName);
+  console.log('📑 Changement d\'onglet:', tabName);
   
   // Désactiver tous les onglets
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -456,7 +550,7 @@ async function importerFichier() {
 
   try {
     const data = await lireFichierExcel(file);
-    console.log('📊 Données brutes Excel:', data);
+    console.log('📊 Données Excel parsées:', data.metadata);
 
     if (!data || !data.clients || data.clients.length === 0) {
       throw new Error('Aucune donnée valide trouvée dans le fichier');
@@ -482,13 +576,14 @@ async function importerFichier() {
     });
 
     const result = await response.json();
-    console.log('✅ Réponse reçue:', result);
+    console.log('✅ Réponse import:', result);
 
     if (result.success) {
       showMessage('importMessage', 
         `✅ Import réussi ! ${result.nbClients} clients importés (${result.version || 'v1'})`, 
         'success');
       fileInput.value = '';
+      showSuccess(`Import terminé : ${result.nbClients} clients`);
     } else {
       showMessage('importMessage', '❌ ' + (result.message || 'Erreur inconnue'), 'error');
     }
@@ -510,7 +605,7 @@ async function lireFichierExcel(file) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         
-        console.log('📊 Parsing Excel - Feuilles:', workbook.SheetNames);
+        console.log('📊 Feuilles Excel:', workbook.SheetNames);
         
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
@@ -519,74 +614,48 @@ async function lireFichierExcel(file) {
           blankrows: false
         });
         
-        console.log('📊 Nombre total de lignes:', jsonData.length);
-        console.log('📊 Première ligne:', jsonData[0]);
-        console.log('📊 Deuxième ligne:', jsonData[1]);
+        console.log('📊 Lignes totales:', jsonData.length);
         
         if (jsonData.length < 3) {
-          reject(new Error('Fichier vide ou invalide (moins de 3 lignes)'));
+          reject(new Error('Fichier vide ou invalide'));
           return;
         }
 
-        // DÉTECTION AUTOMATIQUE DE LA LIGNE D'EN-TÊTES
+        // Détection des en-têtes
         let headerRowIndex = 0;
-        
-        // Chercher la ligne qui contient "Compte" et "Intitulé"
         for (let i = 0; i < Math.min(5, jsonData.length); i++) {
           const row = jsonData[i];
           const rowStr = row.join('|').toLowerCase();
           
           if (rowStr.includes('compte') && rowStr.includes('intitulé')) {
             headerRowIndex = i;
-            console.log('✅ En-têtes détectés à la ligne', i + 1);
+            console.log('✅ En-têtes ligne', i + 1);
             break;
           }
         }
 
         const headers = jsonData[headerRowIndex].map(h => 
-          String(h || '')
-            .toLowerCase()
-            .replace(/\s+/g, ' ')
-            .replace(/\n/g, ' ')
-            .trim()
+          String(h || '').toLowerCase().replace(/\s+/g, ' ').replace(/\n/g, ' ').trim()
         );
         
-        console.log('📋 En-têtes normalisés:', headers);
+        console.log('📋 En-têtes:', headers);
 
-        // MAPPING DES COLONNES
+        // Mapping colonnes
         const colonnes = {
-          compte: headers.findIndex(h => 
-            h.includes('compte') || h === 'compte'
-          ),
-          intitule: headers.findIndex(h => 
-            h.includes('intitulé') || h.includes('intitule') || h.includes('nom')
-          ),
-          solde: headers.findIndex(h => 
-            h === 'solde' || h.includes('solde')
-          ),
-          e120plus: headers.findIndex(h => 
-            h.includes('120') || h.includes('+120') || (h.includes('echue') && h.includes('120'))
-          ),
-          e90_119: headers.findIndex(h => 
-            (h.includes('90') && h.includes('119')) || (h.includes('echue') && h.includes('90'))
-          ),
-          e60_89: headers.findIndex(h => 
-            (h.includes('60') && h.includes('89')) || (h.includes('echue') && h.includes('60'))
-          ),
-          e30_59: headers.findIndex(h => 
-            (h.includes('30') && h.includes('59')) || (h.includes('echue') && h.includes('30'))
-          ),
-          e0_29: headers.findIndex(h => 
-            (h.includes('0') && h.includes('29')) || (h.includes('echue') && h.includes('0'))
-          ),
-          paiement: headers.findIndex(h => 
-            h.includes('paiement')
-          )
+          compte: headers.findIndex(h => h.includes('compte')),
+          intitule: headers.findIndex(h => h.includes('intitulé') || h.includes('intitule')),
+          solde: headers.findIndex(h => h.includes('solde')),
+          e120plus: headers.findIndex(h => h.includes('120') || h.includes('+120')),
+          e90_119: headers.findIndex(h => h.includes('90') && h.includes('119')),
+          e60_89: headers.findIndex(h => h.includes('60') && h.includes('89')),
+          e30_59: headers.findIndex(h => h.includes('30') && h.includes('59')),
+           e0_29: headers.findIndex(h => h.includes('0') && h.includes('29')),
+          paiement: headers.findIndex(h => h.includes('paiement'))
         };
 
-        console.log('📊 Mapping des colonnes:', colonnes);
+        console.log('📊 Mapping colonnes:', colonnes);
 
-        // Vérification des colonnes obligatoires
+        // Vérification colonnes obligatoires
         if (colonnes.compte === -1) {
           reject(new Error('Colonne "Compte" non trouvée'));
           return;
@@ -602,11 +671,11 @@ async function lireFichierExcel(file) {
 
         const clients = [];
         
-        // Commencer APRÈS la ligne d'en-têtes
+        // Parser les données (après la ligne d'en-têtes)
         for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
           const row = jsonData[i];
           
-          // Ignorer les lignes vides
+          // Ignorer lignes vides
           if (!row || row.length === 0 || row.every(cell => !cell || cell === '')) {
             continue;
           }
@@ -616,11 +685,10 @@ async function lireFichierExcel(file) {
           
           // Ignorer si pas de compte
           if (!compte || compte === '') {
-            console.log(`⚠️ Ligne ${i + 1} ignorée: pas de compte`);
             continue;
           }
 
-          // Parser les montants (gérer les valeurs négatives et vides)
+          // Parser montants
           const parseMontant = (val) => {
             if (!val || val === '') return 0;
             const num = parseFloat(String(val).replace(/,/g, '.').replace(/\s/g, ''));
@@ -647,14 +715,13 @@ async function lireFichierExcel(file) {
             paiement: paiement
           };
 
-          console.log(`✅ Client ${clients.length + 1}: ${compte} - ${intitule} - Solde: ${solde}€`);
           clients.push(client);
         }
 
-        console.log('✅ TOTAL:', clients.length, 'clients valides détectés');
+        console.log('✅ Total clients:', clients.length);
 
-                if (clients.length === 0) {
-          reject(new Error('Aucun client valide trouvé dans le fichier'));
+        if (clients.length === 0) {
+          reject(new Error('Aucun client valide trouvé'));
           return;
         }
 
@@ -668,7 +735,7 @@ async function lireFichierExcel(file) {
         });
 
       } catch (error) {
-        console.error('❌ Erreur parsing Excel:', error);
+        console.error('❌ Erreur parsing:', error);
         reject(error);
       }
     };
@@ -701,7 +768,7 @@ async function chargerVersions() {
       });
     }
   } catch (error) {
-    console.error('Erreur chargement versions:', error);
+    console.error('❌ Erreur versions:', error);
   }
 }
 
@@ -729,7 +796,7 @@ async function chargerBalance() {
       showError('Erreur : ' + data.message);
     }
   } catch (error) {
-    console.error('Erreur chargement balance:', error);
+    console.error('❌ Erreur balance:', error);
     showError('Erreur de chargement : ' + error.message);
   } finally {
     document.getElementById('consultLoader').classList.add('hidden');
@@ -799,7 +866,7 @@ async function chargerHistorique() {
       showError('Erreur : ' + data.message);
     }
   } catch (error) {
-    console.error('Erreur chargement historique:', error);
+    console.error('❌ Erreur historique:', error);
     showError('Erreur de chargement : ' + error.message);
   } finally {
     document.getElementById('historiqueLoader').classList.add('hidden');
@@ -855,6 +922,7 @@ function sauvegarderConfig() {
   API_CONFIG.workerUrl = url;
   localStorage.setItem('apiUrl', url);
   showMessage('configMessage', '✅ Configuration sauvegardée', 'success');
+  console.log('💾 URL sauvegardée:', url);
 }
 
 async function testerConnexion() {
@@ -863,18 +931,32 @@ async function testerConnexion() {
   showMessage('configMessage', '🔄 Test en cours...', 'info');
 
   try {
-    const response = await fetch(`${url}?action=test`);
-    const data = await response.json();
+    console.log('🧪 Test connexion:', url);
+    
+    const response = await fetch(`${url}?action=test`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
-    console.log('✅ Réponse reçue:', data);
+    console.log('📥 Status:', response.status);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Réponse:', data);
 
     if (data.status === 'success' || data.success) {
       showMessage('configMessage', '✅ Connexion réussie ! API opérationnelle', 'success');
+      showSuccess('API connectée avec succès');
     } else {
       showMessage('configMessage', '⚠️ Connexion établie mais réponse inattendue', 'warning');
     }
   } catch (error) {
-    console.error('❌ Erreur test connexion:', error);
+    console.error('❌ Erreur test:', error);
     showMessage('configMessage', '❌ Erreur de connexion : ' + error.message, 'error');
   }
 }
@@ -883,13 +965,40 @@ async function testerConnexion() {
 // HELPERS UI
 // ============================================
 function showLoading(message) {
-  const loadingDiv = document.getElementById('loading') || createLoadingDiv();
-  loadingDiv.textContent = message;
-  loadingDiv.style.display = 'block';
+  let loadingDiv = document.getElementById('globalLoading');
+  
+  if (!loadingDiv) {
+    loadingDiv = document.createElement('div');
+    loadingDiv.id = 'globalLoading';
+    loadingDiv.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    loadingDiv.innerHTML = `
+      <div style="background: white; padding: 30px 50px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); text-align: center;">
+        <div class="spinner" style="margin: 0 auto 15px;"></div>
+        <p id="loadingText" style="font-weight: 600; color: #1e40af; margin: 0;"></p>
+      </div>
+    `;
+    
+    document.body.appendChild(loadingDiv);
+  }
+  
+  document.getElementById('loadingText').textContent = message;
+  loadingDiv.style.display = 'flex';
 }
 
 function hideLoading() {
-  const loadingDiv = document.getElementById('loading');
+  const loadingDiv = document.getElementById('globalLoading');
   if (loadingDiv) {
     loadingDiv.style.display = 'none';
   }
@@ -905,49 +1014,33 @@ function showError(message) {
 
 function showNotification(message, type) {
   const notification = document.createElement('div');
-  notification.className = `notification ${type}`;
-  notification.textContent = message;
+  notification.className = 'notification';
+  
+  const bgColor = type === 'success' ? '#10b981' : 
+                  type === 'error' ? '#ef4444' : 
+                  type === 'warning' ? '#f59e0b' : '#3b82f6';
+  
   notification.style.cssText = `
     position: fixed;
     top: 20px;
     right: 20px;
     padding: 15px 25px;
-    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+    background: ${bgColor};
     color: white;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    z-index: 10000;
-    animation: slideIn 0.3s ease;
+    z-index: 10001;
     max-width: 400px;
+    font-weight: 500;
   `;
   
+  notification.textContent = message;
   document.body.appendChild(notification);
   
   setTimeout(() => {
-    notification.style.animation = 'slideOut 0.3s ease';
+    notification.classList.add('slide-out');
     setTimeout(() => notification.remove(), 300);
   }, 3000);
-}
-
-function createLoadingDiv() {
-  const div = document.createElement('div');
-  div.id = 'loading';
-  div.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 30px 50px;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    z-index: 10000;
-    display: none;
-    font-weight: 600;
-    color: #1e40af;
-  `;
-  document.body.appendChild(div);
-  return div;
 }
 
 // ============================================
@@ -980,8 +1073,13 @@ function showMessage(elementId, message, type) {
   el.textContent = message;
   el.classList.add('fade-in');
 }
+
+// ============================================
+// LOGS DE DEBUG
+// ============================================
+console.log('✅ Script chargé avec succès');
+console.log('📡 Configuration API:', API_CONFIG);
   </script>
 </body>
 </html>
-
-
+          
