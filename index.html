@@ -1,1182 +1,799 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balance Âgée - Olympic Location</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .drop-zone {
-            border: 2px dashed #cbd5e0;
-            transition: all 0.3s ease;
-        }
-        .drop-zone.dragover {
-            border-color: #4299e1;
-            background-color: #ebf8ff;
-        }
-        .loading {
-            display: none;
-        }
-        .loading.active {
-            display: flex;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        .save-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-            display: none;
-            z-index: 2000;
-        }
-        .tab-button {
-            padding: 12px 24px;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .tab-button.active {
-            border-bottom-color: #3b82f6;
-            color: #3b82f6;
-            font-weight: 600;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .version-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .version-card:hover {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balance Âgée - Olympic Location</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    .tab-active {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .table-container {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .sticky-header th {
+      position: sticky;
+      top: 0;
+      background-color: #1e40af;
+      z-index: 10;
+    }
+  </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Indicateur de sauvegarde -->
-    <div class="save-indicator" id="saveIndicator">✓ Sauvegarde effectuée</div>
-    
-    <!-- Indicateur de chargement -->
-    <div id="loadingIndicator" class="loading fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 text-center">
-            <div class="animate-pulse text-4xl mb-4">⏳</div>
-            <p class="text-lg font-semibold">Chargement en cours...</p>
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold">📊 Balance Âgée</h1>
+          <p class="text-blue-200 text-sm">Olympic Location - Gestion des créances clients</p>
         </div>
+        <div id="userInfo" class="text-right hidden">
+          <p class="font-semibold" id="userName"></p>
+          <p class="text-sm text-blue-200" id="userEmail"></p>
+          <button onclick="logout()" class="mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded text-sm">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container mx-auto px-4 py-8">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">🔐 Connexion</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input type="email" id="emailInput" placeholder="votre.email@olympiclocation.fr"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+        <button onclick="login()" 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
+          Se connecter
+        </button>
+        <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"></div>
+      </div>
     </div>
 
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <!-- En-tête -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">🏦 Analyseur de Balances Âgées</h1>
-            <p class="text-gray-600">Olympic Location - Version Cloud</p>
-            <div id="userInfo" class="mt-2 text-sm text-gray-500"></div>
+    <!-- MAIN APP -->
+    <div id="mainApp" class="hidden">
+      
+      <!-- TABS -->
+      <div class="bg-white rounded-lg shadow-lg mb-6">
+        <div class="flex border-b">
+          <button onclick="switchTab('import')" id="tab-import" 
+            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition tab-active">
+            📤 Import
+          </button>
+          <button onclick="switchTab('consultation')" id="tab-consultation"
+            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition">
+            📋 Consultation
+          </button>
+          <button onclick="switchTab('historique')" id="tab-historique"
+            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition">
+            📜 Historique
+          </button>
+          <button onclick="switchTab('config')" id="tab-config"
+            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition">
+            ⚙️ Configuration
+          </button>
         </div>
+      </div>
 
-        <!-- Navigation par onglets -->
-        <div class="bg-white rounded-lg shadow-md mb-8">
-            <div class="flex border-b overflow-x-auto">
-                <button class="tab-button active" data-tab="config">⚙️ Configuration</button>
-                <button class="tab-button" data-tab="import">📤 Import</button>
-                <button class="tab-button" data-tab="analyse">📊 Analyse</button>
-                <button class="tab-button" data-tab="versions">📁 Versions</button>
-                <button class="tab-button" data-tab="historique">📜 Historique</button>
+      <!-- TAB CONTENT: IMPORT -->
+      <div id="content-import" class="tab-content">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">📤 Import de Balance</h2>
+          
+          <div class="space-y-6">
+            <!-- Sélection agence -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Agence</label>
+              <select id="agenceSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">-- Sélectionnez une agence --</option>
+              </select>
             </div>
 
-            <!-- Onglet Configuration -->
-            <div id="tab-config" class="tab-content active p-6">
-                <h2 class="text-xl font-semibold mb-4">⚙️ Configuration</h2>
-                
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                    <p class="text-sm text-yellow-800">
-                        <strong>⚠️ Important :</strong> Configurez l'URL de votre Google Apps Script ci-dessous
-                    </p>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">URL Google Apps Script :</label>
-                        <input type="text" id="apiUrl" class="w-full border rounded px-3 py-2" placeholder="https://script.google.com/macros/s/...">
-                        <p class="text-xs text-gray-500 mt-1">L'URL de déploiement de votre script Apps Script</p>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Votre email :</label>
-                        <input type="email" id="userEmail" class="w-full border rounded px-3 py-2" placeholder="prenom@olympiclocation.com">
-                    </div>
-                    
-                    <button onclick="testConnection()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
-                        🔌 Tester la connexion
-                    </button>
-                    
-                    <div id="connectionStatus" class="hidden mt-4"></div>
-                </div>
+            <!-- Upload fichier -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Fichier Excel</label>
+              <input type="file" id="fileInput" accept=".xlsx,.xls" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
             </div>
 
-            <!-- Onglet Import -->
-            <div id="tab-import" class="tab-content p-6">
-                <h2 class="text-xl font-semibold mb-4">📤 Importer une balance</h2>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionner l'agence :</label>
-                    <select id="agenceSelect" class="w-full border rounded px-3 py-2">
-                        <option value="">-- Choisir une agence --</option>
-                        <option value="00">00 - Gèze</option>
-                        <option value="01">01 - 5 Av</option>
-                        <option value="02">02 - Gare St Charles</option>
-                        <option value="03">03 - Aubagne</option>
-                        <option value="06">06 - La Valentine</option>
-                        <option value="09">09 - Plombières</option>
-                        <option value="12">12 - La Garde</option>
-                        <option value="13">13 - La Ciotat</option>
-                        <option value="08">08 - Toulon</option>
-                    </select>
-                </div>
-                
-                <div id="dropZone" class="drop-zone rounded-lg p-8 text-center cursor-pointer mb-4">
-                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p class="text-gray-600 mb-2">Glissez-déposez votre fichier Excel ici</p>
-                    <p class="text-sm text-gray-500">ou</p>
-                    <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.csv">
-                    <button onclick="document.getElementById('fileInput').click()" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                        Parcourir
-                    </button>
-                </div>
+            <!-- Bouton import -->
+            <button onclick="importerFichier()" 
+              class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200">
+              🚀 Importer
+            </button>
 
-                <div id="fileInfo" class="hidden bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <p class="text-green-800">✅ <span id="fileName"></span></p>
-                    <p class="text-sm text-green-600">Lignes détectées : <span id="rowCount"></span></p>
-                </div>
-
-                <button onclick="importerBalance()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
-                    💾 Importer dans le Cloud
-                </button>
-
-                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 class="font-semibold text-blue-800 mb-2">💡 Format accepté :</h3>
-                    <ul class="text-sm text-blue-700 space-y-1">
-                        <li>• <strong>Compte</strong> ou <strong>Code Client</strong></li>
-                        <li>• <strong>Intitulé</strong> ou <strong>Nom Client</strong></li>
-                        <li>• <strong>Solde</strong></li>
-                        <li>• <strong>Échéances</strong> : 0-30, 30-60, 60-90, 90-120, >120</li>
-                        <li>• <strong>Paiement</strong></li>
-                    </ul>
-                </div>
+            <!-- Messages -->
+            <div id="importMessage" class="hidden"></div>
+            
+            <!-- Loader -->
+            <div id="importLoader" class="hidden flex justify-center items-center py-8">
+              <div class="spinner"></div>
             </div>
-
-            <!-- Onglet Analyse -->
-            <div id="tab-analyse" class="tab-content p-6">
-                <div class="mb-4 flex space-x-4">
-                    <select id="analyseAgence" class="flex-1 border rounded px-3 py-2">
-                        <option value="">-- Choisir une agence --</option>
-                        <option value="00">00 - Gèze</option>
-                        <option value="01">01 - 5 Av</option>
-                        <option value="02">02 - Gare St Charles</option>
-                        <option value="03">03 - Aubagne</option>
-                        <option value="06">06 - La Valentine</option>
-                        <option value="09">09 - Plombières</option>
-                        <option value="12">12 - La Garde</option>
-                        <option value="13">13 - La Ciotat</option>
-                        <option value="08">08 - Toulon</option>
-                    </select>
-                    <select id="analyseVersion" class="flex-1 border rounded px-3 py-2">
-                        <option value="latest">Dernière version</option>
-                    </select>
-                    <button onclick="chargerEtAnalyser()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                        📊 Charger
-                    </button>
-                </div>
-                
-                <div id="analysisResults" class="hidden">
-                    <!-- KPIs -->
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p class="text-sm text-red-600 mb-1">Soldes Débiteurs</p>
-                            <p class="text-2xl font-bold text-red-700" id="soldesDebiteurs">0 €</p>
-                        </div>
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <p class="text-sm text-green-600 mb-1">Soldes Créditeurs</p>
-                            <p class="text-2xl font-bold text-green-700" id="soldesCrediteurs">0 €</p>
-                        </div>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <p class="text-sm text-blue-600 mb-1">Balance Totale</p>
-                            <p class="text-2xl font-bold text-blue-700" id="balanceTotale">0 €</p>
-                        </div>
-                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                            <p class="text-sm text-orange-600 mb-1">Clients à Risque</p>
-                            <p class="text-2xl font-bold text-orange-700" id="clientsCritiques">0</p>
-                        </div>
-                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                            <p class="text-sm text-purple-600 mb-1">Taux >90j</p>
-                            <p class="text-2xl font-bold text-purple-700" id="tauxRisque">0%</p>
-                        </div>
-                    </div>
-
-                    <!-- Graphiques -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div class="bg-white border rounded-lg p-4">
-                            <h3 class="font-semibold mb-3">Répartition par ancienneté</h3>
-                            <canvas id="ageChart"></canvas>
-                        </div>
-                        <div class="bg-white border rounded-lg p-4">
-                            <h3 class="font-semibold mb-3">Top 10 clients</h3>
-                            <canvas id="topClientsChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Tableau -->
-                    <div class="bg-white border rounded-lg overflow-hidden">
-                        <div class="p-4 bg-gray-50 border-b">
-                            <h3 class="font-semibold">Liste des clients</h3>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left">Code</th>
-                                        <th class="px-4 py-3 text-left">Nom</th>
-                                        <th class="px-4 py-3 text-right">Solde</th>
-                                        <th class="px-4 py-3 text-right">0-30j</th>
-                                        <th class="px-4 py-3 text-right">30-60j</th>
-                                        <th class="px-4 py-3 text-right">60-90j</th>
-                                        <th class="px-4 py-3 text-right">90-120j</th>
-                                        <th class="px-4 py-3 text-right">>120j</th>
-                                        <th class="px-4 py-3 text-right">Paiement</th>
-                                        <th class="px-4 py-3 text-center">Risque</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="clientsTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Export -->
-                    <div class="mt-6 flex space-x-4">
-                        <button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
-                            📥 Exporter en Excel
-                        </button>
-                        <button onclick="window.print()" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700">
-                            🖨️ Imprimer
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Onglet Versions -->
-            <div id="tab-versions" class="tab-content p-6">
-                <h2 class="text-xl font-semibold mb-4">📁 Versions sauvegardées</h2>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Agence :</label>
-                    <select id="versionsAgence" onchange="chargerVersions()" class="w-full border rounded px-3 py-2">
-                        <option value="">-- Choisir une agence --</option>
-                        <option value="00">00 - Gèze</option>
-                        <option value="01">01 - 5 Av</option>
-                        <option value="02">02 - Gare St Charles</option>
-                        <option value="03">03 - Aubagne</option>
-                        <option value="06">06 - La Valentine</option>
-                        <option value="09">09 - Plombières</option>
-                        <option value="12">12 - La Garde</option>
-                        <option value="13">13 - La Ciotat</option>
-                        <option value="08">08 - Toulon</option>
-                    </select>
-                </div>
-                
-                <div id="versionsList"></div>
-            </div>
-
-            <!-- Onglet Historique -->
-            <div id="tab-historique" class="tab-content p-6">
-                <h2 class="text-xl font-semibold mb-4">📜 Historique des imports</h2>
-                <button onclick="chargerHistorique()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    🔄 Actualiser
-                </button>
-                <div id="historiqueList"></div>
-            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- TAB CONTENT: CONSULTATION -->
+      <div id="content-consultation" class="tab-content hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Consultation des Balances</h2>
+          
+          <div class="space-y-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Agence</label>
+                <select id="consultAgenceSelect" onchange="chargerVersions()" 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="">-- Sélectionnez une agence --</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Version</label>
+                <select id="versionSelect" 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="latest">Dernière version</option>
+                </select>
+              </div>
+            </div>
+            
+            <button onclick="chargerBalance()" 
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
+              📊 Charger la balance
+            </button>
+          </div>
+
+          <!-- Résultats -->
+          <div id="balanceResults" class="hidden">
+            <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <p class="text-sm text-gray-600">Version</p>
+                  <p class="text-xl font-bold text-blue-700" id="resultVersion"></p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600">Date</p>
+                  <p class="text-xl font-bold text-blue-700" id="resultDate"></p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600">Clients</p>
+                  <p class="text-xl font-bold text-blue-700" id="resultNbClients"></p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600">Solde Total</p>
+                  <p class="text-xl font-bold text-blue-700" id="resultSoldeTotal"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recherche -->
+            <div class="mb-4">
+              <input type="text" id="searchInput" placeholder="🔍 Rechercher un client..." 
+                onkeyup="filtrerClients()"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Tableau -->
+            <div class="table-container border rounded-lg">
+              <table class="w-full text-sm">
+                <thead class="sticky-header text-white">
+                  <tr>
+                    <th class="px-4 py-3 text-left">Code</th>
+                    <th class="px-4 py-3 text-left">Client</th>
+                    <th class="px-4 py-3 text-right">Solde</th>
+                    <th class="px-4 py-3 text-right">0-29j</th>
+                    <th class="px-4 py-3 text-right">30-59j</th>
+                    <th class="px-4 py-3 text-right">60-89j</th>
+                    <th class="px-4 py-3 text-right">90-119j</th>
+                    <th class="px-4 py-3 text-right">+120j</th>
+                    <th class="px-4 py-3 text-right">Paiement</th>
+                  </tr>
+                </thead>
+                <tbody id="clientsTableBody" class="bg-white divide-y divide-gray-200">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="consultLoader" class="hidden flex justify-center items-center py-8">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT: HISTORIQUE -->
+      <div id="content-historique" class="tab-content hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">📜 Historique des Imports</h2>
+          
+          <button onclick="chargerHistorique()" 
+            class="mb-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
+            🔄 Actualiser
+          </button>
+
+          <div id="historiqueContent" class="space-y-2">
+            <!-- Historique dynamique -->
+          </div>
+
+          <div id="historiqueLoader" class="hidden flex justify-center items-center py-8">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT: CONFIG -->
+      <div id="content-config" class="tab-content hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Configuration</h2>
+          
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">URL de l'API Google Apps Script</label>
+              <input type="text" id="apiUrlInput" 
+                placeholder="https://script.google.com/macros/s/..."
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="flex gap-4">
+              <button onclick="sauvegarderConfig()" 
+                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200">
+                💾 Sauvegarder
+              </button>
+              <button onclick="testerConnexion()" 
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
+                🔌 Tester la connexion
+              </button>
+            </div>
+
+            <div id="configMessage" class="hidden"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
 
-    <script>
-        // ========== VARIABLES GLOBALES ==========
-        let currentData = [];
-        let currentMetadata = {};
-        let analysisData = [];
-        let ageChartInstance = null;
-        let topClientsChartInstance = null;
-        let API_URL = '';
-        let USER_EMAIL = '';
-        let USER_NAME = '';
+  <script>
+    // ============================================
+    // CONFIGURATION GLOBALE
+    // ============================================
+    let API_URL = 'https://script.google.com/macros/s/AKfycbzBWezbMQZwNYfV4PJm1-TdVKQwKFWUsUxHxd2N_-1rFH7w1ewe57hyaZHxnvTiXFiD/exec';
+    let currentUser = null;
+    let currentBalance = [];
 
-        // ========== INITIALISATION ==========
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Application démarrée');
-            loadConfig();
-            setupFileHandlers();
-            setupTabHandlers();
-            hideLoading();
+    const AGENCES_MAP = {
+      '00': 'Gèze',
+      '01': '5 Av',
+      '02': 'Gare St Charles',
+      '03': 'Aubagne',
+      '06': 'La Valentine',
+      '09': 'Plombières',
+      '12': 'La Garde',
+      '13': 'La Ciotat',
+      '08': 'Toulon'
+    };
+
+    // ============================================
+    // INITIALISATION
+    // ============================================
+    window.onload = function() {
+      console.log('🚀 Application démarrée');
+      
+      // Charger config
+      const savedUrl = localStorage.getItem('apiUrl');
+      if (savedUrl) {
+        API_URL = savedUrl;
+        document.getElementById('apiUrlInput').value = savedUrl;
+      }
+
+      // Vérifier session
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        afficherMainApp();
+      }
+    };
+
+    // ============================================
+    // AUTHENTIFICATION
+    // ============================================
+    async function login() {
+      const email = document.getElementById('emailInput').value.trim();
+      
+      if (!email) {
+        showError('loginError', 'Veuillez entrer votre email');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}?action=authentifier&email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+
+        if (data.success) {
+          currentUser = data;
+          localStorage.setItem('currentUser', JSON.stringify(data));
+          afficherMainApp();
+        } else {
+          showError('loginError', data.message || 'Email non autorisé');
+        }
+      } catch (error) {
+        console.error('Erreur login:', error);
+        showError('loginError', 'Erreur de connexion : ' + error.message);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('currentUser');
+      currentUser = null;
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('mainApp').classList.add('hidden');
+      document.getElementById('userInfo').classList.add('hidden');
+    }
+
+    function afficherMainApp() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('userName').textContent = currentUser.nom;
+      document.getElementById('userEmail').textContent = currentUser.email;
+
+      // Remplir les selects d'agences
+      remplirAgences();
+    }
+
+    function remplirAgences() {
+      const agences = currentUser.agencesArray || [];
+      const select1 = document.getElementById('agenceSelect');
+      const select2 = document.getElementById('consultAgenceSelect');
+
+      select1.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
+      select2.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
+
+      agences.forEach(code => {
+        const nom = AGENCES_MAP[code] || code;
+        select1.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
+        select2.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
+      });
+    }
+
+    // ============================================
+    // GESTION DES ONGLETS
+    // ============================================
+    function switchTab(tabName) {
+      console.log('Switching to tab:', tabName);
+      
+      // Désactiver tous les onglets
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('tab-active'));
+
+      // Activer l'onglet sélectionné
+      document.getElementById('content-' + tabName).classList.remove('hidden');
+      document.getElementById('tab-' + tabName).classList.add('tab-active');
+    }
+
+    // ============================================
+    // IMPORT DE FICHIER
+    // ============================================
+    async function importerFichier() {
+      const agence = document.getElementById('agenceSelect').value;
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      if (!agence) {
+        showMessage('importMessage', 'Veuillez sélectionner une agence', 'error');
+        return;
+      }
+
+      if (!file) {
+        showMessage('importMessage', 'Veuillez sélectionner un fichier', 'error');
+        return;
+      }
+
+      document.getElementById('importLoader').classList.remove('hidden');
+      document.getElementById('importMessage').classList.add('hidden');
+
+      try {
+        const data = await lireFichierExcel(file);
+        console.log('📊 Données brutes Excel:', data);
+
+        if (!data || !data.clients || data.clients.length === 0) {
+          throw new Error('Aucune donnée valide trouvée dans le fichier');
+        }
+
+        console.log('📤 Envoi de', data.clients.length, 'clients pour l\'agence', agence);
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'import',
+            data: data.clients,
+            agence: agence,
+            user: currentUser.email,
+            metadata: {
+              userName: currentUser.nom,
+              dateImport: new Date().toISOString()
+            }
+          })
         });
 
-        // ========== GESTION DU LOADING ==========
-        function showLoading() {
-            const indicator = document.getElementById('loadingIndicator');
-            if (indicator) indicator.classList.add('active');
+        const result = await response.json();
+        console.log('✅ Réponse reçue:', result);
+
+        if (result.success) {
+          showMessage('importMessage', 
+            `✅ Import réussi ! ${result.nbClients} clients importés (${result.version})`, 
+            'success');
+          fileInput.value = '';
+        } else {
+          showMessage('importMessage', '❌ ' + (result.message || 'Erreur inconnue'), 'error');
         }
 
-        function hideLoading() {
-            const indicator = document.getElementById('loadingIndicator');
-            if (indicator) indicator.classList.remove('active');
-        }
+      } catch (error) {
+        console.error('❌ Erreur import:', error);
+        showMessage('importMessage', '❌ Erreur : ' + error.message, 'error');
+      } finally {
+        document.getElementById('importLoader').classList.add('hidden');
+      }
+    }
 
-        // ========== CONFIGURATION ==========
-        function loadConfig() {
-            try {
-                const config = localStorage.getItem('olBalanceConfig');
-                if (config) {
-                    const data = JSON.parse(config);
-                    document.getElementById('apiUrl').value = data.apiUrl || '';
-                    document.getElementById('userEmail').value = data.email || '';
-                    API_URL = data.apiUrl || '';
-                    USER_EMAIL = data.email || '';
-                    USER_NAME = data.name || '';
-                    
-                    if (USER_EMAIL) {
-                        document.getElementById('userInfo').textContent = `Connecté en tant que : ${USER_EMAIL}`;
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur loadConfig:', error);
+    async function lireFichierExcel(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            console.log('📊 Parsing Excel - Nombre de lignes:', workbook.SheetNames.length);
+            
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            
+            if (jsonData.length < 2) {
+              reject(new Error('Fichier vide ou invalide'));
+              return;
             }
-        }
 
-        function testConnection() {
-            const apiUrl = document.getElementById('apiUrl').value;
-            const email = document.getElementById('userEmail').value;
-            const statusDiv = document.getElementById('connectionStatus');
-            
-            if (!apiUrl) {
-                alert('❌ Veuillez entrer l\'URL de votre Google Apps Script');
-                return;
-            }
-            
-            statusDiv.classList.remove('hidden');
-            statusDiv.innerHTML = '<div class="text-blue-600 p-4 bg-blue-50 border border-blue-200 rounded">⏳ Test en cours...</div>';
-            
-            // Créer un callback unique pour JSONP
-            const callbackName = 'jsonpCallback_test_' + Date.now();
-            
-            // Définir la fonction de callback
-            window[callbackName] = function(data) {
-                console.log('✅ Réponse reçue:', data);
-                
-                if (data.status === 'success') {
-                    statusDiv.innerHTML = `
-                        <div class="text-green-600 p-4 bg-green-50 border border-green-200 rounded">
-                            ✅ <strong>Connexion réussie !</strong><br>
-                            <small>${data.message}</small><br>
-                            <small class="text-gray-600">${data.timestamp}</small>
-                        </div>
-                    `;
-                    
-                    // Sauvegarder la configuration
-                    const config = {
-                        apiUrl: apiUrl,
-                        email: email,
-                        name: email.split('@')[0]
-                    };
-                    localStorage.setItem('olBalanceConfig', JSON.stringify(config));
-                    
-                    API_URL = apiUrl;
-                    USER_EMAIL = email;
-                    USER_NAME = config.name;
-                    
-                    document.getElementById('userInfo').textContent = `Connecté en tant que : ${email}`;
-                    
-                    alert('✅ Configuration sauvegardée avec succès !');
-                } else {
-                    statusDiv.innerHTML = `
-                        <div class="text-red-600 p-4 bg-red-50 border border-red-200 rounded">
-                            ❌ <strong>Erreur :</strong> ${data.message || 'Connexion échouée'}
-                        </div>
-                    `;
-                }
-                
-                // Nettoyer
-                document.body.removeChild(script);
-                delete window[callbackName];
+            const headers = jsonData[0].map(h => String(h).toLowerCase().trim());
+            console.log('📋 En-têtes bruts:', jsonData[0]);
+            console.log('📋 En-têtes normalisés:', headers);
+
+            const colonnes = {
+              compte: headers.findIndex(h => h.includes('compte') || h.includes('code')),
+              intitule: headers.findIndex(h => h.includes('intitulé') || h.includes('intitule') || h.includes('nom')),
+              solde: headers.findIndex(h => h.includes('solde')),
+              e120plus: headers.findIndex(h => h.includes('120') || h.includes('+120')),
+              e90_119: headers.findIndex(h => h.includes('90') && h.includes('119')),
+              e60_89: headers.findIndex(h => h.includes('60') && h.includes('89')),
+              e30_59: headers.findIndex(h => h.includes('30') && h.includes('59')),
+              e0_29: headers.findIndex(h => h.includes('0') && h.includes('29')),
+              paiement: headers.findIndex(h => h.includes('paiement'))
             };
-            
-            // Créer la balise script pour JSONP
-            const script = document.createElement('script');
-            script.src = `${apiUrl}?action=test&callback=${callbackName}`;
-            
-            script.onerror = function() {
-                console.error('❌ Erreur de chargement du script');
-                statusDiv.innerHTML = `
-                    <div class="text-red-600 p-4 bg-red-50 border border-red-200 rounded">
-                        ❌ <strong>Erreur de connexion</strong><br>
-                        <small>Vérifiez :</small>
-                        <ul class="text-sm mt-2 ml-4 list-disc">
-                            <li>L'URL est correcte</li>
-                            <li>Le script est bien déployé</li>
-                            <li>L'accès est configuré sur "Tout le monde"</li>
-                        </ul>
-                    </div>
-                `;
-                delete window[callbackName];
-            };
-            
-            document.body.appendChild(script);
-        }
 
-        // ========== GESTION DES ONGLETS ==========
-        function setupTabHandlers() {
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', function() {
-                    const tabName = this.getAttribute('data-tab');
-                    switchTab(tabName);
-                });
-            });
-        }
-
-        function switchTab(tabName) {
-            console.log('Switching to tab:', tabName);
-            
-            try {
-                document.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                
-                const activeButton = document.querySelector(`.tab-button[data-tab="${tabName}"]`);
-                if (activeButton) activeButton.classList.add('active');
-                
-                const tabContent = document.getElementById('tab-' + tabName);
-                if (tabContent) {
-                    tabContent.classList.add('active');
-                    
-                    if (tabName === 'versions') {
-                        const agence = document.getElementById('versionsAgence').value;
-                        if (agence) setTimeout(() => chargerVersions(), 100);
-                    } else if (tabName === 'historique') {
-                        setTimeout(() => chargerHistorique(), 100);
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur switchTab:', error);
-            }
-        }
-
-        // ========== GESTION DES FICHIERS ==========
-        function setupFileHandlers() {
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
-
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
+            Object.entries(colonnes).forEach(([key, index]) => {
+              if (index !== -1) {
+                console.log(`✅ Colonne "${key}" trouvée à l'index ${index}`);
+              }
             });
 
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
+            const clients = [];
+            
+            for (let i = 1; i < jsonData.length; i++) {
+              const row = jsonData[i];
+              
+              const compte = colonnes.compte !== -1 ? String(row[colonnes.compte] || '').trim() : '';
+              const intitule = colonnes.intitule !== -1 ? String(row[colonnes.intitule] || '').trim() : '';
+              const solde = colonnes.solde !== -1 ? parseFloat(row[colonnes.solde]) || 0 : 0;
+
+              if (!compte || compte === '' || solde === 0) {
+                continue;
+              }
+
+              const client = {
+                code: compte,
+                nom: intitule,
+                solde: solde,
+                e0_29: colonnes.e0_29 !== -1 ? parseFloat(row[colonnes.e0_29]) || 0 : 0,
+                e30_59: colonnes.e30_59 !== -1 ? parseFloat(row[colonnes.e30_59]) || 0 : 0,
+                e60_89: colonnes.e60_89 !== -1 ? parseFloat(row[colonnes.e60_89]) || 0 : 0,
+                e90_119: colonnes.e90_119 !== -1 ? parseFloat(row[colonnes.e90_119]) || 0 : 0,
+                e120plus: colonnes.e120plus !== -1 ? parseFloat(row[colonnes.e120plus]) || 0 : 0,
+                paiement: colonnes.paiement !== -1 ? parseFloat(row[colonnes.paiement]) || 0 : 0
+              };
+
+              console.log(`📊 Client ${i}:`, client);
+              clients.push(client);
+            }
+
+            console.log('✅', clients.length, 'clients valides détectés');
+
+            resolve({
+              clients: clients,
+              metadata: {
+                nbLignes: jsonData.length - 1,
+                nbClients: clients.length
+              }
             });
 
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file) handleFile(file);
-            });
+          } catch (error) {
+            console.error('❌ Erreur parsing Excel:', error);
+            reject(error);
+          }
+        };
 
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) handleFile(file);
-            });
+        reader.onerror = function(error) {
+          reject(error);
+        };
+
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // ============================================
+    // CONSULTATION
+    // ============================================
+    async function chargerVersions() {
+      const agence = document.getElementById('consultAgenceSelect').value;
+      if (!agence) return;
+
+      try {
+        const response = await fetch(`${API_URL}?action=getVersions&agence=${agence}`);
+        const data = await response.json();
+
+        const select = document.getElementById('versionSelect');
+        select.innerHTML = '<option value="latest">Dernière version</option>';
+
+        if (data.success && data.versions) {
+          data.versions.forEach(v => {
+            select.innerHTML += `<option value="${v.version}">${v.version} - ${v.date} ${v.heure} (${v.nbClients} clients)</option>`;
+          });
+        }
+      } catch (error) {
+        console.error('Erreur chargement versions:', error);
+      }
+    }
+
+    async function chargerBalance() {
+      const agence = document.getElementById('consultAgenceSelect').value;
+      const version = document.getElementById('versionSelect').value;
+
+      if (!agence) {
+        alert('Veuillez sélectionner une agence');
+        return;
+      }
+
+      document.getElementById('consultLoader').classList.remove('hidden');
+      document.getElementById('balanceResults').classList.add('hidden');
+
+      try {
+        const response = await fetch(`${API_URL}?action=getBalance&agence=${agence}&version=${version}`);
+        const data = await response.json();
+
+        if (data.success) {
+          currentBalance = data.clients;
+          afficherBalance(data);
+        } else {
+          alert('Erreur : ' + data.message);
+        }
+      } catch (error) {
+        console.error('Erreur chargement balance:', error);
+        alert('Erreur de chargement : ' + error.message);
+      } finally {
+        document.getElementById('consultLoader').classList.add('hidden');
+      }
+    }
+
+    function afficherBalance(data) {
+      document.getElementById('resultVersion').textContent = data.version;
+      document.getElementById('resultDate').textContent = data.dateImport;
+      document.getElementById('resultNbClients').textContent = data.nbClients;
+      
+      const soldeTotal = data.clients.reduce((sum, c) => sum + (c.solde || 0), 0);
+      document.getElementById('resultSoldeTotal').textContent = formatMontant(soldeTotal);
+
+      afficherClients(data.clients);
+      document.getElementById('balanceResults').classList.remove('hidden');
+    }
+
+    function afficherClients(clients) {
+      const tbody = document.getElementById('clientsTableBody');
+      tbody.innerHTML = '';
+
+      clients.forEach(client => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-4 py-2 font-mono text-sm">${client.codeClient}</td>
+          <td class="px-4 py-2">${client.nomClient}</td>
+          <td class="px-4 py-2 text-right font-semibold">${formatMontant(client.solde)}</td>
+          <td class="px-4 py-2 text-right">${formatMontant(client.echeance0)}</td>
+          <td class="px-4 py-2 text-right">${formatMontant(client.echeance30)}</td>
+          <td class="px-4 py-2 text-right">${formatMontant(client.echeance60)}</td>
+          <td class="px-4 py-2 text-right">${formatMontant(client.echeance90)}</td>
+          <td class="px-4 py-2 text-right text-red-600 font-semibold">${formatMontant(client.echeancePlus120)}</td>
+          <td class="px-4 py-2 text-right text-green-600">${formatMontant(client.paiement)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filtrerClients() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = currentBalance.filter(c => 
+        c.codeClient.toLowerCase().includes(search) || 
+        c.nomClient.toLowerCase().includes(search)
+        );
+        afficherClients(filtered);
+      }
+
+      // ============================================
+      // HISTORIQUE
+      // ============================================
+      async function chargerHistorique() {
+        document.getElementById('historiqueLoader').classList.remove('hidden');
+        
+        try {
+          const response = await fetch(`${API_URL}?action=getHistorique`);
+          const data = await response.json();
+
+          if (data.success) {
+            afficherHistorique(data.historique);
+          } else {
+            alert('Erreur : ' + data.message);
+          }
+        } catch (error) {
+          console.error('Erreur chargement historique:', error);
+          alert('Erreur de chargement : ' + error.message);
+        } finally {
+          document.getElementById('historiqueLoader').classList.add('hidden');
+        }
+      }
+
+      function afficherHistorique(historique) {
+        const container = document.getElementById('historiqueContent');
+        container.innerHTML = '';
+
+        if (!historique || historique.length === 0) {
+          container.innerHTML = '<p class="text-gray-500 text-center py-8">Aucun historique disponible</p>';
+          return;
         }
 
-        function handleFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                    
-                    console.log('📊 Données brutes Excel:', jsonData.slice(0, 3));
-                    
-                    currentData = parseExcelData(jsonData);
-                    
-                    if (currentData.length === 0) {
-                        alert('❌ Aucune donnée détectée. Vérifiez le format de votre fichier.');
-                        return;
-                    }
-                    
-                    // Calculer les métadonnées
-                    currentMetadata = {
-                        soldeTotal: currentData.reduce((sum, c) => sum + c.solde, 0),
-                        soldesDebiteurs: currentData.filter(c => c.solde > 0).reduce((sum, c) => sum + c.solde, 0),
-                        soldesCrediteurs: Math.abs(currentData.filter(c => c.solde < 0).reduce((sum, c) => sum + c.solde, 0)),
-                        nbClients: currentData.length,
-                        userName: USER_NAME
-                    };
-                    
-                    document.getElementById('fileInfo').classList.remove('hidden');
-                    document.getElementById('fileName').textContent = file.name;
-                    document.getElementById('rowCount').textContent = currentData.length;
-                    
-                    console.log('✅ Données parsées:', currentData.slice(0, 2));
-                    console.log('📊 Métadonnées:', currentMetadata);
-                    
-                } catch (error) {
-                    console.error('Erreur handleFile:', error);
-                    alert('❌ Erreur lors de la lecture du fichier : ' + error.message);
-                }
-            };
-            reader.readAsArrayBuffer(file);
+        historique.forEach(h => {
+          const div = document.createElement('div');
+          div.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition';
+          div.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="font-semibold text-gray-800">
+                  ${AGENCES_MAP[h.agence] || h.agence} - ${h.version}
+                </p>
+                <p class="text-sm text-gray-600">
+                  ${h.utilisateur} (${h.email})
+                </p>
+                <p class="text-sm text-gray-500">
+                  ${h.nbClients} clients importés
+                </p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-medium text-blue-600">${h.date}</p>
+                <p class="text-xs text-gray-500">${h.heure}</p>
+              </div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      // ============================================
+      // CONFIGURATION
+      // ============================================
+      function sauvegarderConfig() {
+        const url = document.getElementById('apiUrlInput').value.trim();
+        
+        if (!url) {
+          showMessage('configMessage', 'Veuillez entrer une URL', 'error');
+          return;
         }
 
-        function parseExcelData(data) {
-            if (data.length < 3) {
-                console.error('❌ Fichier vide ou incomplet');
-                return [];
-            }
-            
-            console.log('📊 Parsing Excel - Nombre de lignes:', data.length);
-            
-            const headerRow = 1;
-            const dataStartRow = 2;
-            
-            const headers = data[headerRow];
-            console.log('📋 En-têtes bruts:', headers);
-            
-            const normalizedHeaders = headers.map(h => 
-                String(h)
-                    .replace(/\n/g, ' ')
-                    .replace(/\s+/g, ' ')
-                    .toLowerCase()
-                    .trim()
-            );
-            
-            console.log('📋 En-têtes normalisés:', normalizedHeaders);
-            
-            const findColumn = (keywords) => {
-                for (let keyword of keywords) {
-                    const index = normalizedHeaders.findIndex(h => h.includes(keyword));
-                    if (index !== -1) {
-                        console.log(`✅ Colonne "${keyword}" trouvée à l'index ${index}`);
-                        return index;
-                    }
-                }
-                console.warn(`⚠️ Aucune colonne trouvée pour: ${keywords.join(', ')}`);
-                return -1;
-            };
-            
-            const codeIndex = findColumn(['compte', 'code']);
-            const nomIndex = findColumn(['intitulé', 'intitule']);
-            const soldeIndex = findColumn(['solde']);
-            const e120Index = findColumn(['120 à +', '120 à', 'de :120']);
-            const e90Index = findColumn(['90 à 119', 'de :90']);
-            const e60Index = findColumn(['60 à 89', 'de :60']);
-            const e30Index = findColumn(['30 à 59', 'de :30']);
-            const e0Index = findColumn(['0 à 29', 'de :0']);
-            const paiementIndex = findColumn(['paiement']);
-            
-            if (codeIndex === -1 || nomIndex === -1 || soldeIndex === -1) {
-                console.error('❌ Colonnes obligatoires manquantes');
-                alert('❌ Format invalide : colonnes obligatoires introuvables.');
-                return [];
-            }
-            
-            const parsedData = [];
-            
-            for (let i = dataStartRow; i < data.length; i++) {
-                const row = data[i];
-                if (!row || row.length === 0 || !row[codeIndex]) continue;
-                
-                const codeClient = String(row[codeIndex] || '').trim();
-                const nomClient = String(row[nomIndex] || '').trim();
-                
-                if (!codeClient || codeClient === '') continue;
-                
-                const client = {
-                    code: codeClient,
-                    nom: nomClient,
-                    solde: parseFloat(row[soldeIndex]) || 0,
-                    e0_29: e0Index !== -1 ? (parseFloat(row[e0Index]) || 0) : 0,
-                    e30_59: e30Index !== -1 ? (parseFloat(row[e30Index]) || 0) : 0,
-                    e60_89: e60Index !== -1 ? (parseFloat(row[e60Index]) || 0) : 0,
-                    e90_119: e90Index !== -1 ? (parseFloat(row[e90Index]) || 0) : 0,
-                    e120plus: e120Index !== -1 ? (parseFloat(row[e120Index]) || 0) : 0,
-                    paiement: paiementIndex !== -1 ? (parseFloat(row[paiementIndex]) || 0) : 0
-                };
-                
-                if (i <= dataStartRow + 2) {
-                    console.log(`📊 Client ${i - dataStartRow + 1}:`, client);
-                }
-                
-                parsedData.push(client);
-            }
-            
-            console.log(`✅ ${parsedData.length} clients valides détectés`);
-            return parsedData;
+        API_URL = url;
+        localStorage.setItem('apiUrl', url);
+        showMessage('configMessage', '✅ Configuration sauvegardée', 'success');
+      }
+
+      async function testerConnexion() {
+        const url = document.getElementById('apiUrlInput').value.trim() || API_URL;
+        
+        showMessage('configMessage', '🔄 Test en cours...', 'info');
+
+        try {
+          const response = await fetch(`${url}?action=test`);
+          const data = await response.json();
+
+          console.log('✅ Réponse reçue:', data);
+
+          if (data.status === 'success' || data.success) {
+            showMessage('configMessage', '✅ Connexion réussie ! API opérationnelle', 'success');
+          } else {
+            showMessage('configMessage', '⚠️ Connexion établie mais réponse inattendue', 'warning');
+          }
+        } catch (error) {
+          console.error('❌ Erreur test connexion:', error);
+          showMessage('configMessage', '❌ Erreur de connexion : ' + error.message, 'error');
+        }
+      }
+
+      // ============================================
+      // UTILITAIRES
+      // ============================================
+      function formatMontant(montant) {
+        if (!montant || isNaN(montant)) return '0,00 €';
+        return new Intl.NumberFormat('fr-FR', {
+          style: 'currency',
+          currency: 'EUR'
+        }).format(montant);
+      }
+
+      function showMessage(elementId, message, type) {
+        const el = document.getElementById(elementId);
+        el.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'bg-blue-100', 'bg-yellow-100');
+        el.classList.remove('border-red-400', 'border-green-400', 'border-blue-400', 'border-yellow-400');
+        el.classList.remove('text-red-700', 'text-green-700', 'text-blue-700', 'text-yellow-700');
+
+        if (type === 'error') {
+          el.className = 'p-4 rounded-lg border bg-red-100 border-red-400 text-red-700';
+        } else if (type === 'success') {
+          el.className = 'p-4 rounded-lg border bg-green-100 border-green-400 text-green-700';
+        } else if (type === 'warning') {
+          el.className = 'p-4 rounded-lg border bg-yellow-100 border-yellow-400 text-yellow-700';
+        } else {
+          el.className = 'p-4 rounded-lg border bg-blue-100 border-blue-400 text-blue-700';
         }
 
-        // ========== IMPORT ==========
-        function importerBalance() {
-            const agence = document.getElementById('agenceSelect').value;
-            
-            if (!API_URL) {
-                alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
-                switchTab('config');
-                return;
-            }
-            
-            if (!agence) {
-                alert('❌ Veuillez sélectionner une agence');
-                return;
-            }
-            
-            if (!currentData || currentData.length === 0) {
-                alert('❌ Aucune donnée à importer. Veuillez d\'abord charger un fichier Excel.');
-                return;
-            }
-            
-            showLoading();
-            
-            const donnees = {
-                agence: agence,
-                data: currentData,
-                metadata: currentMetadata,
-                user: USER_EMAIL,
-                timestamp: new Date().toISOString()
-            };
-            
-            console.log('📤 Envoi de', currentData.length, 'clients pour l\'agence', agence);
-            
-            const callbackName = 'jsonpCallback_import_' + Date.now();
-            
-            window[callbackName] = function(response) {
-                console.log('✅ Réponse reçue:', response);
-                hideLoading();
-                
-                if (response.success) {
-                    alert(`✅ Balance importée avec succès !\n\nVersion: ${response.version}\nAgence: ${response.agenceNom}\nNombre de clients: ${response.nbClients}`);
-                    
-                    document.getElementById('fileInput').value = '';
-                    document.getElementById('fileInfo').classList.add('hidden');
-                    currentData = [];
-                    currentMetadata = {};
-                    
-                    chargerVersions();
-                } else {
-                    alert(`❌ Erreur lors de l'import:\n${response.message}`);
-                }
-                
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
-            
-            const jsonData = JSON.stringify(donnees);
-            const encodedData = encodeURIComponent(jsonData);
-            
-            const script = document.createElement('script');
-            script.src = `${API_URL}?action=import&callback=${callbackName}&data=${encodedData}`;
-            
-            script.onerror = function() {
-                console.error('❌ Erreur de chargement du script');
-                hideLoading();
-                alert('❌ Erreur de connexion. Vérifiez votre URL API.');
-                delete window[callbackName];
-            };
-            
-            document.body.appendChild(script);
-        }
+        el.textContent = message;
+        el.classList.add('fade-in');
+      }
 
-        // ========== CHARGEMENT ET ANALYSE (JSONP) ==========
-        function chargerEtAnalyser() {
-            if (!API_URL) {
-                alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
-                switchTab('config');
-                return;
-            }
-            
-            const agence = document.getElementById('analyseAgence').value;
-            const version = document.getElementById('analyseVersion').value;
-            
-            if (!agence) {
-                alert('❌ Veuillez sélectionner une agence');
-                return;
-            }
-            
-            showLoading();
-            
-            const callbackName = 'jsonpCallback_balance_' + Date.now();
-            
-            window[callbackName] = function(result) {
-                console.log('✅ Balance reçue:', result);
-                hideLoading();
-                
-                if (result.success) {
-                    analysisData = result.clients || [];
-                    
-                    if (analysisData.length === 0) {
-                        alert('⚠️ Aucune donnée disponible pour cette agence/version');
-                        return;
-                    }
-                    
-                    analyserDonnees();
-                    document.getElementById('analysisResults').classList.remove('hidden');
-                } else {
-                    alert('❌ Erreur : ' + result.message);
-                }
-                
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
-            
-            const script = document.createElement('script');
-            script.src = `${API_URL}?action=getBalance&agence=${agence}&version=${version}&callback=${callbackName}`;
-            
-            script.onerror = function() {
-                console.error('❌ Erreur de chargement');
-                hideLoading();
-                alert('❌ Erreur de connexion');
-                delete window[callbackName];
-            };
-            
-            document.body.appendChild(script);
-        }
-
-        function analyserDonnees() {
-            try {
-                const soldesDebiteurs = analysisData.filter(c => c.solde > 0).reduce((sum, c) => sum + c.solde, 0);
-                const soldesCrediteurs = Math.abs(analysisData.filter(c => c.solde < 0).reduce((sum, c) => sum + c.solde, 0));
-                const balanceTotale = soldesDebiteurs - soldesCrediteurs;
-                
-                const clientsCritiques = analysisData.filter(c => 
-                    (c.echeance90 || 0) + (c.echeancePlus120 || 0) > 1000 || c.solde > 10000
-                ).length;
-                
-                const montantPlus90 = analysisData.reduce((sum, c) => 
-                    sum + (c.echeance90 || 0) + (c.echeancePlus120 || 0), 0
-                );
-                const tauxRisque = soldesDebiteurs > 0 ? ((montantPlus90 / soldesDebiteurs) * 100).toFixed(1) : 0;
-
-                document.getElementById('soldesDebiteurs').textContent = formatCurrency(soldesDebiteurs);
-                document.getElementById('soldesCrediteurs').textContent = formatCurrency(soldesCrediteurs);
-                document.getElementById('balanceTotale').textContent = formatCurrency(balanceTotale);
-                document.getElementById('clientsCritiques').textContent = clientsCritiques;
-                document.getElementById('tauxRisque').textContent = tauxRisque + '%';
-
-                displayClientsTable();
-                displayCharts();
-            } catch (error) {
-                console.error('Erreur analyserDonnees:', error);
-                alert('❌ Erreur lors de l\'analyse : ' + error.message);
-            }
-        }
-
-        function displayClientsTable() {
-            const tbody = document.getElementById('clientsTableBody');
-            tbody.innerHTML = '';
-
-            const sortedData = [...analysisData].sort((a, b) => b.solde - a.solde);
-
-            sortedData.forEach(client => {
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50';
-
-                const montantPlus90 = (client.echeance90 || 0) + (client.echeancePlus120 || 0);
-                let risqueClass = 'bg-green-100 text-green-800';
-                let risqueText = 'Faible';
-                
-                if (montantPlus90 > 5000 || client.solde > 20000) {
-                    risqueClass = 'bg-red-100 text-red-800';
-                    risqueText = 'Élevé';
-                } else if (montantPlus90 > 3000 || client.solde > 10000) {
-                    risqueClass = 'bg-orange-100 text-orange-800';
-                    risqueText = 'Moyen';
-                }
-
-                row.innerHTML = `
-                    <td class="px-4 py-3 font-mono text-sm">${client.codeClient}</td>
-                    <td class="px-4 py-3">${client.nomClient}</td>
-                    <td class="px-4 py-3 text-right font-semibold ${client.solde > 0 ? 'text-red-600' : 'text-green-600'}">
-                        ${formatCurrency(client.solde)}
-                    </td>
-                    <td class="px-4 py-3 text-right">${formatCurrency(client.echeance0 || 0)}</td>
-                    <td class="px-4 py-3 text-right">${formatCurrency(client.echeance30 || 0)}</td>
-                    <td class="px-4 py-3 text-right">${formatCurrency(client.echeance60 || 0)}</td>
-                    <td class="px-4 py-3 text-right">${formatCurrency(client.echeance90 || 0)}</td>
-                    <td class="px-4 py-3 text-right">${formatCurrency(client.echeancePlus120 || 0)}</td>
-                    <td class="px-4 py-3 text-right">${formatCurrency(client.paiement || 0)}</td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="px-2 py-1 rounded text-xs font-semibold ${risqueClass}">${risqueText}</span>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function displayCharts() {
-            try {
-                const totalE0 = analysisData.reduce((sum, c) => sum + (c.echeance0 || 0), 0);
-                const totalE30 = analysisData.reduce((sum, c) => sum + (c.echeance30 || 0), 0);
-                const totalE60 = analysisData.reduce((sum, c) => sum + (c.echeance60 || 0), 0);
-                const totalE90 = analysisData.reduce((sum, c) => sum + (c.echeance90 || 0), 0);
-                const totalE120 = analysisData.reduce((sum, c) => sum + (c.echeancePlus120 || 0), 0);
-
-                const ctxAge = document.getElementById('ageChart').getContext('2d');
-                if (ageChartInstance) ageChartInstance.destroy();
-                ageChartInstance = new Chart(ctxAge, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['0-30j', '30-60j', '60-90j', '90-120j', '>120j'],
-                        datasets: [{
-                            data: [totalE0, totalE30, totalE60, totalE90, totalE120],
-                            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#7c3aed']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: { position: 'bottom' },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.label + ': ' + formatCurrency(context.raw);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                const top10 = [...analysisData]
-                    .filter(c => c.solde > 0)
-                    .sort((a, b) => b.solde - a.solde)
-                    .slice(0, 10);
-
-                const ctxTop = document.getElementById('topClientsChart').getContext('2d');
-                if (topClientsChartInstance) topClientsChartInstance.destroy();
-                topClientsChartInstance = new Chart(ctxTop, {
-                    type: 'bar',
-                    data: {
-                        labels: top10.map(c => c.nomClient.substring(0, 20)),
-                        datasets: [{
-                            label: 'Solde (€)',
-                            data: top10.map(c => c.solde),
-                            backgroundColor: '#3b82f6'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        indexAxis: 'y',
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return formatCurrency(context.raw);
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return formatCurrency(value);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Erreur displayCharts:', error);
-            }
-        }
-
-        // ========== VERSIONS (JSONP) ==========
-        function chargerVersions() {
-            if (!API_URL) return;
-            
-            const agence = document.getElementById('versionsAgence').value;
-            if (!agence) {
-                document.getElementById('versionsList').innerHTML = `
-                    <div class="bg-gray-50 border rounded-lg p-4">
-                        <p class="text-gray-600">Veuillez sélectionner une agence</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            showLoading();
-            
-            const callbackName = 'jsonpCallback_versions_' + Date.now();
-            
-            window[callbackName] = function(result) {
-                console.log('✅ Versions reçues:', result);
-                hideLoading();
-                
-                if (result.success && result.versions) {
-                    displayVersionsList(result.versions);
-                    
-                    const selectAnalyse = document.getElementById('analyseVersion');
-                    selectAnalyse.innerHTML = '<option value="latest">Dernière version</option>';
-                    result.versions.forEach(v => {
-                        const option = document.createElement('option');
-                        option.value = v.version;
-                        option.textContent = `${v.version} - ${v.date} ${v.heure}`;
-                        selectAnalyse.appendChild(option);
-                    });
-                } else {
-                    document.getElementById('versionsList').innerHTML = `
-                        <div class="bg-gray-50 border rounded-lg p-4">
-                            <p class="text-gray-600">Aucune version trouvée</p>
-                        </div>
-                    `;
-                }
-                
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
-            
-            const script = document.createElement('script');
-            script.src = `${API_URL}?action=getVersions&agence=${agence}&callback=${callbackName}`;
-            
-            script.onerror = function() {
-                console.error('❌ Erreur');
-                hideLoading();
-                delete window[callbackName];
-            };
-            
-            document.body.appendChild(script);
-        }
-
-        function displayVersionsList(versions) {
-            const container = document.getElementById('versionsList');
-            
-            if (versions.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-gray-50 border rounded-lg p-4">
-                        <p class="text-gray-600">Aucune version trouvée</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = versions.map(version => `
-                <div class="version-card" onclick="chargerVersionSpecifique('${version.agence}', '${version.version}')">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="font-semibold text-lg">${version.version}</h3>
-                            <p class="text-sm text-gray-600">Par ${version.utilisateur || 'Inconnu'}</p>
-                        </div>
-                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            ${version.date} ${version.heure}
-                        </span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <span>📊 ${version.nbClients
-
-|| 0} clients</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function chargerVersionSpecifique(agence, version) {
-            if (!confirm(`Charger la version ${version} de l'agence ${agence} ?`)) return;
-            
-            document.getElementById('analyseAgence').value = agence;
-            document.getElementById('analyseVersion').value = version;
-            
-            switchTab('analyse');
-            
-            setTimeout(() => chargerEtAnalyser(), 300);
-        }
-
-        // ========== HISTORIQUE (JSONP) ==========
-        function chargerHistorique() {
-            if (!API_URL) {
-                alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
-                return;
-            }
-            
-            showLoading();
-            
-            const callbackName = 'jsonpCallback_historique_' + Date.now();
-            
-            window[callbackName] = function(result) {
-                console.log('✅ Historique reçu:', result);
-                hideLoading();
-                
-                if (result.success && result.historique) {
-                    displayHistorique(result.historique);
-                } else {
-                    document.getElementById('historiqueList').innerHTML = `
-                        <div class="bg-gray-50 border rounded-lg p-4">
-                            <p class="text-gray-600">Aucun historique disponible</p>
-                        </div>
-                    `;
-                }
-                
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
-            
-            const script = document.createElement('script');
-            script.src = `${API_URL}?action=getHistorique&callback=${callbackName}`;
-            
-            script.onerror = function() {
-                console.error('❌ Erreur de chargement de l\'historique');
-                hideLoading();
-                document.getElementById('historiqueList').innerHTML = `
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p class="text-red-800">❌ Erreur lors du chargement de l'historique</p>
-                    </div>
-                `;
-                delete window[callbackName];
-            };
-            
-            document.body.appendChild(script);
-        }
-
-        function displayHistorique(historique) {
-            const container = document.getElementById('historiqueList');
-            
-            if (historique.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-gray-50 border rounded-lg p-4">
-                        <p class="text-gray-600">Aucun historique disponible</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <div class="overflow-x-auto bg-white border rounded-lg">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-3 text-left">Date</th>
-                                <th class="px-4 py-3 text-left">Heure</th>
-                                <th class="px-4 py-3 text-left">Agence</th>
-                                <th class="px-4 py-3 text-left">Version</th>
-                                <th class="px-4 py-3 text-left">Utilisateur</th>
-                                <th class="px-4 py-3 text-right">Nb Clients</th>
-                                <th class="px-4 py-3 text-left">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${historique.map(h => `
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-3">${h.date}</td>
-                                    <td class="px-4 py-3">${h.heure}</td>
-                                    <td class="px-4 py-3">${h.agence}</td>
-                                    <td class="px-4 py-3 font-mono">${h.version}</td>
-                                    <td class="px-4 py-3">${h.utilisateur}</td>
-                                    <td class="px-4 py-3 text-right">${h.nbClients}</td>
-                                    <td class="px-4 py-3">${h.action}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        // ========== EXPORT ==========
-        function exportToExcel() {
-            if (analysisData.length === 0) {
-                alert('❌ Aucune donnée à exporter');
-                return;
-            }
-            
-            try {
-                const ws = XLSX.utils.json_to_sheet(analysisData.map(c => ({
-                    'Code Client': c.codeClient,
-                    'Nom Client': c.nomClient,
-                    'Solde': c.solde,
-                    '0-30j': c.echeance0 || 0,
-                    '30-60j': c.echeance30 || 0,
-                    '60-90j': c.echeance60 || 0,
-                    '90-120j': c.echeance90 || 0,
-                    '>120j': c.echeancePlus120 || 0,
-                    'Paiement': c.paiement || 0
-                })));
-                
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Balance Âgée');
-                
-                const agence = document.getElementById('analyseAgence').value;
-                const version = document.getElementById('analyseVersion').value;
-                const fileName = `Balance_Agee_${agence}_${version}_${new Date().toISOString().split('T')[0]}.xlsx`;
-                XLSX.writeFile(wb, fileName);
-                
-                alert('✅ Export Excel réussi !');
-            } catch (error) {
-                console.error('Erreur exportToExcel:', error);
-                alert('❌ Erreur lors de l\'export : ' + error.message);
-            }
-        }
-
-        // ========== UTILITAIRES ==========
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: 'EUR',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(value);
-        }
-
-        function showSaveIndicator() {
-            const indicator = document.getElementById('saveIndicator');
-            if (indicator) {
-                indicator.style.display = 'block';
-                setTimeout(() => {
-                    indicator.style.display = 'none';
-                }, 2000);
-            }
-        }
+      function showError(elementId, message) {
+        const el = document.getElementById(elementId);
+        el.textContent = message;
+        el.classList.remove('hidden');
+        el.classList.add('fade-in');
+      }
     </script>
-</body>
-</html>
-
-
-                            
-
-
-
-
+  </body>
+  </html>
