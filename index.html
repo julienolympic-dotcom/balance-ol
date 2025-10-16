@@ -528,88 +528,140 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // ========== PARSING EXCEL AMÉLIORÉ ==========
-        function parseExcelData(data) {
-            if (data.length < 2) {
-                console.error('❌ Fichier vide ou incomplet');
-                return [];
+       // ========== PARSING EXCEL POUR FORMAT OL (BALANCE ÂGÉE) ==========
+function parseExcelData(data) {
+    if (data.length < 3) {
+        console.error('❌ Fichier vide ou incomplet');
+        return [];
+    }
+    
+    console.log('📊 Nombre de lignes:', data.length);
+    console.log('📊 Première ligne:', data[0]);
+    console.log('📊 Deuxième ligne:', data[1]);
+    console.log('📊 Troisième ligne (données):', data[2]);
+    
+    // Ligne 0 : Titre "BALANCE AGEE : CLIENTS 09"
+    // Ligne 1 : En-têtes réels
+    // Ligne 2+ : Données
+    
+    const headerRow = 1;
+    const dataStartRow = 2;
+    
+    const headers = data[headerRow];
+    console.log('📋 En-têtes bruts:', headers);
+    
+    // Normaliser les en-têtes (supprimer retours à la ligne et espaces)
+    const normalizedHeaders = headers.map(h => 
+        String(h)
+            .replace(/\n/g, ' ')  // Remplacer retours à la ligne par espace
+            .replace(/\s+/g, ' ')  // Remplacer espaces multiples par un seul
+            .toLowerCase()
+            .trim()
+    );
+    
+    console.log('📋 En-têtes normalisés:', normalizedHeaders);
+    
+    // Recherche intelligente des colonnes
+    const findColumn = (keywords) => {
+        for (let keyword of keywords) {
+            const index = normalizedHeaders.findIndex(h => h.includes(keyword));
+            if (index !== -1) {
+                console.log(`✅ Colonne "${keyword}" trouvée à l'index ${index}: "${headers[index]}"`);
+                return index;
             }
-            
-            // Afficher les en-têtes pour debug
-            console.log('📋 En-têtes détectés:', data[0]);
-            
-            const headers = data[0].map(h => String(h).toLowerCase().trim());
-            console.log('📋 En-têtes normalisés:', headers);
-            
-            // Recherche intelligente des colonnes
-            const findColumn = (keywords) => {
-                for (let keyword of keywords) {
-                    const index = headers.findIndex(h => h.includes(keyword));
-                    if (index !== -1) {
-                        console.log(`✅ Colonne "${keyword}" trouvée à l'index ${index}`);
-                        return index;
-                    }
-                }
-                console.warn(`⚠️ Aucune colonne trouvée pour: ${keywords.join(', ')}`);
-                return -1;
-            };
-            
-            // Mapping des colonnes avec plusieurs variantes possibles
-            const codeIndex = findColumn(['compte', 'code', 'client']);
-            const nomIndex = findColumn(['intitulé', 'intitule', 'nom', 'raison', 'libellé', 'libelle']);
-            const soldeIndex = findColumn(['solde']);
-            
-            // Recherche des échéances (format "Echue depuis De :X à Y")
-            const e0Index = findColumn(['0 à 29', '0à29', '0-30', '0 30', 'courant', '30j']);
-            const e30Index = findColumn(['30 à 59', '30à59', '30-60', '30 60', '60j']);
-            const e60Index = findColumn(['60 à 89', '60à89', '60-90', '60 90', '90j']);
-            const e90Index = findColumn(['90 à 119', '90à119', '90-120', '90 120', '120j']);
-            const e120Index = findColumn(['120 à +', '120à+', '120', '>120', 'plus120', '+ 120', 'sup 120']);
-            
-            const paiementIndex = findColumn(['paiement', 'règlement', 'reglement', 'encaissement']);
-            
-            // Vérification des colonnes obligatoires
-            if (codeIndex === -1 || nomIndex === -1) {
-                console.error('❌ Colonnes obligatoires manquantes (Code ou Nom)');
-                alert('❌ Format invalide : colonnes "Compte" et "Intitulé" introuvables');
-                return [];
-            }
-            
-            // Parser les données
-            const parsedData = data.slice(1)
-                .map((row, index) => {
-                    const client = {
-                                                codeClient: String(row[codeIndex] || '').trim(),
-                        nomClient: String(row[nomIndex] || '').trim(),
-                        solde: soldeIndex !== -1 ? parseFloat(row[soldeIndex]) || 0 : 0,
-                        echeance0: e0Index !== -1 ? parseFloat(row[e0Index]) || 0 : 0,
-                        echeance30: e30Index !== -1 ? parseFloat(row[e30Index]) || 0 : 0,
-                        echeance60: e60Index !== -1 ? parseFloat(row[e60Index]) || 0 : 0,
-                        echeance90: e90Index !== -1 ? parseFloat(row[e90Index]) || 0 : 0,
-                        echeancePlus120: e120Index !== -1 ? parseFloat(row[e120Index]) || 0 : 0,
-                        paiement: paiementIndex !== -1 ? parseFloat(row[paiementIndex]) || 0 : 0
-                    };
-                    
-                    // Log de la première ligne pour vérification
-                    if (index === 0) {
-                        console.log('📊 Premier client parsé:', client);
-                    }
-                    
-                    return client;
-                })
-                .filter(c => {
-                    // Filtrer les lignes vides ou invalides
-                    const isValid = c.codeClient && c.nomClient && c.codeClient !== '' && c.nomClient !== '';
-                    if (!isValid && c.codeClient) {
-                        console.warn('⚠️ Ligne ignorée:', c);
-                    }
-                    return isValid;
-                });
-            
-            console.log(`✅ ${parsedData.length} clients valides détectés`);
-            
-            return parsedData;
         }
+        console.warn(`⚠️ Aucune colonne trouvée pour: ${keywords.join(', ')}`);
+        return -1;
+    };
+    
+    // Mapping des colonnes
+    const codeIndex = findColumn(['compte', 'code']);
+    const nomIndex = findColumn(['intitulé', 'intitule']);
+    const soldeIndex = findColumn(['solde']);
+    
+    // Recherche des échéances (dans l'ordre du fichier)
+    const e120Index = findColumn(['120 à +', '120 à', 'de :120']);
+    const e90Index = findColumn(['90 à 119', 'de :90']);
+    const e60Index = findColumn(['60 à 89', 'de :60']);
+    const e30Index = findColumn(['30 à 59', 'de :30']);
+    const e0Index = findColumn(['0 à 29', 'de :0']);
+    
+    const paiementIndex = findColumn(['paiement']);
+    
+    console.log('📊 Mapping des colonnes:');
+    console.log(`  - Code: ${codeIndex}`);
+    console.log(`  - Nom: ${nomIndex}`);
+    console.log(`  - Solde: ${soldeIndex}`);
+    console.log(`  - E120+: ${e120Index}`);
+    console.log(`  - E90-119: ${e90Index}`);
+    console.log(`  - E60-89: ${e60Index}`);
+    console.log(`  - E30-59: ${e30Index}`);
+    console.log(`  - E0-29: ${e0Index}`);
+    console.log(`  - Paiement: ${paiementIndex}`);
+    
+    // Vérification des colonnes obligatoires
+    if (codeIndex === -1 || nomIndex === -1 || soldeIndex === -1) {
+        console.error('❌ Colonnes obligatoires manquantes');
+        alert('❌ Format invalide : colonnes "Compte", "Intitulé" ou "Solde" introuvables.');
+        return [];
+    }
+    
+    // Parser les données
+    const parsedData = [];
+    
+    for (let i = dataStartRow; i < data.length; i++) {
+        const row = data[i];
+        
+        // Ignorer les lignes vides
+        if (!row || row.length === 0 || !row[codeIndex]) continue;
+        
+        const codeClient = String(row[codeIndex] || '').trim();
+        const nomClient = String(row[nomIndex] || '').trim();
+        
+        // Ignorer si pas de code client
+        if (!codeClient || codeClient === '') continue;
+        
+        const client = {
+            codeClient: codeClient,
+            nomClient: nomClient,
+            solde: parseFloat(row[soldeIndex]) || 0,
+            echeance0: e0Index !== -1 ? (parseFloat(row[e0Index]) || 0) : 0,
+            echeance30: e30Index !== -1 ? (parseFloat(row[e30Index]) || 0) : 0,
+            echeance60: e60Index !== -1 ? (parseFloat(row[e60Index]) || 0) : 0,
+            echeance90: e90Index !== -1 ? (parseFloat(row[e90Index]) || 0) : 0,
+            echeancePlus120: e120Index !== -1 ? (parseFloat(row[e120Index]) || 0) : 0,
+            paiement: paiementIndex !== -1 ? (parseFloat(row[paiementIndex]) || 0) : 0
+        };
+        
+        // Log des 3 premiers clients pour vérification
+        if (i <= dataStartRow + 2) {
+            console.log(`📊 Client ${i - dataStartRow + 1}:`, client);
+        }
+        
+        parsedData.push(client);
+    }
+    
+    console.log(`✅ ${parsedData.length} clients valides détectés`);
+    
+    if (parsedData.length === 0) {
+        alert('❌ Aucune donnée valide détectée dans le fichier.');
+        return [];
+    }
+    
+    // Afficher un résumé
+    const totalSolde = parsedData.reduce((sum, c) => sum + c.solde, 0);
+    const soldesDebiteurs = parsedData.filter(c => c.solde > 0).reduce((sum, c) => sum + c.solde, 0);
+    const soldesCrediteurs = Math.abs(parsedData.filter(c => c.solde < 0).reduce((sum, c) => sum + c.solde, 0));
+    
+    console.log('📊 RÉSUMÉ:');
+    console.log(`  - Nombre de clients: ${parsedData.length}`);
+    console.log(`  - Solde total: ${totalSolde.toFixed(2)} €`);
+    console.log(`  - Soldes débiteurs: ${soldesDebiteurs.toFixed(2)} €`);
+    console.log(`  - Soldes créditeurs: ${soldesCrediteurs.toFixed(2)} €`);
+    
+    return parsedData;
+}
+
 
         // ========== IMPORT ==========
         async function importerBalance() {
@@ -1108,3 +1160,4 @@
 </html>
 
                             
+
