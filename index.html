@@ -686,63 +686,84 @@ function parseExcelData(data) {
 
 
         // ========== IMPORT ==========
-        async function importerBalance() {
-            if (!API_URL) {
-                alert('❌ Veuillez d\'abord configurer l\'URL de votre API');
-                switchTab('config');
-                return;
-            }
+        function importerBalance() {
+    const agence = document.getElementById('agenceSelect').value;
+    
+    if (!agence) {
+        alert('❌ Veuillez sélectionner une agence');
+        return;
+    }
+    
+    if (!CURRENT_DATA || CURRENT_DATA.length === 0) {
+        alert('❌ Aucune donnée à importer. Veuillez d\'abord charger un fichier Excel.');
+        return;
+    }
+    
+    // Afficher le loader
+    document.getElementById('importLoader').classList.remove('hidden');
+    
+    // Préparer les données
+    const donnees = {
+        action: 'import',
+        agence: agence,
+        data: CURRENT_DATA,
+        metadata: CURRENT_METADATA,
+        user: USER_EMAIL,
+        timestamp: new Date().toISOString()
+    };
+    
+    console.log('📤 Envoi des données:', donnees);
+    
+    // Créer un callback unique pour JSONP
+    const callbackName = 'jsonpCallback_import_' + Date.now();
+    
+    // Définir la fonction de callback
+    window[callbackName] = function(response) {
+        console.log('✅ Réponse reçue:', response);
+        
+        // Cacher le loader
+        document.getElementById('importLoader').classList.add('hidden');
+        
+        if (response.success) {
+            alert(`✅ Balance importée avec succès !\n\nVersion: ${response.version}\nNombre de clients: ${response.nbClients}`);
             
-            const agence = document.getElementById('agenceSelect').value;
-            if (!agence) {
-                alert('❌ Veuillez sélectionner une agence');
-                return;
-            }
+            // Réinitialiser le formulaire
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').classList.add('hidden');
+            document.getElementById('importBtn').classList.add('hidden');
+            CURRENT_DATA = null;
+            CURRENT_METADATA = null;
             
-            if (currentData.length === 0) {
-                alert('❌ Veuillez d\'abord charger un fichier Excel');
-                return;
+            // Recharger les versions
+            if (typeof chargerVersions === 'function') {
+                chargerVersions();
             }
-            
-            showLoading();
-            
-            try {
-                const payload = {
-                    action: 'importerBalance',
-                    data: currentData,
-                    agence: agence,
-                    email: USER_EMAIL,
-                    nom: USER_NAME
-                };
-                
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(`✅ ${result.message}\nVersion: ${result.version}\nNombre de clients: ${result.nbClients}`);
-                    showSaveIndicator();
-                    
-                    // Réinitialiser
-                    currentData = [];
-                    document.getElementById('fileInfo').classList.add('hidden');
-                    document.getElementById('fileInput').value = '';
-                } else {
-                    alert('❌ Erreur : ' + result.message);
-                }
-            } catch (error) {
-                console.error('❌ Erreur importerBalance:', error);
-                alert('❌ Erreur lors de l\'import : ' + error.message);
-            } finally {
-                hideLoading();
-            }
+        } else {
+            alert(`❌ Erreur lors de l'import:\n${response.message}`);
         }
+        
+        // Nettoyer
+        document.body.removeChild(script);
+        delete window[callbackName];
+    };
+    
+    // Encoder les données en JSON puis en URL
+    const jsonData = JSON.stringify(donnees);
+    const encodedData = encodeURIComponent(jsonData);
+    
+    // Créer la balise script pour JSONP
+    const script = document.createElement('script');
+    script.src = `${API_URL}?callback=${callbackName}&data=${encodedData}`;
+    
+    script.onerror = function() {
+        console.error('❌ Erreur de chargement du script');
+        document.getElementById('importLoader').classList.add('hidden');
+        alert('❌ Erreur de connexion au serveur.\n\nVérifiez votre connexion internet et réessayez.');
+        delete window[callbackName];
+    };
+    
+    document.body.appendChild(script);
+}
 
         // ========== CHARGEMENT ET ANALYSE ==========
         async function chargerEtAnalyser() {
@@ -1182,5 +1203,6 @@ function parseExcelData(data) {
 </html>
 
                             
+
 
 
