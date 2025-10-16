@@ -10,6 +10,18 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .spinner {
       border: 3px solid #f3f3f3;
       border-top: 3px solid #3b82f6;
@@ -24,10 +36,6 @@
     }
     .fade-in {
       animation: fadeIn 0.3s ease-in;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
     }
     .table-container {
       max-height: 600px;
@@ -71,7 +79,7 @@
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <input type="email" id="emailInput" placeholder="votre.email@olympiclocation.fr"
+          <input type="email" id="emailInput" placeholder="votre.email@olympiclocation.com"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
         <button onclick="login()" 
@@ -259,9 +267,9 @@
           
           <div class="space-y-6">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">URL de l'API Google Apps Script</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">URL de l'API Worker</label>
               <input type="text" id="apiUrlInput" 
-                placeholder="https://twilight-resonance-5291.julienolympic.workers.dev"
+                placeholder="https://twilight-resonance-5291.julien-olympiclocation.workers.dev"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
             </div>
 
@@ -285,192 +293,215 @@
   </div>
 
   <script>
-    // ============================================
-    // CONFIGURATION GLOBALE
-    // ============================================
-    let API_URL = 'https://twilight-resonance-5291.julienolympic.workers.dev';
-    let currentUser = null;
-    let currentBalance = [];
+// ============================================
+// CONFIGURATION API
+// ============================================
+const API_CONFIG = {
+    workerUrl: 'https://twilight-resonance-5291.julien-olympiclocation.workers.dev',
+    
+    agencesMap: {
+        '00': 'Gèze',
+        '01': '5 Av',
+        '02': 'Gare St Charles',
+        '03': 'Aubagne',
+        '06': 'La Valentine',
+        '08': 'Toulon',
+        '09': 'Plombières',
+        '12': 'La Garde',
+        '13': 'La Ciotat'
+    }
+};
 
-    const AGENCES_MAP = {
-      '00': 'Gèze',
-      '01': '5 Av',
-      '02': 'Gare St Charles',
-      '03': 'Aubagne',
-      '06': 'La Valentine',
-      '09': 'Plombières',
-      '12': 'La Garde',
-      '13': 'La Ciotat',
-      '08': 'Toulon'
-    };
+// État global
+let currentUser = null;
+let currentAgence = null;
+let currentData = null;
 
-    // ============================================
-    // INITIALISATION
-    // ============================================
-    window.onload = function() {
-      console.log('🚀 Application démarrée');
+// ============================================
+// INITIALISATION
+// ============================================
+window.onload = function() {
+  console.log('🚀 Application démarrée');
+  
+  // Charger config
+  const savedUrl = localStorage.getItem('apiUrl');
+  if (savedUrl) {
+    API_CONFIG.workerUrl = savedUrl;
+    document.getElementById('apiUrlInput').value = savedUrl;
+  }
+
+  // Vérifier session
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    afficherMainApp();
+  }
+};
+
+// ============================================
+// AUTHENTIFICATION
+// ============================================
+async function login() {
+  const email = document.getElementById('emailInput').value.trim();
+  
+  if (!email) {
+    showMessage('loginError', 'Veuillez entrer votre email', 'error');
+    document.getElementById('loginError').classList.remove('hidden');
+    return;
+  }
+
+  try {
+    showLoading('Authentification en cours...');
+    
+    const response = await fetch(`${API_CONFIG.workerUrl}?action=authentifier&email=${encodeURIComponent(email)}`);
+    
+    if (!response.ok) {
+      throw new Error('Erreur réseau');
+    }
+    
+    const result = await response.json();
+    
+    hideLoading();
+    
+    if (result.success) {
+      currentUser = result;
+      localStorage.setItem('currentUser', JSON.stringify(result));
       
-      // Charger config
-      const savedUrl = localStorage.getItem('apiUrl');
-      if (savedUrl) {
-        API_URL = savedUrl;
-        document.getElementById('apiUrlInput').value = savedUrl;
-      }
-
-      // Vérifier session
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        afficherMainApp();
-      }
-    };
-
-    // ============================================
-    // AUTHENTIFICATION
-    // ============================================
-    async function login() {
-      const email = document.getElementById('emailInput').value.trim();
+      document.getElementById('loginError').classList.add('hidden');
+      afficherMainApp();
       
-      if (!email) {
-        showError('loginError', 'Veuillez entrer votre email');
-        return;
-      }
+      showSuccess(`Bienvenue ${result.nom} !`);
+    } else {
+      document.getElementById('loginError').textContent = result.message || 'Email non autorisé';
+      document.getElementById('loginError').classList.remove('hidden');
+    }
+    
+  } catch (error) {
+    hideLoading();
+    document.getElementById('loginError').textContent = 'Erreur de connexion : ' + error.message;
+    document.getElementById('loginError').classList.remove('hidden');
+  }
+}
 
-      try {
-        const response = await fetch(`${API_URL}?action=authentifier&email=${encodeURIComponent(email)}`);
-        const data = await response.json();
+function logout() {
+  localStorage.removeItem('currentUser');
+  currentUser = null;
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('userInfo').classList.add('hidden');
+  document.getElementById('emailInput').value = '';
+}
 
-        if (data.success) {
-          currentUser = data;
-          localStorage.setItem('currentUser', JSON.stringify(data));
-          afficherMainApp();
-        } else {
-          showError('loginError', data.message || 'Email non autorisé');
+function afficherMainApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('userInfo').classList.remove('hidden');
+  document.getElementById('userName').textContent = currentUser.nom;
+  document.getElementById('userEmail').textContent = currentUser.email;
+
+  // Remplir les selects d'agences
+  remplirAgences();
+}
+
+function remplirAgences() {
+  const agences = currentUser.agencesArray || [];
+  const select1 = document.getElementById('agenceSelect');
+  const select2 = document.getElementById('consultAgenceSelect');
+
+  select1.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
+  select2.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
+
+  agences.forEach(code => {
+    const nom = API_CONFIG.agencesMap[code] || code;
+    select1.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
+    select2.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
+  });
+}
+
+// ============================================
+// GESTION DES ONGLETS
+// ============================================
+function switchTab(tabName) {
+  console.log('Switching to tab:', tabName);
+  
+  // Désactiver tous les onglets
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('tab-active'));
+
+  // Activer l'onglet sélectionné
+  document.getElementById('content-' + tabName).classList.remove('hidden');
+  document.getElementById('tab-' + tabName).classList.add('tab-active');
+}
+
+// ============================================
+// IMPORT DE FICHIER
+// ============================================
+async function importerFichier() {
+  const agence = document.getElementById('agenceSelect').value;
+  const fileInput = document.getElementById('fileInput');
+  const file = fileInput.files[0];
+
+  if (!agence) {
+    showMessage('importMessage', 'Veuillez sélectionner une agence', 'error');
+    return;
+  }
+
+  if (!file) {
+    showMessage('importMessage', 'Veuillez sélectionner un fichier', 'error');
+    return;
+  }
+
+  document.getElementById('importLoader').classList.remove('hidden');
+  document.getElementById('importMessage').classList.add('hidden');
+
+  try {
+    const data = await lireFichierExcel(file);
+    console.log('📊 Données brutes Excel:', data);
+
+    if (!data || !data.clients || data.clients.length === 0) {
+      throw new Error('Aucune donnée valide trouvée dans le fichier');
+    }
+
+    console.log('📤 Envoi de', data.clients.length, 'clients pour l\'agence', agence);
+
+    const response = await fetch(API_CONFIG.workerUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'import',
+        data: data.clients,
+        agence: agence,
+        user: currentUser.email,
+        metadata: {
+          userName: currentUser.nom,
+          dateImport: new Date().toISOString()
         }
-      } catch (error) {
-        console.error('Erreur login:', error);
-        showError('loginError', 'Erreur de connexion : ' + error.message);
-      }
+      })
+    });
+
+    const result = await response.json();
+    console.log('✅ Réponse reçue:', result);
+
+    if (result.success) {
+      showMessage('importMessage', 
+        `✅ Import réussi ! ${result.nbClients} clients importés (${result.version || 'v1'})`, 
+        'success');
+      fileInput.value = '';
+    } else {
+      showMessage('importMessage', '❌ ' + (result.message || 'Erreur inconnue'), 'error');
     }
 
-    function logout() {
-      localStorage.removeItem('currentUser');
-      currentUser = null;
-      document.getElementById('loginScreen').classList.remove('hidden');
-      document.getElementById('mainApp').classList.add('hidden');
-      document.getElementById('userInfo').classList.add('hidden');
-    }
+  } catch (error) {
+    console.error('❌ Erreur import:', error);
+    showMessage('importMessage', '❌ Erreur : ' + error.message, 'error');
+  } finally {
+    document.getElementById('importLoader').classList.add('hidden');
+  }
+}
 
-    function afficherMainApp() {
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('mainApp').classList.remove('hidden');
-      document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('userName').textContent = currentUser.nom;
-      document.getElementById('userEmail').textContent = currentUser.email;
-
-      // Remplir les selects d'agences
-      remplirAgences();
-    }
-
-    function remplirAgences() {
-      const agences = currentUser.agencesArray || [];
-      const select1 = document.getElementById('agenceSelect');
-      const select2 = document.getElementById('consultAgenceSelect');
-
-      select1.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
-      select2.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
-
-      agences.forEach(code => {
-        const nom = AGENCES_MAP[code] || code;
-        select1.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
-        select2.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
-      });
-    }
-
-    // ============================================
-    // GESTION DES ONGLETS
-    // ============================================
-    function switchTab(tabName) {
-      console.log('Switching to tab:', tabName);
-      
-      // Désactiver tous les onglets
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('tab-active'));
-
-      // Activer l'onglet sélectionné
-      document.getElementById('content-' + tabName).classList.remove('hidden');
-      document.getElementById('tab-' + tabName).classList.add('tab-active');
-    }
-
-    // ============================================
-    // IMPORT DE FICHIER
-    // ============================================
-    async function importerFichier() {
-      const agence = document.getElementById('agenceSelect').value;
-      const fileInput = document.getElementById('fileInput');
-      const file = fileInput.files[0];
-
-      if (!agence) {
-        showMessage('importMessage', 'Veuillez sélectionner une agence', 'error');
-        return;
-      }
-
-      if (!file) {
-        showMessage('importMessage', 'Veuillez sélectionner un fichier', 'error');
-        return;
-      }
-
-      document.getElementById('importLoader').classList.remove('hidden');
-      document.getElementById('importMessage').classList.add('hidden');
-
-      try {
-        const data = await lireFichierExcel(file);
-        console.log('📊 Données brutes Excel:', data);
-
-        if (!data || !data.clients || data.clients.length === 0) {
-          throw new Error('Aucune donnée valide trouvée dans le fichier');
-        }
-
-        console.log('📤 Envoi de', data.clients.length, 'clients pour l\'agence', agence);
-
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'import',
-            data: data.clients,
-            agence: agence,
-            user: currentUser.email,
-            metadata: {
-              userName: currentUser.nom,
-              dateImport: new Date().toISOString()
-            }
-          })
-        });
-
-        const result = await response.json();
-        console.log('✅ Réponse reçue:', result);
-
-        if (result.success) {
-          showMessage('importMessage', 
-            `✅ Import réussi ! ${result.nbClients} clients importés (${result.version})`, 
-            'success');
-          fileInput.value = '';
-        } else {
-          showMessage('importMessage', '❌ ' + (result.message || 'Erreur inconnue'), 'error');
-        }
-
-      } catch (error) {
-        console.error('❌ Erreur import:', error);
-        showMessage('importMessage', '❌ Erreur : ' + error.message, 'error');
-      } finally {
-        document.getElementById('importLoader').classList.add('hidden');
-      }
-    }
-
-    async function lireFichierExcel(file) {
+async function lireFichierExcel(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -622,7 +653,7 @@
 
         console.log('✅ TOTAL:', clients.length, 'clients valides détectés');
 
-        if (clients.length === 0) {
+                if (clients.length === 0) {
           reject(new Error('Aucun client valide trouvé dans le fichier'));
           return;
         }
@@ -650,242 +681,306 @@
   });
 }
 
+// ============================================
+// CONSULTATION
+// ============================================
+async function chargerVersions() {
+  const agence = document.getElementById('consultAgenceSelect').value;
+  if (!agence) return;
 
-    // ============================================
-    // CONSULTATION
-    // ============================================
-    async function chargerVersions() {
-      const agence = document.getElementById('consultAgenceSelect').value;
-      if (!agence) return;
+  try {
+    const response = await fetch(`${API_CONFIG.workerUrl}?action=getVersions&agence=${agence}`);
+    const data = await response.json();
 
-      try {
-        const response = await fetch(`${API_URL}?action=getVersions&agence=${agence}`);
-        const data = await response.json();
+    const select = document.getElementById('versionSelect');
+    select.innerHTML = '<option value="latest">Dernière version</option>';
 
-        const select = document.getElementById('versionSelect');
-        select.innerHTML = '<option value="latest">Dernière version</option>';
-
-        if (data.success && data.versions) {
-          data.versions.forEach(v => {
-            select.innerHTML += `<option value="${v.version}">${v.version} - ${v.date} ${v.heure} (${v.nbClients} clients)</option>`;
-          });
-        }
-      } catch (error) {
-        console.error('Erreur chargement versions:', error);
-      }
-    }
-
-    async function chargerBalance() {
-      const agence = document.getElementById('consultAgenceSelect').value;
-      const version = document.getElementById('versionSelect').value;
-
-      if (!agence) {
-        alert('Veuillez sélectionner une agence');
-        return;
-      }
-
-      document.getElementById('consultLoader').classList.remove('hidden');
-      document.getElementById('balanceResults').classList.add('hidden');
-
-      try {
-        const response = await fetch(`${API_URL}?action=getBalance&agence=${agence}&version=${version}`);
-        const data = await response.json();
-
-        if (data.success) {
-          currentBalance = data.clients;
-          afficherBalance(data);
-        } else {
-          alert('Erreur : ' + data.message);
-        }
-      } catch (error) {
-        console.error('Erreur chargement balance:', error);
-        alert('Erreur de chargement : ' + error.message);
-      } finally {
-        document.getElementById('consultLoader').classList.add('hidden');
-      }
-    }
-
-    function afficherBalance(data) {
-      document.getElementById('resultVersion').textContent = data.version;
-      document.getElementById('resultDate').textContent = data.dateImport;
-      document.getElementById('resultNbClients').textContent = data.nbClients;
-      
-      const soldeTotal = data.clients.reduce((sum, c) => sum + (c.solde || 0), 0);
-      document.getElementById('resultSoldeTotal').textContent = formatMontant(soldeTotal);
-
-      afficherClients(data.clients);
-      document.getElementById('balanceResults').classList.remove('hidden');
-    }
-
-    function afficherClients(clients) {
-      const tbody = document.getElementById('clientsTableBody');
-      tbody.innerHTML = '';
-
-      clients.forEach(client => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50';
-        tr.innerHTML = `
-          <td class="px-4 py-2 font-mono text-sm">${client.codeClient}</td>
-          <td class="px-4 py-2">${client.nomClient}</td>
-          <td class="px-4 py-2 text-right font-semibold">${formatMontant(client.solde)}</td>
-          <td class="px-4 py-2 text-right">${formatMontant(client.echeance0)}</td>
-          <td class="px-4 py-2 text-right">${formatMontant(client.echeance30)}</td>
-          <td class="px-4 py-2 text-right">${formatMontant(client.echeance60)}</td>
-          <td class="px-4 py-2 text-right">${formatMontant(client.echeance90)}</td>
-          <td class="px-4 py-2 text-right text-red-600 font-semibold">${formatMontant(client.echeancePlus120)}</td>
-          <td class="px-4 py-2 text-right text-green-600">${formatMontant(client.paiement)}</td>
-        `;
-        tbody.appendChild(tr);
+    if (data.success && data.versions) {
+      data.versions.forEach(v => {
+        select.innerHTML += `<option value="${v.version}">${v.version} - ${v.date} ${v.heure} (${v.nbClients} clients)</option>`;
       });
     }
+  } catch (error) {
+    console.error('Erreur chargement versions:', error);
+  }
+}
 
-    function filtrerClients() {
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = currentBalance.filter(c => 
-        c.codeClient.toLowerCase().includes(search) || 
-        c.nomClient.toLowerCase().includes(search)
-        );
-        afficherClients(filtered);
-      }
+async function chargerBalance() {
+  const agence = document.getElementById('consultAgenceSelect').value;
+  const version = document.getElementById('versionSelect').value;
 
-      // ============================================
-      // HISTORIQUE
-      // ============================================
-      async function chargerHistorique() {
-        document.getElementById('historiqueLoader').classList.remove('hidden');
-        
-        try {
-          const response = await fetch(`${API_URL}?action=getHistorique`);
-          const data = await response.json();
+  if (!agence) {
+    showError('Veuillez sélectionner une agence');
+    return;
+  }
 
-          if (data.success) {
-            afficherHistorique(data.historique);
-          } else {
-            alert('Erreur : ' + data.message);
-          }
-        } catch (error) {
-          console.error('Erreur chargement historique:', error);
-          alert('Erreur de chargement : ' + error.message);
-        } finally {
-          document.getElementById('historiqueLoader').classList.add('hidden');
-        }
-      }
+  document.getElementById('consultLoader').classList.remove('hidden');
+  document.getElementById('balanceResults').classList.add('hidden');
 
-      function afficherHistorique(historique) {
-        const container = document.getElementById('historiqueContent');
-        container.innerHTML = '';
+  try {
+    const response = await fetch(`${API_CONFIG.workerUrl}?action=getBalance&agence=${agence}&version=${version}`);
+    const data = await response.json();
 
-        if (!historique || historique.length === 0) {
-          container.innerHTML = '<p class="text-gray-500 text-center py-8">Aucun historique disponible</p>';
-          return;
-        }
+    if (data.success) {
+      currentData = data.clients;
+      currentAgence = agence;
+      afficherBalance(data);
+    } else {
+      showError('Erreur : ' + data.message);
+    }
+  } catch (error) {
+    console.error('Erreur chargement balance:', error);
+    showError('Erreur de chargement : ' + error.message);
+  } finally {
+    document.getElementById('consultLoader').classList.add('hidden');
+  }
+}
 
-        historique.forEach(h => {
-          const div = document.createElement('div');
-          div.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition';
-          div.innerHTML = `
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="font-semibold text-gray-800">
-                  ${AGENCES_MAP[h.agence] || h.agence} - ${h.version}
-                </p>
-                <p class="text-sm text-gray-600">
-                  ${h.utilisateur} (${h.email})
-                </p>
-                <p class="text-sm text-gray-500">
-                  ${h.nbClients} clients importés
-                </p>
-              </div>
-              <div class="text-right">
-                <p class="text-sm font-medium text-blue-600">${h.date}</p>
-                <p class="text-xs text-gray-500">${h.heure}</p>
-              </div>
-            </div>
-          `;
-          container.appendChild(div);
-        });
-      }
+function afficherBalance(data) {
+  document.getElementById('resultVersion').textContent = data.version;
+  document.getElementById('resultDate').textContent = data.dateImport;
+  document.getElementById('resultNbClients').textContent = data.nbClients;
+  
+  const soldeTotal = data.clients.reduce((sum, c) => sum + (c.solde || 0), 0);
+  document.getElementById('resultSoldeTotal').textContent = formatMontant(soldeTotal);
 
-      // ============================================
-      // CONFIGURATION
-      // ============================================
-      function sauvegarderConfig() {
-        const url = document.getElementById('apiUrlInput').value.trim();
-        
-        if (!url) {
-          showMessage('configMessage', 'Veuillez entrer une URL', 'error');
-          return;
-        }
+  afficherClients(data.clients);
+  document.getElementById('balanceResults').classList.remove('hidden');
+}
 
-        API_URL = url;
-        localStorage.setItem('apiUrl', url);
-        showMessage('configMessage', '✅ Configuration sauvegardée', 'success');
-      }
+function afficherClients(clients) {
+  const tbody = document.getElementById('clientsTableBody');
+  tbody.innerHTML = '';
 
-      async function testerConnexion() {
-        const url = document.getElementById('apiUrlInput').value.trim() || API_URL;
-        
-        showMessage('configMessage', '🔄 Test en cours...', 'info');
+  clients.forEach(client => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50';
+    tr.innerHTML = `
+      <td class="px-4 py-2 font-mono text-sm">${client.codeClient}</td>
+      <td class="px-4 py-2">${client.nomClient}</td>
+      <td class="px-4 py-2 text-right font-semibold">${formatMontant(client.solde)}</td>
+      <td class="px-4 py-2 text-right">${formatMontant(client.echeance0)}</td>
+      <td class="px-4 py-2 text-right">${formatMontant(client.echeance30)}</td>
+      <td class="px-4 py-2 text-right">${formatMontant(client.echeance60)}</td>
+      <td class="px-4 py-2 text-right">${formatMontant(client.echeance90)}</td>
+      <td class="px-4 py-2 text-right text-red-600 font-semibold">${formatMontant(client.echeancePlus120)}</td>
+      <td class="px-4 py-2 text-right text-green-600">${formatMontant(client.paiement)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 
-        try {
-          const response = await fetch(`${url}?action=test`);
-          const data = await response.json();
+function filtrerClients() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  
+  if (!currentData) return;
+  
+  const filtered = currentData.filter(c => 
+    c.codeClient.toLowerCase().includes(search) || 
+    c.nomClient.toLowerCase().includes(search)
+  );
+  
+  afficherClients(filtered);
+}
 
-          console.log('✅ Réponse reçue:', data);
+// ============================================
+// HISTORIQUE
+// ============================================
+async function chargerHistorique() {
+  document.getElementById('historiqueLoader').classList.remove('hidden');
+  
+  try {
+    const response = await fetch(`${API_CONFIG.workerUrl}?action=getHistorique`);
+    const data = await response.json();
 
-          if (data.status === 'success' || data.success) {
-            showMessage('configMessage', '✅ Connexion réussie ! API opérationnelle', 'success');
-          } else {
-            showMessage('configMessage', '⚠️ Connexion établie mais réponse inattendue', 'warning');
-          }
-        } catch (error) {
-          console.error('❌ Erreur test connexion:', error);
-          showMessage('configMessage', '❌ Erreur de connexion : ' + error.message, 'error');
-        }
-      }
+    if (data.success) {
+      afficherHistorique(data.historique);
+    } else {
+      showError('Erreur : ' + data.message);
+    }
+  } catch (error) {
+    console.error('Erreur chargement historique:', error);
+    showError('Erreur de chargement : ' + error.message);
+  } finally {
+    document.getElementById('historiqueLoader').classList.add('hidden');
+  }
+}
 
-      // ============================================
-      // UTILITAIRES
-      // ============================================
-      function formatMontant(montant) {
-        if (!montant || isNaN(montant)) return '0,00 €';
-        return new Intl.NumberFormat('fr-FR', {
-          style: 'currency',
-          currency: 'EUR'
-        }).format(montant);
-      }
+function afficherHistorique(historique) {
+  const container = document.getElementById('historiqueContent');
+  container.innerHTML = '';
 
-      function showMessage(elementId, message, type) {
-        const el = document.getElementById(elementId);
-        el.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'bg-blue-100', 'bg-yellow-100');
-        el.classList.remove('border-red-400', 'border-green-400', 'border-blue-400', 'border-yellow-400');
-        el.classList.remove('text-red-700', 'text-green-700', 'text-blue-700', 'text-yellow-700');
+  if (!historique || historique.length === 0) {
+    container.innerHTML = '<p class="text-gray-500 text-center py-8">Aucun historique disponible</p>';
+    return;
+  }
 
-        if (type === 'error') {
-          el.className = 'p-4 rounded-lg border bg-red-100 border-red-400 text-red-700';
-        } else if (type === 'success') {
-          el.className = 'p-4 rounded-lg border bg-green-100 border-green-400 text-green-700';
-        } else if (type === 'warning') {
-          el.className = 'p-4 rounded-lg border bg-yellow-100 border-yellow-400 text-yellow-700';
-        } else {
-          el.className = 'p-4 rounded-lg border bg-blue-100 border-blue-400 text-blue-700';
-        }
+  historique.forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition';
+    div.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="font-semibold text-gray-800">
+            ${API_CONFIG.agencesMap[h.agence] || h.agence} - ${h.version}
+          </p>
+          <p class="text-sm text-gray-600">
+            ${h.utilisateur} (${h.email})
+          </p>
+          <p class="text-sm text-gray-500">
+            ${h.nbClients} clients importés
+          </p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm font-medium text-blue-600">${h.date}</p>
+          <p class="text-xs text-gray-500">${h.heure}</p>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
 
-        el.textContent = message;
-        el.classList.add('fade-in');
-      }
+// ============================================
+// CONFIGURATION
+// ============================================
+function sauvegarderConfig() {
+  const url = document.getElementById('apiUrlInput').value.trim();
+  
+  if (!url) {
+    showMessage('configMessage', 'Veuillez entrer une URL', 'error');
+    return;
+  }
 
-      function showError(elementId, message) {
-        const el = document.getElementById(elementId);
-        el.textContent = message;
-        el.classList.remove('hidden');
-        el.classList.add('fade-in');
-      }
-    </script>
-  </body>
-  </html>
+  API_CONFIG.workerUrl = url;
+  localStorage.setItem('apiUrl', url);
+  showMessage('configMessage', '✅ Configuration sauvegardée', 'success');
+}
 
+async function testerConnexion() {
+  const url = document.getElementById('apiUrlInput').value.trim() || API_CONFIG.workerUrl;
+  
+  showMessage('configMessage', '🔄 Test en cours...', 'info');
 
+  try {
+    const response = await fetch(`${url}?action=test`);
+    const data = await response.json();
 
+    console.log('✅ Réponse reçue:', data);
 
+    if (data.status === 'success' || data.success) {
+      showMessage('configMessage', '✅ Connexion réussie ! API opérationnelle', 'success');
+    } else {
+      showMessage('configMessage', '⚠️ Connexion établie mais réponse inattendue', 'warning');
+    }
+  } catch (error) {
+    console.error('❌ Erreur test connexion:', error);
+    showMessage('configMessage', '❌ Erreur de connexion : ' + error.message, 'error');
+  }
+}
+
+// ============================================
+// HELPERS UI
+// ============================================
+function showLoading(message) {
+  const loadingDiv = document.getElementById('loading') || createLoadingDiv();
+  loadingDiv.textContent = message;
+  loadingDiv.style.display = 'block';
+}
+
+function hideLoading() {
+  const loadingDiv = document.getElementById('loading');
+  if (loadingDiv) {
+    loadingDiv.style.display = 'none';
+  }
+}
+
+function showSuccess(message) {
+  showNotification(message, 'success');
+}
+
+function showError(message) {
+  showNotification(message, 'error');
+}
+
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+function createLoadingDiv() {
+  const div = document.createElement('div');
+  div.id = 'loading';
+  div.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px 50px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 10000;
+    display: none;
+    font-weight: 600;
+    color: #1e40af;
+  `;
+  document.body.appendChild(div);
+  return div;
+}
+
+// ============================================
+// UTILITAIRES
+// ============================================
+function formatMontant(montant) {
+  if (!montant || isNaN(montant)) return '0,00 €';
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(montant);
+}
+
+function showMessage(elementId, message, type) {
+  const el = document.getElementById(elementId);
+  el.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'bg-blue-100', 'bg-yellow-100');
+  el.classList.remove('border-red-400', 'border-green-400', 'border-blue-400', 'border-yellow-400');
+  el.classList.remove('text-red-700', 'text-green-700', 'text-blue-700', 'text-yellow-700');
+
+  if (type === 'error') {
+    el.className = 'p-4 rounded-lg border bg-red-100 border-red-400 text-red-700';
+  } else if (type === 'success') {
+    el.className = 'p-4 rounded-lg border bg-green-100 border-green-400 text-green-700';
+  } else if (type === 'warning') {
+    el.className = 'p-4 rounded-lg border bg-yellow-100 border-yellow-400 text-yellow-700';
+  } else {
+    el.className = 'p-4 rounded-lg border bg-blue-100 border-blue-400 text-blue-700';
+  }
+
+  el.textContent = message;
+  el.classList.add('fade-in');
+}
+  </script>
+</body>
+</html>
 
