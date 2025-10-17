@@ -549,241 +549,6 @@
         padding: 30px;
       }
     }
-    /* ============================================ */
-/* STYLES POUR L'ANALYSEUR DE BALANCES ÂGÉES */
-/* ============================================ */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
-}
-.modal.active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.modal-content {
-    background-color: #fefefe;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-.comment-input-cell {
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    min-height: 40px;
-    background-color: #f9fafb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-.comment-input-cell:hover {
-    border-color: #3b82f6;
-    background-color: #eff6ff;
-}
-.comment-input-cell.has-comment {
-    background-color: #fef3c7;
-    border-color: #f59e0b;
-    font-weight: 500;
-}
-.comment-history-item {
-    background: #f3f4f6;
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    border-left: 3px solid #3b82f6;
-    position: relative;
-}
-.comment-history-item .author {
-    font-weight: bold;
-    color: #1f2937;
-    font-size: 0.875rem;
-}
-.comment-history-item .timestamp {
-    font-size: 0.75rem;
-    color: #6b7280;
-}
-.comment-history-item .text {
-    margin-top: 6px;
-    color: #374151;
-    font-size: 0.875rem;
-    white-space: pre-wrap;
-}
-.comment-delete-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: #ef4444;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-.comment-history-item:hover .comment-delete-btn {
-    opacity: 1;
-}
-.comment-delete-btn:hover {
-    background: #dc2626;
-}
-.save-indicator {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #10b981;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-    display: none;
-    z-index: 20000;
-    animation: fadeInOut 2s ease;
-}
-@keyframes fadeInOut {
-    0%, 100% { opacity: 0; }
-    10%, 90% { opacity: 1; }
-}
-
-/* Classes Tailwind nécessaires */
-.bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
-.from-purple-50 { --tw-gradient-from: #faf5ff; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(250, 245, 255, 0)); }
-.to-blue-50 { --tw-gradient-to: #eff6ff; }
-.border-2 { border-width: 2px; }
-.border-purple-200 { border-color: #e9d5ff; }
-.border-purple-300 { border-color: #d8b4fe; }
-.text-purple-800 { color: #6b21a8; }
-.text-purple-700 { color: #7e22ce; }
-.bg-purple-600 { background-color: #9333ea; }
-.hover\:bg-purple-700:hover { background-color: #7e22ce; }
-.focus\:border-purple-500:focus { border-color: #a855f7; }
-.focus\:outline-none:focus { outline: 2px solid transparent; outline-offset: 2px; }
-.grid { display: grid; }
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-.gap-4 { gap: 1rem; }
-.items-end { align-items: flex-end; }
-.mb-4 { margin-bottom: 1rem; }
-.mb-8 { margin-bottom: 2rem; }
-.p-4 { padding: 1rem; }
-.p-6 { padding: 1.5rem; }
-.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-.px-4 { padding-left: 1rem; padding-right: 1rem; }
-.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-.rounded { border-radius: 0.25rem; }
-.rounded-lg { border-radius: 0.5rem; }
-.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-.text-2xl { font-size: 1.5rem; line-height: 2rem; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-.text-gray-600 { color: #4b5563; }
-.text-gray-700 { color: #374151; }
-.text-gray-800 { color: #1f2937; }
-.text-white { color: #ffffff; }
-.bg-white { background-color: #ffffff; }
-.border { border-width: 1px; }
-.w-full { width: 100%; }
-.hidden { display: none; }
-.flex { display: flex; }
-.justify-end { justify-content: flex-end; }
-.space-x-3 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.75rem; }
-.bg-gray-300 { background-color: #d1d5db; }
-.hover\:bg-gray-400:hover { background-color: #9ca3af; }
-.bg-blue-600 { background-color: #2563eb; }
-.hover\:bg-blue-700:hover { background-color: #1d4ed8; }
-.bg-red-600 { background-color: #dc2626; }
-.hover\:bg-red-700:hover { background-color: #b91c1c; }
-.bg-blue-50 { background-color: #eff6ff; }
-.bg-red-50 { background-color: #fef2f2; }
-.bg-green-50 { background-color: #f0fdf4; }
-.bg-orange-50 { background-color: #fff7ed; }
-.bg-yellow-50 { background-color: #fefce8; }
-.text-red-600 { color: #dc2626; }
-.text-red-800 { color: #991b1b; }
-.text-green-600 { color: #16a34a; }
-.text-green-800 { color: #166534; }
-.text-blue-600 { color: #2563eb; }
-.text-blue-800 { color: #1e40af; }
-.text-orange-600 { color: #ea580c; }
-.text-orange-800 { color: #9a3412; }
-.text-yellow-600 { color: #ca8a04; }
-.text-yellow-800 { color: #854d0e; }
-.overflow-x-auto { overflow-x: auto; }
-.min-w-full { min-width: 100%; }
-.table-auto { table-layout: auto; }
-.divide-y { border-top-width: 0px; }
-.divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-top-width: 1px; border-color: #e5e7eb; }
-.bg-gray-50 { background-color: #f9fafb; }
-.text-xs { font-size: 0.75rem; line-height: 1rem; }
-.uppercase { text-transform: uppercase; }
-.tracking-wider { letter-spacing: 0.05em; }
-.cursor-pointer { cursor: pointer; }
-.hover\:bg-gray-100:hover { background-color: #f3f4f6; }
-.text-left { text-align: left; }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.bg-green-500 { background-color: #22c55e; }
-.hover\:bg-green-600:hover { background-color: #16a34a; }
-.bg-blue-500 { background-color: #3b82f6; }
-.hover\:bg-blue-600:hover { background-color: #2563eb; }
-.bg-red-500 { background-color: #ef4444; }
-.hover\:bg-red-600:hover { background-color: #dc2626; }
-.flex-wrap { flex-wrap: wrap; }
-.gap-2 { gap: 0.5rem; }
-.border-l-4 { border-left-width: 4px; }
-.border-red-500 { border-color: #ef4444; }
-.border-orange-500 { border-color: #f97316; }
-.border-yellow-400 { border-color: #facc15; }
-.text-red-700 { color: #b91c1c; }
-.text-orange-700 { color: #c2410c; }
-.text-yellow-700 { color: #a16207; }
-.text-yellow-800 { color: #854d0e; }
-.list-disc { list-style-type: disc; }
-.list-inside { list-style-position: inside; }
-.space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
-.border-gray-200 { border-color: #e5e7eb; }
-.max-h-48 { max-height: 12rem; }
-.overflow-y-auto { overflow-y: auto; }
-.bg-gray-100 { background-color: #f3f4f6; }
-.p-3 { padding: 0.75rem; }
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 0.75rem; }
-.mt-4 { margin-top: 1rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.block { display: block; }
-.bg-purple-50 { background-color: #faf5ff; }
-.border-purple-200 { border-color: #e9d5ff; }
-.text-purple-600 { color: #9333ea; }
-.text-purple-800 { color: #6b21a8; }
-
-@media (min-width: 768px) {
-  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .md\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-}
-
   </style>
 </head>
 <body>
@@ -814,7 +579,6 @@
       </div>
     </div>
   </div>
-
   <!-- MAIN APP -->
   <div id="mainApp" style="display: none;">
     <div class="container">
@@ -885,1866 +649,498 @@
           </div>
         </div>
       </div>
+
       <!-- TAB: CONSULTATION -->
       <div id="tab-consultation" class="tab-content">
-        <h2>📊 Consultation des Balances Âgées</h2>
-        
-        <!-- ALERTE -->
         <div id="consultationAlert"></div>
-
         <!-- SÉLECTEUR D'AGENCE -->
-        <div class="import-section" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 10px; font-weight: 600;">🏢 Sélectionner une agence :</label>
-          <select id="agenceConsultation" onchange="handleAgenceChangeConsultation()" style="padding: 10px; border-radius: 8px; border: 2px solid #e9ecef; width: 100%; max-width: 400px;">
-            <option value="">-- Choisir une agence --</option>
-          </select>
-        </div>
+<div class="import-section" style="margin-bottom: 20px;">
+  <label style="display: block; margin-bottom: 10px; font-weight: 600;">🏢 Sélectionner une agence :</label>
+  <select id="agenceConsultation" onchange="handleAgenceChange()" style="padding: 10px; border-radius: 8px; border: 2px solid #e9ecef; width: 100%; max-width: 400px;">
+    <option value="">-- Choisir une agence --</option>
+  </select>
+</div>
 
-        <!-- NOUVEAU CONTENU : ANALYSEUR DE BALANCES ÂGÉES -->
-        <div id="balanceAgeeContainer" style="display: none;">
-          
-          <!-- Indicateur de sauvegarde -->
-          <div class="save-indicator" id="saveIndicatorConsultation">✓ Sauvegarde effectuée</div>
 
-          <!-- Modal Commentaires -->
-          <div id="commentModalConsultation" class="modal">
-              <div class="modal-content">
-                  <h3 class="text-xl font-bold text-gray-800 mb-4">💬 Commentaires Client</h3>
-                  <div class="bg-blue-50 p-3 rounded mb-4">
-                      <p class="text-sm"><strong>Code:</strong> <span id="modalClientCodeConsultation"></span></p>
-                      <p class="text-sm"><strong>Nom:</strong> <span id="modalClientNameConsultation"></span></p>
-                      <p class="text-sm"><strong>Solde:</strong> <span id="modalClientSoldeConsultation"></span></p>
-                  </div>
-                  
-                  <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Nom de l'utilisateur :</label>
-                      <input type="text" id="commentAuthorConsultation" class="w-full border rounded px-3 py-2" placeholder="Votre nom">
-                  </div>
-                  
-                  <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Historique des commentaires :</label>
-                      <div id="commentHistoryConsultation" class="max-h-48 overflow-y-auto"></div>
-                  </div>
-                  
-                  <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Nouveau commentaire :</label>
-                      <textarea id="newCommentTextConsultation" class="w-full border rounded px-3 py-2" rows="3" placeholder="Entrez votre commentaire..."></textarea>
-                  </div>
-                  
-                  <div class="flex justify-end space-x-3">
-                      <button onclick="closeCommentModalConsultation()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
-                          Annuler
-                      </button>
-                      <button onclick="saveNewCommentConsultation()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                          Enregistrer
-                      </button>
-                  </div>
-              </div>
-          </div>
-
-          <!-- Modal de suppression -->
-          <div id="deleteModalConsultation" class="modal">
-              <div class="modal-content">
-                  <h3 class="text-xl font-bold text-gray-800 mb-4">⚠️ Confirmation de suppression</h3>
-                  <p class="text-gray-700 mb-4">Êtes-vous sûr de vouloir supprimer ce client ?</p>
-                  <div id="deleteClientInfoConsultation" class="text-sm text-gray-600 mb-4 bg-gray-100 p-3 rounded"></div>
-                  <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                      <p class="text-sm text-yellow-800">
-                          <strong>⚠️ Important :</strong> S'il s'agit d'un partenariat, vous devez entreprendre les démarches nécessaires pour le déclarer (CERFA).
-                      </p>
-                  </div>
-                  
-                  <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Votre nom :</label>
-                      <input type="text" id="deleteAuthorConsultation" class="w-full border rounded px-3 py-2" placeholder="Votre nom">
-                  </div>
-                  
-                  <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Raison de la suppression :</label>
-                      <textarea id="deleteReasonConsultation" class="w-full border rounded px-3 py-2" rows="3" placeholder="Expliquez la raison de cette suppression..."></textarea>
-                  </div>
-                  
-                  <div class="flex justify-end space-x-3">
-                      <button onclick="closeDeleteModalConsultation()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
-                          Annuler
-                      </button>
-                      <button onclick="confirmDeleteConsultation()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-                          Confirmer la suppression
-                      </button>
-                  </div>
-              </div>
-          </div>
-
-          <!-- Zone Chiffre d'Affaires -->
-          <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-md p-6 mb-8 border-2 border-purple-200">
-              <h2 class="text-xl font-semibold mb-4 text-purple-800">💼 Calcul du Taux d'Impayés</h2>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                  <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Chiffre d'Affaires Annuel (€)</label>
-                      <input type="number" id="chiffreAffairesConsultation" class="w-full border-2 border-purple-300 rounded-lg px-4 py-2 focus:border-purple-500 focus:outline-none" placeholder="Ex: 1000000" min="0">
-                  </div>
-                  <div>
-                      <button onclick="calculateTauxImpayeConsultation()" class="w-full bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-semibold">
-                          Calculer le Taux d'Impayés
-                      </button>
-                  </div>
-                  <div id="tauxImpayeResultConsultation" class="hidden bg-white rounded-lg p-4 border-2 border-purple-300">
-                      <p class="text-sm text-gray-600">Taux d'Impayés</p>
-                      <p id="tauxImpayeValueConsultation" class="text-2xl font-bold"></p>
-                      <p id="tauxImpayeStatusConsultation" class="text-xs mt-1"></p>
-                  </div>
-              </div>
-              <div class="mt-3 text-sm text-purple-700">
-                  <strong>Objectif :</strong> Maintenir le taux d'impayés <strong>sous 2%</strong> pour une gestion saine
-              </div>
-          </div>
-
-          <!-- Synthèse Globale -->
-          <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h2 class="text-xl font-semibold mb-4">📊 Synthèse Globale</h2>
-              <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  <div class="bg-red-50 rounded-lg p-4">
-                      <p class="text-sm text-red-600">Soldes Débiteurs</p>
-                      <p id="soldesDebiteursConsultation" class="text-2xl font-bold text-red-800">-</p>
-                  </div>
-                  <div class="bg-green-50 rounded-lg p-4">
-                      <p class="text-sm text-green-600">Soldes Créditeurs</p>
-                      <p id="soldesCrediteursConsultation" class="text-2xl font-bold text-green-800">-</p>
-                  </div>
-                  <div class="bg-blue-50 rounded-lg p-4">
-                      <p class="text-sm text-blue-600">Balance Totale</p>
-                      <p id="balanceTotaleConsultation" class="text-2xl font-bold text-blue-800">-</p>
-                  </div>
-                  <div class="bg-orange-50 rounded-lg p-4">
-                      <p class="text-sm text-orange-600">Clients > 90j</p>
-                      <p id="clientsCritiquesConsultation" class="text-2xl font-bold text-orange-800">-</p>
-                  </div>
-                  <div class="bg-yellow-50 rounded-lg p-4">
-                      <p class="text-sm text-yellow-600">Taux de risque</p>
-                      <p id="tauxRisqueConsultation" class="text-2xl font-bold text-yellow-800">-</p>
-                  </div>
-              </div>
-              
-              <div class="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <div class="flex items-center justify-between">
-                      <div>
-                          <p class="text-sm text-purple-600">Nombre de clients</p>
-                          <p id="nombreClientsConsultation" class="text-xl font-bold text-purple-800">-</p>
-                      </div>
-                      <div class="text-right">
-                          <p class="text-sm text-purple-600">Montant à risque (>60j)</p>
-                          <p id="montantRisqueConsultation" class="text-xl font-bold text-purple-800">-</p>
-                      </div>
-                  </div>
-              </div>
-          </div>
-
-          <!-- Graphiques -->
-          <div class="row mb-4">
-  <!-- Graphique 1 : Risques -->
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <canvas id="riskChartConsultation" height="300"></canvas>
+          <!-- Calcul du Taux d'Impayés -->
+  <div class="import-section" style="margin-bottom: 30px; border: 1px solid #ececec;">
+    <h2 style="margin-bottom: 15px; color: #7c3aed;">💼 Calcul du Taux d'Impayés</h2>
+    <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+      <div>
+        <label for="chiffreAffaires" style="font-weight: 600;">Chiffre d'Affaires Annuel (€)</label>
+        <input type="number" id="chiffreAffaires" placeholder="Ex: 1000000" style="padding: 10px; border-radius: 8px; border: 2px solid #e9ecef; width: 180px;">
       </div>
+      <button class="btn btn-primary" onclick="calculateTauxImpaye()" style="height: 40px;">Calculer le Taux d'Impayés</button>
+      <div id="tauxImpayeResult" style="margin-left: 30px; display: none;">
+        <span id="tauxImpayeValue" style="font-size: 1.5em; font-weight: bold;"></span>
+        <span id="tauxImpayeStatus" style="margin-left: 12px; font-size: 1em;"></span>
+      </div>
+    </div>
+    <p style="font-size: 13px; color: #7c3aed; margin-top: 10px;">
+      <strong>Objectif :</strong> Maintenir le taux d'impayés <strong>sous 2%</strong> pour une gestion saine
+    </p>
+  </div>
+
+  <!-- Synthèse Globale -->
+  <div class="import-section" style="margin-bottom: 30px; border: 1px solid #ececec;">
+    <h2 style="margin-bottom: 15px;">📊 Synthèse Globale</h2>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div style="background: #fee2e2; border-radius: 10px; padding: 20px; min-width: 160px;">
+        <div style="color: #b91c1c; font-weight: bold;">Soldes Débiteurs</div>
+        <div id="soldesDebiteurs" style="font-size: 1.4em; font-weight: bold;">-</div>
+      </div>
+      <div style="background: #d1fae5; border-radius: 10px; padding: 20px; min-width: 160px;">
+        <div style="color: #065f46; font-weight: bold;">Soldes Créditeurs</div>
+        <div id="soldesCrediteurs" style="font-size: 1.4em; font-weight: bold;">-</div>
+      </div>
+      <div style="background: #e0e7ff; border-radius: 10px; padding: 20px; min-width: 160px;">
+        <div style="color: #3730a3; font-weight: bold;">Balance Totale</div>
+        <div id="balanceTotale" style="font-size: 1.4em; font-weight: bold;">-</div>
+      </div>
+      <div style="background: #fff7ed; border-radius: 10px; padding: 20px; min-width: 160px;">
+        <div style="color: #c2410c; font-weight: bold;">Clients > 90j</div>
+        <div id="clientsCritiques" style="font-size: 1.4em; font-weight: bold;">-</div>
+      </div>
+      <div style="background: #fef9c3; border-radius: 10px; padding: 20px; min-width: 160px;">
+        <div style="color: #ca8a04; font-weight: bold;">Taux de risque</div>
+        <div id="tauxRisque" style="font-size: 1.4em; font-weight: bold;">-</div>
+      </div>
+    </div>
+    <div style="margin-top: 15px; display: flex; gap: 30px; flex-wrap: wrap;">
+      <div style="color: #7c3aed; font-weight: bold;">Nombre de clients <span id="nombreClients" style="margin-left: 5px;">-</span></div>
+      <div style="color: #7c3aed; font-weight: bold;">Montant à risque (&gt;60j) <span id="montantRisque" style="margin-left: 5px;">-</span></div>
     </div>
   </div>
 
-  <!-- Graphique 2 : Âges -->
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <canvas id="ageChartConsultation" height="300"></canvas>
-      </div>
+  <!-- Graphiques -->
+  <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 30px;">
+    <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.07); min-width: 350px;">
+      <h3 style="margin-bottom: 15px;">Répartition des soldes par ancienneté</h3>
+      <canvas id="chartAge"></canvas>
+    </div>
+    <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.07); min-width: 350px;">
+      <h3 style="margin-bottom: 15px;">Top 10 soldes à risque</h3>
+      <canvas id="chartTop10"></canvas>
     </div>
   </div>
 
-  <!-- Graphique 3 : Top Clients -->
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <canvas id="topClientsChartConsultation" height="300"></canvas>
+  <!-- Détail par Client -->
+  <div class="import-section" style="margin-bottom: 30px; border: 1px solid #ececec;">
+    <h2 style="margin-bottom: 15px;">📋 Détail par Client</h2>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px;">
+      <div>
+        <label>Filtrer par niveau de risque:</label>
+        <select id="riskFilter" style="padding: 8px; border-radius: 8px;">
+          <option value="all">Tous</option>
+          <option value="critical">Critique (&gt;90j)</option>
+          <option value="high">Élevé (60-90j)</option>
+          <option value="medium">Modéré (30-60j)</option>
+          <option value="low">Faible (&lt;30j)</option>
+        </select>
       </div>
+      <div>
+        <label>Type de solde:</label>
+        <select id="soldeTypeFilter" style="padding: 8px; border-radius: 8px;">
+          <option value="all">Tous</option>
+          <option value="debiteur">Débiteurs uniquement</option>
+          <option value="crediteur">Créditeurs uniquement</option>
+        </select>
+      </div>
+      <div>
+        <label>Solde minimum (valeur absolue):</label>
+        <input type="number" id="minBalance" placeholder="0" style="padding: 8px; border-radius: 8px; width: 100px;" min="0">
+      </div>
+    </div>
+    <div class="table-container" style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; background: white;">
+        <thead>
+          <tr>
+            <th onclick="sortTableConsult('code')" style="cursor:pointer;">CODE CLIENT</th>
+            <th onclick="sortTableConsult('nom')" style="cursor:pointer;">NOM CLIENT</th>
+            <th onclick="sortTableConsult('solde')" style="cursor:pointer;">SOLDE</th>
+            <th onclick="sortTableConsult('anciennete')" style="cursor:pointer;">% ANCIENNETÉ</th>
+            <th onclick="sortTableConsult('risque')" style="cursor:pointer;">RISQUE</th>
+            <th>ACTION</th>
+            <th>COMMENTAIRE</th>
+            <th>SUPPRIMER</th>
+          </tr>
+        </thead>
+        <tbody id="detailsTableConsult"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Actions Recommandées -->
+  <div class="import-section" style="margin-bottom: 30px; border: 1px solid #ececec;">
+    <h2 style="margin-bottom: 15px;">🎯 Actions Recommandées</h2>
+    <div id="urgentAlertConsult" style="display:none; background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+      <strong id="urgentTitleConsult" style="color:#b91c1c;"></strong>
+      <div id="urgentTextConsult" style="margin-top:8px;"></div>
+    </div>
+    <div id="criticalClientsCardConsult" style="display:none; background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px;">
+      <strong id="criticalClientsCountConsult" style="color:#b45309;"></strong>
+      <div style="margin-top:7px;">
+        <div style="font-size:13px; color:#a16207;">Liste des clients :</div>
+        <ul id="criticalClientsListConsult" style="font-size:13px; color:#a16207; margin-top:5px;"></ul>
+      </div>
+      <ul style="margin-top:10px; font-size:13px; color:#a16207;">
+        <li>Prioriser les relances téléphoniques</li>
+        <li>Envoyer des mises en demeure si nécessaire</li>
+      </ul>
     </div>
   </div>
 </div>
-
-          <!-- Détail par Client -->
-          <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h2 class="text-xl font-semibold mb-4">📋 Détail par Client</h2>
-              <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                      <label class="text-sm text-gray-600">Filtrer par niveau de risque:</label>
-                      <select id="riskFilterConsultation" class="w-full mt-1 border rounded px-3 py-2">
-                          <option value="all">Tous</option>
-                          <option value="critical">Critique (>90j)</option>
-                          <option value="high">Élevé (60-90j)</option>
-                          <option value="medium">Modéré (30-60j)</option>
-                          <option value="low">Faible (<30j)</option>
-                      </select>
-                  </div>
-                  <div>
-                      <label class="text-sm text-gray-600">Type de solde:</label>
-                      <select id="soldeTypeFilterConsultation" class="w-full mt-1 border rounded px-3 py-2">
-                          <option value="all">Tous</option>
-                          <option value="debiteur">Débiteurs uniquement</option>
-                          <option value="crediteur">Créditeurs uniquement</option>
-                      </select>
-                  </div>
-                  <div>
-                      <label class="text-sm text-gray-600">Solde minimum (valeur absolue):</label>
-                      <input type="number" id="minBalanceConsultation" class="w-full mt-1 border rounded px-3 py-2" placeholder="0" min="0">
-                  </div>
-              </div>
-              <div class="overflow-x-auto">
-                  <table class="min-w-full table-auto">
-                      <thead class="bg-gray-50">
-                         <tr>
-                              <th onclick="sortTableConsultation('code')" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                 Code Client
-                              </th>
-                              <th onclick="sortTableConsultation('nom')" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                  Nom Client
-                              </th>
-                              <th onclick="sortTableConsultation('solde')" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                  Solde
-                              </th>
-                              <th onclick="sortTableConsultation('anciennete')" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                  % Ancienneté
-                              </th>
-                              <th onclick="sortTableConsultation('risque')" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                                  Risque
-                              </th>
-                              <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 200px;">Commentaire</th>
-                              <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Supprimer</th>
-                         </tr>
-                      </thead>
-                      <tbody id="detailsTableConsultation" class="bg-white divide-y divide-gray-200">
-                      </tbody>
-                  </table>
-              </div>
-          </div>
-
-          <!-- Actions Recommandées -->
-          <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h2 class="text-xl font-semibold mb-4">🎯 Actions Recommandées</h2>
-              
-              <div id="urgentAlertConsultation" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded mb-4">
-                  <h3 class="font-semibold text-red-800 mb-2">🚨 <span id="urgentTitleConsultation"></span></h3>
-                  <p class="text-sm text-red-700" id="urgentTextConsultation"></p>
-              </div>
-
-              <div id="riskAlertConsultation" class="hidden bg-orange-50 border-l-4 border-orange-500 p-4 rounded mb-4">
-                  <h3 class="font-semibold text-orange-800 mb-2">⚠️ <span id="riskTitleConsultation"></span></h3>
-                  <p class="text-sm text-orange-700" id="riskTextConsultation"></p>
-                  <ul class="text-sm text-orange-700 mt-2 space-y-1 list-disc list-inside">
-                      <li>Contacter immédiatement tous les clients avec soldes > 90 jours</li>
-                      <li>Suspendre les locations pour les clients à risque</li>
-                  </ul>
-              </div>
-
-              <div id="riskConcentrationCardConsultation" class="hidden bg-white border border-gray-200 p-4 rounded mb-4">
-                  <h3 class="font-semibold text-gray-800 mb-2">📊 Concentration du risque</h3>
-                  <p id="riskConcentrationTextConsultation" class="text-gray-600 mb-3 text-sm"></p>
-                  <ul class="text-sm text-gray-700 space-y-1 list-disc list-inside">
-                      <li>Prioriser le recouvrement auprès de ces clients.</li>
-                      <li>Établir un suivi hebdomadaire personnalisé.</li>
-                      <li>Évaluer l'opportunité d'une action en justice si nécessaire.</li>
-                  </ul>
-              </div>
-
-              <div id="criticalClientsCardConsultation" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                  <h3 class="font-semibold text-yellow-800 mb-2">📞 Clients critiques à contacter</h3>
-                  <p class="text-sm text-yellow-700 mb-3" id="criticalClientsCountConsultation"></p>
-                  <div class="bg-white rounded p-3 mb-3">
-                      <p class="text-xs font-semibold text-gray-600 mb-2">Liste des clients :</p>
-                      <ul id="criticalClientsListConsultation" class="text-xs text-gray-700 space-y-1"></ul>
-                  </div>
-                  <ul class="text-sm text-yellow-700 space-y-1 list-disc list-inside">
-                      <li>Prioriser les relances téléphoniques</li>
-                      <li>Envoyer des mises en demeure si nécessaire</li>
-                  </ul>
-              </div>
-          </div>
-
-          <!-- Export -->
-          <div class="bg-white rounded-lg shadow-md p-6">
-              <h2 class="text-xl font-semibold mb-4">💾 Export des Résultats</h2>
-              <div class="flex space-x-4 flex-wrap gap-2">
-                  <button onclick="exportToExcelConsultation()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                      📊 Exporter en Excel
-                  </button>
-                  <button onclick="saveAsHTMLConsultation()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                      💾 Sauvegarder HTML (avec commentaires)
-                  </button>
-                  <button onclick="window.print()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                      📄 Imprimer
-                  </button>
-              </div>
-              <div class="mt-3 text-sm text-gray-600">
-                  <strong>💡 Astuce :</strong> Le fichier HTML sauvegardé contient tous vos commentaires et peut être partagé par email.
-              </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- TAB: HISTORIQUE -->
-      <div id="tab-historique" class="tab-content">
-        <h2>📜 Historique des Actions</h2>
-        <div id="historiqueAlert"></div>
-        
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Heure</th>
-                <th>Type</th>
-                <th>Code Client</th>
-                <th>Nom Client</th>
-                <th>Solde</th>
-                <th>Auteur</th>
-                <th>Raison</th>
-              </tr>
-            </thead>
-            <tbody id="historiqueTableBody">
-              <tr>
-                <td colspan="8" style="text-align: center; padding: 40px; color: #6c757d;">
-                  Sélectionnez une agence pour voir l'historique
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB: CONFIGURATION -->
-      <div id="tab-config" class="tab-content">
-        <h2>⚙️ Configuration</h2>
-        
-        <div class="import-section">
-          <h3 style="margin-bottom: 20px;">🔗 URL du Worker Cloudflare</h3>
-          <p style="color: #6c757d; margin-bottom: 15px;">
-            Modifiez l'URL du Worker si nécessaire (réservé aux administrateurs)
-          </p>
-          
-          <input 
-            type="text" 
-            id="workerUrl" 
-            value="https://twilight-resonance-5291.julienolympic.workers.dev"
-            style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; margin-bottom: 15px;"
-          >
-          
-          <button class="btn btn-primary" onclick="saveConfig()">💾 Enregistrer</button>
-        </div>
-
-        <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-          <h3 style="margin-bottom: 15px;">ℹ️ Informations</h3>
-          <p style="color: #6c757d; line-height: 1.6;">
-            <strong>Version :</strong> 2.0<br>
-            <strong>Dernière mise à jour :</strong> Octobre 2025<br>
-            <strong>Support :</strong> julien@olympiclocation.com
-          </p>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-    <script>
-    // ==========================================
-    // VARIABLES GLOBALES
-    // ==========================================
-    let WORKER_URL = 'https://twilight-resonance-5291.julienolympic.workers.dev';
-    let currentUser = null;
-    let currentAgence = null;
-    let excelData = null;
-    let rawExcelData = null;
-
-    // Données pour l'onglet Consultation
-    let balanceDataConsultation = null;
-    let commentsDataConsultation = {};
-    let currentSortColumnConsultation = null;
-    let currentSortDirectionConsultation = 'asc';
-    let ageChartInstanceConsultation = null;
-    let riskChartInstanceConsultation = null;
-    let topClientsChartInstanceConsultation = null;
-    let currentClientForCommentConsultation = null;
-    let currentClientForDeleteConsultation = null;
-
-    // ==========================================
-    // INITIALISATION
-    // ==========================================
-    window.onload = function() {
-      loadConfig();
-      checkAuth();
+  <script>
+    // ============================================
+    // MAPPING CODES AGENCES
+    // ============================================
+    const AGENCE_CODES = {
+      '00': 'Gèze',
+      '01': '5 Av',
+      '02': 'Gare St Charles',
+      '03': 'Aubagne',
+      '06': 'La Valentine',
+      '08': 'Toulon',
+      '09': 'Plombières',
+      '12': 'La Garde',
+      '13': 'La Ciotat'
     };
 
-    // ==========================================
-    // CONFIGURATION
-    // ==========================================
-    function loadConfig() {
-      const savedUrl = localStorage.getItem('workerUrl');
-      if (savedUrl) {
-        WORKER_URL = savedUrl;
-        const workerUrlInput = document.getElementById('workerUrl');
-        if (workerUrlInput) {
-          workerUrlInput.value = savedUrl;
-        }
-      }
-    }
+    // ============================================
+    // LISTE DES UTILISATEURS AUTORISÉS
+    // ============================================
+    const AUTHORIZED_USERS = [
+      { email: 'julien@olympiclocation.com', nom: 'Julien', agences: ['Toutes'], role: 'Administrateur' },
+      { email: 'magali@olympiclocation.com', nom: 'Magali', agences: ['Gèze', 'Plombières'], role: 'Responsable secteur' },
+      { email: 'valentin@olympiclocation.com', nom: 'Valentin', agences: ['5 Av', 'Gare St Charles'], role: 'Responsable secteur' },
+      { email: 'christine@olympiclocation.com', nom: 'Christine', agences: ['La Valentine', 'Aubagne', 'La Ciotat'], role: 'Responsable secteur' },
+      { email: 'florian@olympiclocation.com', nom: 'Florian', agences: ['Toulon', 'La Garde'], role: 'Responsable secteur' },
+      { email: 'yann@olympiclocation.com', nom: 'Yann', agences: ['Gèze'], role: 'Chef agence' },
+      { email: 'abdel@olympiclocation.com', nom: 'Abdel', agences: ['5 Av'], role: 'Chef agence' },
+      { email: 'yazid@olympiclocation.com', nom: 'Yazid', agences: ['Gare St Charles'], role: 'Chef agence' },
+      { email: 'elodie@olympiclocation.com', nom: 'Elodie', agences: ['Aubagne'], role: 'Chef agence' },
+      { email: 'gaetan@olympiclocation.com', nom: 'Gaetan', agences: ['La Valentine'], role: 'Chef agence' },
+      { email: 'abdillah@olympiclocation.com', nom: 'Abdi', agences: ['Plombières'], role: 'Chef agence' },
+      { email: 'pierre@olympiclocation.com', nom: 'Pierre', agences: ['La Garde'], role: 'Chef agence' },
+      { email: 'nathan@olympiclocation.com', nom: 'Nathan', agences: ['La Ciotat'], role: 'Chef agence' },
+      { email: 'nicolas@olympiclocation.com', nom: 'Nicolas', agences: ['Toulon'], role: 'Chef agence' }
+    ];
 
-    function saveConfig() {
-      const url = document.getElementById('workerUrl').value;
-      if (!url) {
-        alert('⚠️ Veuillez entrer une URL valide');
-        return;
-      }
-      localStorage.setItem('workerUrl', url);
-      WORKER_URL = url;
-      alert('✅ Configuration enregistrée !');
-    }
+    const ALL_AGENCES = ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde'];
 
-    // ==========================================
-    // AUTHENTIFICATION
-    // ==========================================
-    function checkAuth() {
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        showMainApp();
-      } else {
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('mainApp').style.display = 'none';
-      }
-    }
+    // ============================================
+    // VARIABLES GLOBALES
+    // ============================================
+    let currentUser = null;
+    let currentAgence = null;
+    let allData = [];
+    let filteredData = [];
+    let excelData = [];
+    let currentClientForComment = null;
+    let currentClientForDelete = null;
+    let commentsData = {};
+    let chartAge = null;
+    let chartTop10 = null;
 
-    async function handleLogin(event) {
+    let WORKER_URL = 'https://twilight-resonance-5291.julienolympic.workers.dev';
+    // ============================================
+    // AUTHENTICATION
+    // ============================================
+    function handleLogin(event) {
       event.preventDefault();
       
-      const email = document.getElementById('emailInput').value.trim().toLowerCase();
+      const email = document.getElementById('emailInput').value.toLowerCase().trim();
       const errorDiv = document.getElementById('errorMessage');
       
-      if (!email.endsWith('@olympiclocation.com')) {
-        errorDiv.textContent = '❌ Veuillez utiliser votre email @olympiclocation.com';
+      // Vérifier si l'email est dans la liste
+      const user = AUTHORIZED_USERS.find(u => u.email === email);
+      
+      if (!user) {
+        errorDiv.textContent = '❌ Email non autorisé. Contactez l\'administrateur.';
         errorDiv.style.display = 'block';
         return;
       }
 
-      try {
-        const response = await fetch(`${WORKER_URL}/users`);
-        
-        if (!response.ok) {
-          throw new Error('Erreur serveur');
-        }
-        
-        const data = await response.json();
-        
-        let users = [];
-        if (Array.isArray(data)) {
-          users = data;
-        } else if (data.users && Array.isArray(data.users)) {
-          users = data.users;
-        } else {
-          users = [
-            {
-              email: email,
-              name: email.split('@')[0],
-              role: 'Utilisateur',
-              agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
-            }
-          ];
-        }
-        
-        const user = users.find(u => u.email.toLowerCase() === email);
-        
-        if (user) {
-          currentUser = user;
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          showMainApp();
-        } else {
-          currentUser = {
-            email: email,
-            name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-            role: 'Utilisateur',
-            agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
-          };
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-          showMainApp();
-        }
-        
-      } catch (error) {
-        console.error('Erreur de connexion:', error);
-        
-        currentUser = {
-          email: email,
-          name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-          role: 'Utilisateur',
-          agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
-        };
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        showMainApp();
-      }
+      // Connexion réussie
+      currentUser = user;
+      
+      // Sauvegarder dans localStorage
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      
+      // Afficher l'app
+      showMainApp();
     }
 
     function showMainApp() {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('mainApp').style.display = 'block';
-      
-      document.getElementById('userName').textContent = currentUser.name;
+
+      // Afficher les infos utilisateur
+      document.getElementById('userName').textContent = currentUser.nom;
       document.getElementById('userEmail').textContent = currentUser.email;
-      document.getElementById('userRole').textContent = `Rôle: ${currentUser.role}`;
-      document.getElementById('userAgences').textContent = currentUser.agences.join(', ');
+      document.getElementById('userRole').textContent = `🎯 ${currentUser.role}`;
       
-      const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+      // Afficher les agences
+      const agencesText = currentUser.agences.includes('Toutes') 
+        ? 'Toutes les agences' 
+        : currentUser.agences.join(', ');
+      document.getElementById('userAgences').textContent = agencesText;
+
+      // Initiales pour l'avatar
+      const initials = currentUser.nom.substring(0, 2).toUpperCase();
       document.getElementById('userAvatar').textContent = initials;
-      
-      loadAgencesForConsultation();
+
+      // Charger la config
+      loadConfig();
+      // Peupler le sélecteur d'agence dans la consultation
+const agenceSelect = document.getElementById('agenceConsultation');
+agenceSelect.innerHTML = '<option value="">-- Choisir une agence --</option>';
+
+const agencesAccessibles = currentUser.agences.includes('Toutes') 
+  ? ALL_AGENCES 
+  : currentUser.agences;
+
+agencesAccessibles.forEach(agence => {
+  const option = document.createElement('option');
+  option.value = agence;
+  option.textContent = agence;
+  agenceSelect.appendChild(option);
+});
+
+console.log('✅ Sélecteur d\'agence peuplé avec:', agencesAccessibles);
     }
+// ============================================
+// GESTION DU CHANGEMENT D'AGENCE
+// ============================================
+function handleAgenceChange() {
+  const select = document.getElementById('agenceConsultation');
+  const agence = select.value;
+
+  if (!agence) {
+    console.log('⚠️ Aucune agence sélectionnée');
+    return;
+  }
+
+  console.log('🔄 Changement d\'agence vers:', agence);
+  currentAgence = agence;
+
+  // Charger les données de l'agence
+  loadData();
+}
 
     function logout() {
-      localStorage.removeItem('currentUser');
       currentUser = null;
-      currentAgence = null;
-      location.reload();
+      localStorage.removeItem('currentUser');
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('emailInput').value = '';
+      document.getElementById('errorMessage').style.display = 'none';
     }
 
-    // ==========================================
-    // GESTION DES ONGLETS
-    // ==========================================
+    // Vérifier si l'utilisateur est déjà connecté
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        showMainApp();
+      }
+    });
+
+    // ============================================
+    // CONFIG
+    // ============================================
+    function loadConfig() {
+      const savedUrl = localStorage.getItem('workerUrl');
+      if (savedUrl) {
+        WORKER_URL = savedUrl;
+        document.getElementById('workerUrl').value = savedUrl;
+      }
+    }
+
+    function saveConfig() {
+      const url = document.getElementById('workerUrl').value;
+      localStorage.setItem('workerUrl', url);
+      WORKER_URL = url;
+      showAlert('consultationAlert', 'success', '✅ Configuration enregistrée');
+    }
+
+    // ============================================
+    // TABS
+    // ============================================
     function switchTab(tabName) {
+      // Désactiver tous les tabs
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
+      // Activer le tab sélectionné
       event.target.classList.add('active');
-      
-      const tabContent = document.getElementById(`tab-${tabName}`);
-      if (tabContent) {
-        tabContent.classList.add('active');
-      } else {
-        console.error(`❌ Onglet introuvable: tab-${tabName}`);
-      }
+      document.getElementById(`tab-${tabName}`).classList.add('active');
 
+      // Charger les données si nécessaire
       if (tabName === 'consultation' && currentAgence) {
-        handleAgenceChangeConsultation();
+        loadData();
       }
       if (tabName === 'historique' && currentAgence) {
         loadHistorique();
       }
     }
 
-    // ==========================================
-    // IMPORT DE FICHIERS
-    // ==========================================
+    // ============================================
+    // IMPORT EXCEL (✅ ANCIEN CODE QUI MARCHAIT)
+    // ============================================
     function handleFileSelect(event) {
       const file = event.target.files[0];
+      console.log('📁 Fichier sélectionné:', file);
+      
       if (file) {
         document.getElementById('fileName').textContent = file.name;
-        readExcelFile(file);
+        console.log('📊 Début du parsing...');
+        parseExcel(file);
+      } else {
+        console.warn('⚠️ Aucun fichier sélectionné');
       }
     }
 
-    function readExcelFile(file) {
+    function parseExcel(file) {
       const reader = new FileReader();
       
       reader.onload = function(e) {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
           
-          rawExcelData = jsonData;
-          
-          detectAgenceFromFile(jsonData);
-          displayPreview(jsonData);
-          
-        } catch (error) {
-          console.error('Erreur lecture Excel:', error);
-          showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel');
-        }
-      };
-      
-      reader.readAsArrayBuffer(file);
-    }
+          console.log('📊 Nombre de lignes Excel:', jsonData.length);
+          console.log('📊 Ligne 1 (titre):', jsonData[0]);
 
-    function detectAgenceFromFile(data) {
-  // MAPPING CODE → NOM
-  const AGENCE_CODES = {
-    '00': 'Gèze',
-    '01': '5 Av',
-    '02': 'Gare St Charles',
-    '03': 'Aubagne',
-    '06': 'La Valentine',
-    '08': 'Toulon',
-    '09': 'Plombières',
-    '12': 'La Garde',
-    '13': 'La Ciotat'
-  };
-
-  let agenceDetectee = null;
-  let codeAgence = null;
-
-  // Chercher le code dans le titre en 1ère ligne, 1ère cellule
-  const titre = String(data[0][0] || '').trim();
-  const matchCode = titre.match(/CLIENTS?\s+(\d{2})/i);
-
-  if (matchCode) {
-    codeAgence = matchCode[1];
-    agenceDetectee = AGENCE_CODES[codeAgence];
-  }
-
-  const agenceSelect = document.getElementById('agenceSelect');
-
-  if (agenceDetectee) {
-    // Vérifier droits utilisateur
-    if (currentUser.agences.includes('Toutes') || currentUser.agences.includes(agenceDetectee)) {
-      agenceSelect.innerHTML = `<option value="${agenceDetectee}" selected>${agenceDetectee} (code ${codeAgence})</option>`;
-      agenceSelect.disabled = true;
-      agenceSelect.value = agenceDetectee;
-      currentAgence = agenceDetectee;
-      showAlert('importAlert', 'success', `✅ Agence détectée automatiquement : ${agenceDetectee} (code ${codeAgence})`);
-    } else {
-      agenceSelect.innerHTML = `<option value="">-- Accès refusé à ${agenceDetectee} --</option>`;
-      agenceSelect.disabled = true;
-      showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence "${agenceDetectee}" (code ${codeAgence})`);
-    }
-  } else {
-    // Sélection manuelle si non détectée
-    agenceSelect.innerHTML = '<option value="">-- Sélectionner une agence --</option>';
-    currentUser.agences.forEach(agence => {
-      agenceSelect.innerHTML += `<option value="${agence}">${agence}</option>`;
-    });
-    agenceSelect.disabled = false;
-    showAlert('importAlert', 'info', 'ℹ️ Agence non détectée automatiquement. Veuillez sélectionner manuellement.');
-  }
-}
-
-    function displayPreview(data) {
-      const previewSection = document.getElementById('previewSection');
-      const table = document.getElementById('previewTable');
-      const thead = table.querySelector('thead');
-      const tbody = table.querySelector('tbody');
-      
-      thead.innerHTML = '';
-      tbody.innerHTML = '';
-      
-      if (data.length === 0) {
-        previewSection.style.display = 'none';
-        return;
-      }
-      
-      const headerRow = document.createElement('tr');
-      data[0].forEach(header => {
-        const th = document.createElement('th');
-        th.textContent = header || 'Sans titre';
-        headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
-      
-      const previewRows = data.slice(1, 11);
-      previewRows.forEach(row => {
-        const tr = document.createElement('tr');
-        row.forEach(cell => {
-          const td = document.createElement('td');
-          td.textContent = cell !== undefined && cell !== null ? cell : '';
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-      
-      previewSection.style.display = 'block';
-    }
-
-    async function importData() {
-      if (!rawExcelData) {
-        showAlert('importAlert', 'error', '❌ Veuillez d\'abord charger un fichier Excel');
-        return;
-      }
-      
-      if (!currentAgence) {
-        showAlert('importAlert', 'error', '❌ Veuillez sélectionner une agence');
-        return;
-      }
-      
-      document.getElementById('importLoading').classList.add('active');
-      
-      try {
-        const headers = rawExcelData[0];
-        const rows = rawExcelData.slice(1);
-        
-        const formattedData = rows.map(row => {
-          const obj = {};
-          headers.forEach((header, index) => {
-            obj[header] = row[index];
-          });
-          return obj;
-        });
-        
-        const response = await fetch(`${WORKER_URL}/balances`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    action: 'importBalances',    // ✅ Obligatoire pour Apps Script !
-    agence: currentAgence,
-    clients: formattedData,      // ✅ Bonne clé !
-    userEmail: currentUser.email,
-    userName: currentUser.name
-  })
-});
-
-        
-        if (response.ok) {
-          showAlert('importAlert', 'success', `✅ Import réussi ! ${formattedData.length} lignes importées pour ${currentAgence}`);
-          
-          await logAction('import', null, null, null, currentUser.name, `Import de ${formattedData.length} lignes`);
-          
-        } else {
-          throw new Error('Erreur serveur');
-        }
-        
-      } catch (error) {
-        console.error('Erreur import:', error);
-        showAlert('importAlert', 'error', '❌ Erreur lors de l\'import des données');
-      } finally {
-        document.getElementById('importLoading').classList.remove('active');
-      }
-    }
-
-    // ==========================================
-    // CONSULTATION - CHARGEMENT DES AGENCES
-    // ==========================================
-    function loadAgencesForConsultation() {
-      const select = document.getElementById('agenceConsultation');
-      select.innerHTML = '<option value="">-- Choisir une agence --</option>';
-      
-      currentUser.agences.forEach(agence => {
-        select.innerHTML += `<option value="${agence}">${agence}</option>`;
-      });
-    }
-
-    // ============================================
-    // 📊 GESTION DU CHANGEMENT D'AGENCE (CONSULTATION)
-    // ============================================
-    async function handleAgenceChangeConsultation() {
-      const agence = document.getElementById('agenceConsultation').value;
-      
-      console.log('🔄 handleAgenceChangeConsultation appelé pour:', agence);
-      
-      if (!agence) {
-        document.getElementById('balanceAgeeContainer').style.display = 'none';
-        return;
-      }
-      
-      currentAgence = agence;
-      
-      try {
-        console.log('📥 Chargement des balances pour:', agence);
-        
-        const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${encodeURIComponent(agence)}`);
-        
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        
-        const text = await response.text();
-        console.log('📥 Réponse brute (100 premiers caractères):', text.substring(0, 100));
-        
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.error('❌ Erreur parsing JSON:', e);
-          throw new Error('Format de réponse invalide');
-        }
-        
-        console.log('📥 Type de data:', typeof data);
-        console.log('📥 data.success:', data.success);
-        console.log('📥 Array.isArray(data):', Array.isArray(data));
-        
-        let balances = null;
-        
-        if (data.success && Array.isArray(data.data)) {
-          balances = data.data;
-          console.log('✅ Format détecté: { success, data }');
-        }
-        else if (Array.isArray(data)) {
-          balances = data;
-          console.log('✅ Format détecté: tableau direct');
-        }
-        else if (data.balances && Array.isArray(data.balances)) {
-          balances = data.balances;
-          console.log('✅ Format détecté: { balances }');
-        }
-        else if (data.clients && Array.isArray(data.clients)) {
-          balances = data.clients;
-          console.log('✅ Format détecté: { clients }');
-        }
-        else {
-          console.error('❌ Format non reconnu:', data);
-          throw new Error('Format de données non reconnu');
-        }
-        
-        if (!balances || balances.length === 0) {
-          throw new Error('Aucune donnée disponible pour cette agence');
-        }
-        
-        console.log('✅ Nombre de lignes chargées:', balances.length);
-        console.log('✅ Première ligne:', balances[0]);
-        console.log('✅ Colonnes:', Object.keys(balances[0]));
-        
-        balanceDataConsultation = balances;
-        
-        await loadCommentsConsultation(agence);
-        
-        document.getElementById('balanceAgeeContainer').style.display = 'block';
-        
-        // ✅ APPELER UNE SEULE FOIS
-        analyzeBalanceConsultation();
-        
-      } catch (error) {
-        console.error('❌ Erreur chargement:', error);
-        showAlert('consultationAlert', 'error', '❌ ' + error.message);
-        document.getElementById('balanceAgeeContainer').style.display = 'none';
-      }
-    }
-
-    async function loadCommentsConsultation(agence) {
-      try {
-        const response = await fetch(`${WORKER_URL}/comments/${agence}`);
-        if (response.ok) {
-          const data = await response.json();
-          commentsDataConsultation = data || {};
-        } else {
-          commentsDataConsultation = {};
-        }
-      } catch (error) {
-        console.error('Erreur chargement commentaires:', error);
-        commentsDataConsultation = {};
-      }
-    }
-
-    // ============================================
-    // 📊 ANALYSE DE LA BALANCE ÂGÉE
-    // ============================================
-    function analyzeBalanceConsultation() {
-      console.log('📊 Début analyse');
-      console.log('📊 balanceDataConsultation:', balanceDataConsultation);
-      console.log('📊 Type:', typeof balanceDataConsultation);
-      console.log('📊 Est array:', Array.isArray(balanceDataConsultation));
-      
-      if (!balanceDataConsultation || !Array.isArray(balanceDataConsultation) || balanceDataConsultation.length === 0) {
-        showAlert('consultationAlert', 'error', '❌ Aucune donnée à analyser');
-        return;
-      }
-
-      console.log('📊 Analyse de', balanceDataConsultation.length, 'lignes');
-      console.log('📊 Première ligne:', balanceDataConsultation[0]);
-
-      const clientsData = [];
-      let soldesDebiteurs = 0;
-      let soldesCrediteurs = 0;
-      let clientsCritiques = 0;
-      let montantRisque = 0;
-      let nombreClients = 0;
-
-      const firstRow = balanceDataConsultation[0];
-      const keys = Object.keys(firstRow);
-      console.log('📊 Colonnes disponibles:', keys);
-
-      balanceDataConsultation.forEach((row, index) => {
-        try {
-          const codeClient = String(
-            row.Code_Client || 
-            row.code_client || 
-            row['Code Client'] || 
-            row.code || 
-            row.Code || 
-            ''
-          ).trim();
-          
-          const nomClient = String(
-            row.Nom_Client || 
-            row.nom_client || 
-            row['Nom Client'] || 
-            row.nom || 
-            row.Nom || 
-            row.raison_sociale ||
-            row['Raison Sociale'] ||
-            'Client inconnu'
-          ).trim();
-          
-          const solde = parseFloat(
-            row.Solde || 
-            row.solde || 
-            row.Balance || 
-            row.balance || 
-            0
-          );
-          
-          const tranche0 = parseFloat(
-            row.Echeance_0 || 
-            row.echeance_0 || 
-            row['Echeance 0'] ||
-            row['0-29j'] || 
-            row['0_29'] ||
-            0
-          );
-          
-          const tranche30 = parseFloat(
-            row.Echeance_30 || 
-            row.echeance_30 || 
-            row['Echeance 30'] ||
-            row['30-59j'] || 
-            row['30_59'] ||
-            0
-          );
-          
-          const tranche60 = parseFloat(
-            row.Echeance_60 || 
-            row.echeance_60 || 
-            row['Echeance 60'] ||
-            row['60-89j'] || 
-            row['60_89'] ||
-            0
-          );
-          
-          const tranche90 = parseFloat(
-            row.Echeance_90 || 
-            row.echeance_90 || 
-            row['Echeance 90'] ||
-            row['90-119j'] || 
-            row['90_119'] ||
-            0
-          );
-          
-          const tranche120 = parseFloat(
-            row.Echeance_120 || 
-            row.echeance_120 || 
-            row['Echeance 120'] ||
-            row['120+j'] || 
-            row['120_plus'] ||
-            0
-          );
-
-          if (!codeClient || codeClient === '' || solde === 0) {
+          if (jsonData.length < 3) {
+            showAlert('importAlert', 'error', '❌ Fichier Excel vide ou invalide');
             return;
           }
 
-          nombreClients++;
+          // ============================================
+          // ✅ EXTRACTION DU CODE AGENCE (ANCIEN CODE)
+          // ============================================
+          let agenceDetectee = null;
+          let codeAgence = null;
 
-          const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
-          let ageMoyen = 0;
+          const titre = String(jsonData[0][0]).trim();
+          console.log('📋 Titre Excel:', titre);
 
-          if (totalEchu > 0) {
-            ageMoyen = Math.round(
-              (Math.abs(tranche120) * 135 + 
-               Math.abs(tranche90) * 105 + 
-               Math.abs(tranche60) * 75 + 
-               Math.abs(tranche30) * 45 + 
-               Math.abs(tranche0) * 15) / totalEchu
-            );
-          }
-
-          if (solde > 0) {
-            soldesDebiteurs += solde;
-          } else {
-            soldesCrediteurs += Math.abs(solde);
-          }
-
-          const montantsAnciens = Math.abs(tranche60) + Math.abs(tranche90) + Math.abs(tranche120);
-          const pourcentageAncien = solde !== 0 ? (montantsAnciens / Math.abs(solde)) * 100 : 0;
-
-          let risque = 'low';
-          if (Math.abs(tranche120) > 0 || ageMoyen > 90) {
-            risque = 'critical';
-            clientsCritiques++;
-          } else if (Math.abs(tranche90) > 0 || ageMoyen > 60) {
-            risque = 'high';
-          } else if (Math.abs(tranche60) > 0 || ageMoyen > 30) {
-            risque = 'medium';
-          }
-
-          if (solde > 0 && montantsAnciens > 0) {
-            montantRisque += montantsAnciens;
-          }
-
-          clientsData.push({
-            code: codeClient,
-            nom: nomClient,
-            solde: solde,
-            montant30: tranche0,
-            montant60: tranche30,
-            montant90: tranche60,
-            montant90plus: tranche90 + tranche120,
-            ageMoyen: ageMoyen,
-            pourcentageAncien: pourcentageAncien,
-            risque: risque
-          });
+          const matchCode = titre.match(/CLIENTS?\s+(\d{2})/i);
           
+          if (matchCode) {
+            codeAgence = matchCode[1];
+            agenceDetectee = AGENCE_CODES[codeAgence];
+            
+            console.log('🔍 Code agence détecté:', codeAgence);
+            console.log('🏢 Agence correspondante:', agenceDetectee);
+          }
+
+          if (!agenceDetectee) {
+            showAlert('importAlert', 'error', `❌ Code agence "${codeAgence}" non reconnu dans le titre "${titre}". Codes valides : ${Object.keys(AGENCE_CODES).join(', ')}`);
+            return;
+          }
+
+          // Vérifier les permissions utilisateur
+          if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agenceDetectee)) {
+            showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence "${agenceDetectee}" (code ${codeAgence}). Vos agences : ${currentUser.agences.join(', ')}`);
+            return;
+          }
+
+          // Mettre à jour le sélecteur d'agence automatiquement
+          const select = document.getElementById('agenceSelect');
+          select.innerHTML = `<option value="${agenceDetectee}" selected>${agenceDetectee} (code ${codeAgence})</option>`;
+          select.disabled = true;
+          currentAgence = agenceDetectee;
+          
+          console.log('✅ Agence sélectionnée automatiquement:', agenceDetectee);
+
+          // ============================================
+          // ✅ PARSING DES DONNÉES (ANCIEN CODE)
+          // ============================================
+          console.log('📊 Ligne 2 (en-têtes):', jsonData[1]);
+          console.log('📊 Ligne 3 (premier client):', jsonData[2]);
+
+          excelData = [];
+          
+          for (let i = 2; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            
+            if (!row || !row[0] || row[0].trim() === '') continue;
+            
+            const codeClient = String(row[0]).trim();
+            const nomClient = String(row[1]).trim();
+            
+            // ✅ ORDRE CORRECT DES COLONNES EXCEL
+            const tranche120 = parseFloat(row[2]) || 0;
+            const tranche90 = parseFloat(row[3]) || 0;
+            const tranche60 = parseFloat(row[4]) || 0;
+            const tranche30 = parseFloat(row[5]) || 0;
+            const tranche0 = parseFloat(row[6]) || 0;
+            const paiement = parseFloat(row[7]) || 0;
+            const solde = parseFloat(row[8]) || 0;
+
+            if (!codeClient || codeClient === '') continue;
+
+            // ✅ CALCUL DE L'ÂGE MOYEN (ANCIEN CODE)
+            const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
+            let ageMoyen = 0;
+
+            if (totalEchu > 0) {
+              ageMoyen = Math.round(
+                (Math.abs(tranche120) * 135 + 
+                 Math.abs(tranche90) * 105 + 
+                 Math.abs(tranche60) * 75 + 
+                 Math.abs(tranche30) * 45 + 
+                 Math.abs(tranche0) * 15) / totalEchu
+              );
+            }
+
+            // ✅ FORMAT ADAPTÉ AU GOOGLE SHEET
+            excelData.push({
+              codeClient: codeClient,
+              nomClient: nomClient,
+              solde: solde,
+              ageMoyen: ageMoyen,
+              echeance0: tranche0,
+              echeance30: tranche30,
+              echeance60: tranche60,
+              echeance90: tranche90,
+              echeance120: tranche120,
+              paiement: paiement,
+              agence: agenceDetectee
+            });
+          }
+
+          console.log('✅ Données Excel chargées:', excelData.length, 'lignes pour l\'agence', agenceDetectee);
+          
+          if (excelData.length === 0) {
+            showAlert('importAlert', 'error', '❌ Aucune donnée valide trouvée dans le fichier');
+            return;
+          }
+          
+          console.log('📊 Premier client parsé:', excelData[0]);
+          console.log('📊 Dernier client parsé:', excelData[excelData.length - 1]);
+          
+          showPreview();
+          showAlert('importAlert', 'success', `✅ ${excelData.length} clients chargés pour l'agence "${agenceDetectee}" (code ${codeAgence})`);
+
         } catch (error) {
-          console.error(`❌ Erreur ligne ${index}:`, error, row);
+          console.error('❌ Erreur parsing Excel:', error);
+          showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel: ' + error.message);
         }
-      });
-
-      console.log('✅ Clients analysés:', nombreClients);
-      if (clientsData.length > 0) {
-        console.log('✅ Premier client traité:', clientsData[0]);
-      }
-
-      document.getElementById('soldesDebiteursConsultation').textContent = formatCurrency(soldesDebiteurs);
-      document.getElementById('soldesCrediteursConsultation').textContent = formatCurrency(soldesCrediteurs);
-      document.getElementById('balanceTotaleConsultation').textContent = formatCurrency(soldesDebiteurs - soldesCrediteurs);
-      document.getElementById('clientsCritiquesConsultation').textContent = clientsCritiques;
-      document.getElementById('nombreClientsConsultation').textContent = nombreClients;
-      document.getElementById('montantRisqueConsultation').textContent = formatCurrency(montantRisque);
-      
-      const tauxRisque = soldesDebiteurs > 0 ? ((montantRisque / soldesDebiteurs) * 100).toFixed(1) : 0;
-      document.getElementById('tauxRisqueConsultation').textContent = tauxRisque + '%';
-
-      generateChartsConsultation(clientsData);
-      fillDetailsTableConsultation(clientsData);
-      generateRecommendationsConsultation(clientsData, soldesDebiteurs);
-    }
-
-    // ============================================
-    // 📊 GÉNÉRATION DES GRAPHIQUES (CONSULTATION)
-    // ============================================
-    function generateChartsConsultation(clientsData) {
-      console.log('📊 Génération des graphiques pour', clientsData.length, 'clients');
-      
-      // ✅ DÉTRUIRE LES ANCIENS GRAPHIQUES
-      if (window.riskChartConsultation) {
-        try {
-          window.riskChartConsultation.destroy();
-        } catch (e) {
-          console.warn('Erreur destruction riskChart:', e);
-        }
-      }
-      
-      if (window.ageChartConsultation) {
-        try {
-          window.ageChartConsultation.destroy();
-        } catch (e) {
-          console.warn('Erreur destruction ageChart:', e);
-        }
-      }
-      
-      if (window.topClientsChartConsultation) {
-        try {
-          window.topClientsChartConsultation.destroy();
-        } catch (e) {
-          console.warn('Erreur destruction topClientsChart:', e);
-        }
-      }
-
-      // ============================================
-      // 📊 GRAPHIQUE 1 : RÉPARTITION PAR NIVEAU DE RISQUE
-      // ============================================
-      const riskCounts = {
-        critical: clientsData.filter(c => c.risque === 'critical').length,
-        high: clientsData.filter(c => c.risque === 'high').length,
-        medium: clientsData.filter(c => c.risque === 'medium').length,
-        low: clientsData.filter(c => c.risque === 'low').length
       };
 
-      console.log('📊 Répartition risques:', riskCounts);
-
-      try {
-        const ctxRisk = document.getElementById('riskChartConsultation');
-        if (ctxRisk) {
-          window.riskChartConsultation = new Chart(ctxRisk, {
-            type: 'bar',
-            data: {
-              labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
-              datasets: [{
-                label: 'Nombre de clients',
-                data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
-                backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
-              }]
-            },
-            options: {
-              indexAxis: 'y',
-              responsive: true,
-              maintainAspectRatio: false,
-              animation: false,
-              plugins: {
-                legend: { display: false },
-                title: {
-                  display: true,
-                  text: 'Répartition par niveau de risque'
-                }              },
-              scales: {
-                x: {
-                  beginAtZero: true,
-                  ticks: { precision: 0 }
-                }
-              }
-            }
-          });
-          console.log('✅ Graphique risque créé');
-        }
-      } catch (error) {
-        console.error('❌ Erreur graphique risque:', error);
-      }
-
-      // ============================================
-      // 📊 GRAPHIQUE 2 : RÉPARTITION PAR ÂGE MOYEN
-      // ============================================
-      const ageBuckets = {
-        '0-30j': clientsData.filter(c => c.ageMoyen <= 30).length,
-        '31-60j': clientsData.filter(c => c.ageMoyen > 30 && c.ageMoyen <= 60).length,
-        '61-90j': clientsData.filter(c => c.ageMoyen > 60 && c.ageMoyen <= 90).length,
-        '90+j': clientsData.filter(c => c.ageMoyen > 90).length
-      };
-
-      console.log('📊 Répartition âges:', ageBuckets);
-
-      try {
-        const ctxAge = document.getElementById('ageChartConsultation');
-        if (ctxAge) {
-          window.ageChartConsultation = new Chart(ctxAge, {
-            type: 'doughnut',
-            data: {
-              labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
-              datasets: [{
-                data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
-                backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              animation: false,
-              plugins: {
-                legend: { position: 'bottom' },
-                title: {
-                  display: true,
-                  text: 'Répartition par âge moyen de créance'
-                }
-              }
-            }
-          });
-          console.log('✅ Graphique âge créé');
-        }
-      } catch (error) {
-        console.error('❌ Erreur graphique âge:', error);
-      }
-
-      // ============================================
-      // 📊 GRAPHIQUE 3 : TOP 10 CLIENTS PAR SOLDE
-      // ============================================
-      const topClients = clientsData
-        .filter(c => c.solde > 0)
-        .sort((a, b) => b.solde - a.solde)
-        .slice(0, 10);
-
-      console.log('📊 Top 10 clients:', topClients.length);
-
-      try {
-        const ctxTop = document.getElementById('topClientsChartConsultation');
-        if (ctxTop) {
-          window.topClientsChartConsultation = new Chart(ctxTop, {
-            type: 'bar',
-            data: {
-              labels: topClients.map(c => c.nom.substring(0, 20)),
-              datasets: [{
-                label: 'Solde (€)',
-                data: topClients.map(c => c.solde),
-                backgroundColor: topClients.map(c => {
-                  if (c.risque === 'critical') return '#dc3545';
-                  if (c.risque === 'high') return '#fd7e14';
-                  if (c.risque === 'medium') return '#ffc107';
-                  return '#28a745';
-                })
-              }]
-            },
-            options: {
-              indexAxis: 'y',
-              responsive: true,
-              maintainAspectRatio: false,
-              animation: false,
-              plugins: {
-                legend: { display: false },
-                title: {
-                  display: true,
-                  text: 'Top 10 clients par solde'
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      return formatCurrency(context.parsed.x);
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function(value) {
-                      return formatCurrency(value);
-                    }
-                  }
-                }
-              }
-            }
-          });
-          console.log('✅ Graphique top clients créé');
-        } else {
-          console.error('❌ Canvas topClientsChartConsultation introuvable dans le DOM');
-        }
-      } catch (error) {
-        console.error('❌ Erreur graphique top clients:', error);
-      }
-      
-      console.log('✅ Tous les graphiques générés');
-    }
-
-    // ==========================================
-    // TABLEAU DÉTAILLÉ
-    // ==========================================
-    function fillDetailsTableConsultation(clientsData) {
-      const tbody = document.getElementById('detailsTableConsultation');
-      tbody.innerHTML = '';
-
-      const riskFilter = document.getElementById('riskFilterConsultation').value;
-      const soldeTypeFilter = document.getElementById('soldeTypeFilterConsultation').value;
-      const minBalance = parseFloat(document.getElementById('minBalanceConsultation').value) || 0;
-
-      let filteredData = clientsData.filter(client => {
-        if (riskFilter !== 'all' && client.risque !== riskFilter) return false;
-        if (soldeTypeFilter === 'debiteur' && client.solde <= 0) return false;
-        if (soldeTypeFilter === 'crediteur' && client.solde >= 0) return false;
-        if (Math.abs(client.solde) < minBalance) return false;
-        return true;
-      });
-
-      if (currentSortColumnConsultation) {
-        filteredData.sort((a, b) => {
-          let valA = a[currentSortColumnConsultation];
-          let valB = b[currentSortColumnConsultation];
-          
-          if (typeof valA === 'string') valA = valA.toLowerCase();
-          if (typeof valB === 'string') valB = valB.toLowerCase();
-          
-          if (currentSortDirectionConsultation === 'asc') {
-            return valA > valB ? 1 : -1;
-          } else {
-            return valA < valB ? 1 : -1;
-          }
-        });
-      }
-
-      filteredData.forEach(client => {
-        const tr = document.createElement('tr');
-        
-        if (client.risque === 'critical') tr.style.backgroundColor = '#fef2f2';
-        else if (client.risque === 'high') tr.style.backgroundColor = '#fff7ed';
-        else if (client.risque === 'medium') tr.style.backgroundColor = '#fefce8';
-        
-        const tdCode = document.createElement('td');
-        tdCode.textContent = client.code;
-        tr.appendChild(tdCode);
-        
-        const tdNom = document.createElement('td');
-        tdNom.textContent = client.nom;
-        tr.appendChild(tdNom);
-        
-        const tdSolde = document.createElement('td');
-        tdSolde.textContent = formatCurrency(client.solde);
-        tdSolde.style.textAlign = 'right';
-        tdSolde.style.fontWeight = 'bold';
-        tdSolde.style.color = client.solde > 0 ? '#dc2626' : '#16a34a';
-        tr.appendChild(tdSolde);
-        
-        const tdAnciennete = document.createElement('td');
-        tdAnciennete.textContent = client.pourcentageAncien.toFixed(1) + '%';
-        tdAnciennete.style.textAlign = 'right';
-        tr.appendChild(tdAnciennete);
-        
-        const tdRisque = document.createElement('td');
-        tdRisque.style.textAlign = 'center';
-        const riskBadge = document.createElement('span');
-        riskBadge.style.padding = '4px 12px';
-        riskBadge.style.borderRadius = '12px';
-        riskBadge.style.fontSize = '12px';
-        riskBadge.style.fontWeight = 'bold';
-        
-        if (client.risque === 'critical') {
-          riskBadge.textContent = '🚨 Critique';
-          riskBadge.style.backgroundColor = '#7f1d1d';
-          riskBadge.style.color = 'white';
-        } else if (client.risque === 'high') {
-          riskBadge.textContent = '⚠️ Élevé';
-          riskBadge.style.backgroundColor = '#ef4444';
-          riskBadge.style.color = 'white';
-        } else if (client.risque === 'medium') {
-          riskBadge.textContent = '⚡ Modéré';
-          riskBadge.style.backgroundColor = '#f59e0b';
-          riskBadge.style.color = 'white';
-        } else {
-          riskBadge.textContent = '✅ Faible';
-          riskBadge.style.backgroundColor = '#10b981';
-          riskBadge.style.color = 'white';
-        }
-        
-        tdRisque.appendChild(riskBadge);
-        tr.appendChild(tdRisque);
-        
-        const tdAction = document.createElement('td');
-        tdAction.style.textAlign = 'center';
-        const btnDetails = document.createElement('button');
-        btnDetails.textContent = '🔍 Détails';
-        btnDetails.className = 'btn btn-primary';
-        btnDetails.style.fontSize = '12px';
-        btnDetails.style.padding = '6px 12px';
-        btnDetails.onclick = () => showClientDetails(client);
-        tdAction.appendChild(btnDetails);
-        tr.appendChild(tdAction);
-        
-        const tdComment = document.createElement('td');
-        const commentCell = document.createElement('div');
-        commentCell.className = 'comment-input-cell';
-        
-        const clientComments = commentsDataConsultation[client.code] || [];
-        if (clientComments.length > 0) {
-          commentCell.classList.add('has-comment');
-          commentCell.textContent = `💬 ${clientComments.length} commentaire(s)`;
-        } else {
-          commentCell.textContent = '➕ Ajouter un commentaire';
-        }
-        
-        commentCell.onclick = () => openCommentModalConsultation(client);
-        tdComment.appendChild(commentCell);
-        tr.appendChild(tdComment);
-        
-        const tdDelete = document.createElement('td');
-        tdDelete.style.textAlign = 'center';
-        const btnDelete = document.createElement('button');
-        btnDelete.textContent = '🗑️';
-        btnDelete.className = 'btn btn-danger';
-        btnDelete.style.fontSize = '12px';
-        btnDelete.style.padding = '6px 12px';
-        btnDelete.onclick = () => openDeleteModalConsultation(client);
-        tdDelete.appendChild(btnDelete);
-        tr.appendChild(tdDelete);
-        
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('riskFilterConsultation').onchange = () => fillDetailsTableConsultation(clientsData);
-      document.getElementById('soldeTypeFilterConsultation').onchange = () => fillDetailsTableConsultation(clientsData);
-      document.getElementById('minBalanceConsultation').oninput = () => fillDetailsTableConsultation(clientsData);
-    }
-
-    // ==========================================
-    // TRI DU TABLEAU
-    // ==========================================
-    function sortTableConsultation(column) {
-      if (currentSortColumnConsultation === column) {
-        currentSortDirectionConsultation = currentSortDirectionConsultation === 'asc' ? 'desc' : 'asc';
-      } else {
-        currentSortColumnConsultation = column;
-        currentSortDirectionConsultation = 'asc';
-      }
-      
-      analyzeBalanceConsultation();
-    }
-
-    // ==========================================
-    // DÉTAILS CLIENT
-    // ==========================================
-    function showClientDetails(client) {
-      const details = `
-        📋 DÉTAILS CLIENT
-        
-        Code: ${client.code}
-        Nom: ${client.nom}
-        Solde total: ${formatCurrency(client.solde)}
-        
-        RÉPARTITION PAR ANCIENNETÉ:
-        • Moins de 30 jours: ${formatCurrency(client.montant30)}
-        • 30-60 jours: ${formatCurrency(client.montant60)}
-        • 60-90 jours: ${formatCurrency(client.montant90)}
-        • Plus de 90 jours: ${formatCurrency(client.montant90plus)}
-        
-        Pourcentage ancien: ${client.pourcentageAncien.toFixed(1)}%
-        Niveau de risque: ${client.risque.toUpperCase()}
-      `;
-      
-      alert(details);
-    }
-
-    // ==========================================
-    // GESTION DES COMMENTAIRES
-    // ==========================================
-    function openCommentModalConsultation(client) {
-      currentClientForCommentConsultation = client;
-      
-      document.getElementById('modalClientCodeConsultation').textContent = client.code;
-      document.getElementById('modalClientNameConsultation').textContent = client.nom;
-      document.getElementById('modalClientSoldeConsultation').textContent = formatCurrency(client.solde);
-      
-      document.getElementById('commentAuthorConsultation').value = currentUser.name;
-      
-      displayCommentHistoryConsultation(client.code);
-      
-      document.getElementById('newCommentTextConsultation').value = '';
-      
-      document.getElementById('commentModalConsultation').classList.add('active');
-    }
-
-    function displayCommentHistoryConsultation(clientCode) {
-      const historyDiv = document.getElementById('commentHistoryConsultation');
-      const comments = commentsDataConsultation[clientCode] || [];
-      
-      if (comments.length === 0) {
-        historyDiv.innerHTML = '<p class="text-gray-500 text-sm">Aucun commentaire pour ce client</p>';
-        return;
-      }
-      
-      historyDiv.innerHTML = '';
-      comments.forEach((comment, index) => {
-        const commentDiv = document.createElement('div');
-        commentDiv.className = 'comment-history-item';
-        commentDiv.innerHTML = `
-          <div class="author">${comment.author}</div>
-          <div class="timestamp">${new Date(comment.timestamp).toLocaleString('fr-FR')}</div>
-          <div class="text">${comment.text}</div>
-          <button class="comment-delete-btn" onclick="deleteCommentConsultation('${clientCode}', ${index})">Supprimer</button>
-        `;
-        historyDiv.appendChild(commentDiv);
-      });
-    }
-
-    async function saveNewCommentConsultation() {
-      // ✅ CORRECTION : Utiliser le bon ID
-      const author = document.getElementById('commentAuthorConsultation').value.trim();
-      const commentText = document.getElementById('newCommentTextConsultation').value.trim();
-      
-      console.log('💾 Tentative sauvegarde commentaire:', { author, commentText, currentAgence });
-
-      if (!author) {
-        alert('⚠️ Veuillez entrer votre nom');
-        return;
-      }
-
-      if (!commentText) {
-        alert('⚠️ Veuillez saisir un commentaire');
-        return;
-      }
-
-      if (!currentClientForCommentConsultation) {
-        alert('⚠️ Erreur : client non sélectionné');
-        return;
-      }
-
-      try {
-        const clientCode = currentClientForCommentConsultation.code;
-        
-        // Initialiser le tableau de commentaires si nécessaire
-        if (!commentsDataConsultation[clientCode]) {
-          commentsDataConsultation[clientCode] = [];
-        }
-        
-        // Ajouter le nouveau commentaire
-        const newComment = {
-          author: author,
-          text: commentText,
-          timestamp: new Date().toISOString()
-        };
-        
-        commentsDataConsultation[clientCode].push(newComment);
-        
-        // Sauvegarder sur le serveur
-        const response = await fetch(`${WORKER_URL}/comments/${encodeURIComponent(currentAgence)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(commentsDataConsultation)
-        });
-
-        console.log('📡 Réponse serveur:', response.status, response.statusText);
-        
-        if (response.ok) {
-          console.log('✅ Commentaire sauvegardé avec succès');
-          
-          // Réinitialiser le champ
-          document.getElementById('newCommentTextConsultation').value = '';
-          
-          // Rafraîchir l'affichage
-          displayCommentHistoryConsultation(clientCode);
-          
-          // Log l'action
-          await logAction('comment', clientCode, currentClientForCommentConsultation.nom, currentClientForCommentConsultation.solde, author, commentText);
-          
-          // Fermer le modal
-          closeCommentModalConsultation();
-          
-          // Réanalyser pour mettre à jour le tableau
-          analyzeBalanceConsultation();
-          
-          showSaveIndicator('saveIndicatorConsultation');
-          
-        } else {
-          console.error('❌ Échec sauvegarde');
-          alert('❌ Erreur lors de la sauvegarde du commentaire');
-        }
-      } catch (error) {
-        console.error('❌ Erreur sauvegarde commentaire:', error);
-        alert('❌ Erreur lors de la sauvegarde du commentaire');
-      }
-    }
-
-    async function deleteCommentConsultation(clientCode, index) {
-      if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
-        return;
-      }
-      
-      commentsDataConsultation[clientCode].splice(index, 1);
-      
-      if (commentsDataConsultation[clientCode].length === 0) {
-        delete commentsDataConsultation[clientCode];
-      }
-      
-      try {
-        await fetch(`${WORKER_URL}/comments/${currentAgence}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(commentsDataConsultation)
-        });
-        
-        showSaveIndicator('saveIndicatorConsultation');
-        displayCommentHistoryConsultation(clientCode);
-        analyzeBalanceConsultation();
-        
-      } catch (error) {
-        console.error('Erreur suppression commentaire:', error);
-        alert('❌ Erreur lors de la suppression du commentaire');
-      }
-    }
-
-    function closeCommentModalConsultation() {
-      document.getElementById('commentModalConsultation').classList.remove('active');
-      currentClientForCommentConsultation = null;
-    }
-
-    // ==========================================
-    // GESTION DE LA SUPPRESSION
-    // ==========================================
-    function openDeleteModalConsultation(client) {
-      currentClientForDeleteConsultation = client;
-      
-      document.getElementById('deleteClientInfoConsultation').innerHTML = `
-        <strong>Code:</strong> ${client.code}<br>
-        <strong>Nom:</strong> ${client.nom}<br>
-        <strong>Solde:</strong> ${formatCurrency(client.solde)}
-      `;
-      
-      document.getElementById('deleteAuthorConsultation').value = currentUser.name;
-      document.getElementById('deleteReasonConsultation').value = '';
-      
-      document.getElementById('deleteModalConsultation').classList.add('active');
-    }
-
-    async function confirmDeleteConsultation() {
-      const author = document.getElementById('deleteAuthorConsultation').value.trim();
-      const reason = document.getElementById('deleteReasonConsultation').value.trim();
-      
-      if (!author || !reason) {
-        alert('⚠️ Veuillez remplir tous les champs');
-        return;
-      }
-      
-      const client = currentClientForDeleteConsultation;
-      
-      try {
-        await logAction('delete', client.code, client.nom, client.solde, author, reason);
-        
-        balanceDataConsultation = balanceDataConsultation.filter(row => {
-          const code = String(
-            row.Code_Client || 
-            row.code_client || 
-            row['Code Client'] || 
-            row.code || 
-            row.Code || 
-            ''
-          ).trim();
-          return code !== client.code;
-        });
-        
-        await fetch(`${WORKER_URL}/balances`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agence: currentAgence,
-            data: balanceDataConsultation,
-            user: currentUser.email,
-            timestamp: new Date().toISOString()
-          })
-        });
-        
-        showSaveIndicator('saveIndicatorConsultation');
-        closeDeleteModalConsultation();
-        analyzeBalanceConsultation();
-        
-        alert('✅ Client supprimé avec succès');
-        
-      } catch (error) {
-        console.error('Erreur suppression client:', error);
-        alert('❌ Erreur lors de la suppression du client');
-      }
-    }
-
-    function closeDeleteModalConsultation() {
-      document.getElementById('deleteModalConsultation').classList.remove('active');
-      currentClientForDeleteConsultation = null;
-    }
-
-    // ==========================================
-    // CALCUL TAUX D'IMPAYÉS
-    // ==========================================
-    function calculateTauxImpayeConsultation() {
-      const ca = parseFloat(document.getElementById('chiffreAffairesConsultation').value);
-      
-      if (!ca || ca <= 0) {
-        alert('⚠️ Veuillez entrer un chiffre d\'affaires valide');
-        return;
-      }
-      
-      const soldesDebiteurs = parseFloat(document.getElementById('soldesDebiteursConsultation').textContent.replace(/[^0-9.-]/g, ''));
-      const tauxImpaye = (soldesDebiteurs / ca) * 100;
-      
-      const resultDiv = document.getElementById('tauxImpayeResultConsultation');
-      const valueDiv = document.getElementById('tauxImpayeValueConsultation');
-      const statusDiv = document.getElementById('tauxImpayeStatusConsultation');
-      
-      valueDiv.textContent = tauxImpaye.toFixed(2) + '%';
-      
-      if (tauxImpaye < 2) {
-        valueDiv.style.color = '#16a34a';
-        statusDiv.textContent = '✅ Excellent - Objectif atteint';
-        statusDiv.style.color = '#16a34a';
-      } else if (tauxImpaye < 3) {
-        valueDiv.style.color = '#f59e0b';
-        statusDiv.textContent = '⚠️ Attention - Légèrement au-dessus de l\'objectif';
-        statusDiv.style.color = '#f59e0b';
-      } else {
-        valueDiv.style.color = '#dc2626';
-        statusDiv.textContent = '🚨 Critique - Action urgente requise';
-        statusDiv.style.color = '#dc2626';
-      }
-      
-      resultDiv.classList.remove('hidden');
-    }
-
-    // ==========================================
-    // RECOMMANDATIONS
-    // ==========================================
-    function generateRecommendationsConsultation(clientsData, soldesDebiteurs) {
-      const criticalClients = clientsData.filter(c => c.montant90plus > 0 && c.solde > 0);
-      
-      if (criticalClients.length > 0) {
-        document.getElementById('urgentAlertConsultation').classList.remove('hidden');
-        document.getElementById('urgentTitleConsultation').textContent = `${criticalClients.length} client(s) avec impayés > 90 jours`;
-        document.getElementById('urgentTextConsultation').textContent = `Montant total à risque: ${formatCurrency(criticalClients.reduce((sum, c) => sum + c.montant90plus, 0))}`;
-      } else {
-        document.getElementById('urgentAlertConsultation').classList.add('hidden');
-      }
-      
-      const highRiskClients = clientsData.filter(c => c.risque === 'high' || c.risque === 'critical');
-      if (highRiskClients.length > 0) {
-        document.getElementById('riskAlertConsultation').classList.remove('hidden');
-        document.getElementById('riskTitleConsultation').textContent = `${highRiskClients.length} client(s) à risque élevé`;
-        document.getElementById('riskTextConsultation').textContent = `Montant total: ${formatCurrency(highRiskClients.reduce((sum, c) => sum + c.solde, 0))}`;
-      } else {
-        document.getElementById('riskAlertConsultation').classList.add('hidden');
-      }
-      
-      const top5 = clientsData.filter(c => c.solde > 0).sort((a, b) => b.solde - a.solde).slice(0, 5);
-      const top5Total = top5.reduce((sum, c) => sum + c.solde, 0);
-      const concentrationPct = soldesDebiteurs > 0 ? (top5Total / soldesDebiteurs * 100).toFixed(1) : 0;
-      
-      if (concentrationPct > 50) {
-        document.getElementById('riskConcentrationCardConsultation').classList.remove('hidden');
-        document.getElementById('riskConcentrationTextConsultation').textContent = 
-          `Les 5 plus gros clients représentent ${concentrationPct}% du total des impayés (${formatCurrency(top5Total)})`;
-      } else {
-        document.getElementById('riskConcentrationCardConsultation').classList.add('hidden');
-      }
-      
-      if (criticalClients.length > 0) {
-        document.getElementById('criticalClientsCardConsultation').classList.remove('hidden');
-        document.getElementById('criticalClientsCountConsultation').textContent = 
-          `${criticalClients.length} client(s) nécessitent une action immédiate`;
-        
-        const listDiv = document.getElementById('criticalClientsListConsultation');
-        listDiv.innerHTML = '';
-        criticalClients.slice(0, 10).forEach(c => {
-          const li = document.createElement('li');
-          li.textContent = `${c.nom} - ${formatCurrency(c.solde)}`;
-          listDiv.appendChild(li);
-        });
-      } else {
-        document.getElementById('criticalClientsCardConsultation').classList.add('hidden');
-      }
-    }
-
-    // ==========================================
-    // EXPORT
-    // ==========================================
-    function exportToExcelConsultation() {
-      if (!balanceDataConsultation) {
-        alert('❌ Aucune donnée à exporter');
-        return;
-      }
-      
-      const ws = XLSX.utils.json_to_sheet(balanceDataConsultation);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Balance Âgée');
-      
-      const filename = `Balance_Agee_${currentAgence}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(wb, filename);
-    }
-
-    function saveAsHTMLConsultation() {
-      const htmlContent = document.documentElement.outerHTML;
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Balance_Agee_${currentAgence}_${new Date().toISOString().split('T')[0]}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    // ==========================================
-    // HISTORIQUE
-    // ==========================================
-    async function logAction(type, clientCode, clientName, solde, author, reason) {
-      try {
-        const action = {
-          date: new Date().toISOString().split('T')[0],
-          heure: new Date().toLocaleTimeString('fr-FR'),
-          type,
-          clientCode: clientCode || '-',
-          clientName: clientName || '-',
-          solde: solde || 0,
-          author,
-          reason
-        };
-        
-        await fetch(`${WORKER_URL}/historique/${currentAgence}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(action)
-        });
-        
-      } catch (error) {
-        console.error('Erreur enregistrement historique:', error);
-      }
-    }
-
-    async function loadHistorique() {
-      if (!currentAgence) {
-        showAlert('historiqueAlert', 'error', '❌ Veuillez sélectionner une agence');
-        return;
-      }
-      
-      try {
-        const response = await fetch(`${WORKER_URL}/historique/${currentAgence}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          
-          // ✅ CORRECTION : Vérifier que c'est un tableau
-          let historique = [];
-          if (Array.isArray(data)) {
-            historique = data;
-          } else if (data.historique && Array.isArray(data.historique)) {
-            historique = data.historique;
-          } else if (data.actions && Array.isArray(data.actions)) {
-            historique = data.actions;
-          }
-          
-          console.log('📜 Chargement historique:', historique.length, 'actions');
-          displayHistorique(historique);
-        } else {
-          showAlert('historiqueAlert', 'info', 'ℹ️ Aucun historique disponible');
-        }
-        
-      } catch (error) {
-        console.error('❌ Erreur chargement historique:', error);
-        showAlert('historiqueAlert', 'error', '❌ Erreur lors du chargement de l\'historique');
-      }
-    }
-
-    function displayHistorique(historique) {
-      const tbody = document.getElementById('historiqueTableBody');
-      tbody.innerHTML = '';
-      
-      // ✅ CORRECTION : Vérifier que c'est un tableau
-      if (!Array.isArray(historique) || historique.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #6c757d;">Aucune action enregistrée</td></tr>';
-        return;
-      }
-      
-      // ✅ CORRECTION : Copier le tableau avant de le modifier
-      const historiqueReverse = [...historique].reverse();
-      
-      historiqueReverse.forEach(action => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${action.date || '-'}</td>
-          <td>${action.heure || '-'}</td>
-          <td><span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: ${getTypeColor(action.type)}; color: white;">${getTypeLabel(action.type)}</span></td>
-          <td>${action.clientCode || '-'}</td>
-          <td>${action.clientName || '-'}</td>
-          <td style="text-align: right; font-weight: bold;">${formatCurrency(action.solde || 0)}</td>
-          <td>${action.author || '-'}</td>
-          <td>${action.reason || '-'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function getTypeLabel(type) {
-      const labels = {
-        'import': '📥 Import',
-        'comment': '💬 Commentaire',
-        'delete': '🗑️ Suppression'
-      };
-      return labels[type] || type;
-    }
-
-    function getTypeColor(type) {
-      const colors = {
-        'import': '#3b82f6',
-        'comment': '#10b981',
-        'delete': '#ef4444'
-      };
-      return colors[type] || '#6b7280';
-    }
-
-    // ==========================================
-    // UTILITAIRES
-    // ==========================================
-    function formatCurrency(value) {
-      return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR'
-      }).format(value);
+      reader.readAsArrayBuffer(file);
     }
 
     function showAlert(elementId, type, message) {
       const alertDiv = document.getElementById(elementId);
       if (!alertDiv) {
-        console.warn('⚠️ Element alert introuvable:', elementId);
+        console.warn('Element alert introuvable:', elementId);
         return;
       }
       
@@ -2757,34 +1153,994 @@
       }, 5000);
     }
 
-    function showSaveIndicator(elementId) {
-      const indicator = document.getElementById(elementId);
-      if (!indicator) {
-        console.warn('⚠️ Indicateur de sauvegarde introuvable:', elementId);
-        return;
-      }
-      
-      indicator.style.display = 'block';
-      
-      setTimeout(() => {
-        indicator.style.display = 'none';
-      }, 2000);
+    function showPreview() {
+      const preview = excelData.slice(0, 10);
+      const thead = document.querySelector('#previewTable thead');
+      const tbody = document.querySelector('#previewTable tbody');
+
+      // Créer les en-têtes
+      thead.innerHTML = `
+        <tr>
+          <th>Code Client</th>
+          <th>Nom Client</th>
+          <th>Solde</th>
+          <th>Âge moyen</th>
+          <th>120+ j</th>
+          <th>90-119 j</th>
+          <th>60-89 j</th>
+          <th>30-59 j</th>
+          <th>0-29 j</th>
+        </tr>
+      `;
+
+      // Créer les lignes
+      tbody.innerHTML = '';
+      preview.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.codeClient}</td>
+          <td>${row.nomClient}</td>
+          <td class="${row.solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(row.solde)}</td>
+          <td>${row.ageMoyen} jours</td>
+          <td>${formatCurrency(row.echeance120)}</td>
+          <td>${formatCurrency(row.echeance90)}</td>
+          <td>${formatCurrency(row.echeance60)}</td>
+          <td>${formatCurrency(row.echeance30)}</td>
+          <td>${formatCurrency(row.echeance0)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('previewSection').style.display = 'block';
     }
 
-    // Fermer les modals en cliquant à l'extérieur
-    window.onclick = function(event) {
-      if (event.target.classList.contains('modal')) {
-        event.target.classList.remove('active');
+    // ============================================
+    // IMPORT DATA TO GOOGLE SHEETS
+    // ============================================
+    async function importData() {
+      if (excelData.length === 0) {
+        showAlert('importAlert', 'error', '❌ Veuillez d\'abord charger un fichier Excel valide');
+        return;
       }
-    };
 
+      const agence = currentAgence;
+
+      if (!agence) {
+        showAlert('importAlert', 'error', '❌ Agence non détectée. Vérifiez le format du fichier Excel');
+        return;
+      }
+
+      // Vérifier les permissions
+      if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agence)) {
+        showAlert('importAlert', 'error', '❌ Vous n\'avez pas accès à cette agence');
+        return;
+      }
+
+      // Afficher le loading
+      document.getElementById('importLoading').classList.add('active');
+      showAlert('importAlert', 'info', `⏳ Import de ${excelData.length} clients vers ${agence}...`);
+
+      console.log('📤 Envoi des données:', {
+        agence: agence,
+        nbClients: excelData.length,
+        premierClient: excelData[0],
+        userEmail: currentUser.email,
+        userName: currentUser.nom
+      });
+
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'importBalances',
+            agence: agence,
+            clients: excelData,
+            userEmail: currentUser.email,
+            userName: currentUser.nom
+          })
+        });
+
+        console.log('📥 Réponse HTTP:', response.status, response.statusText);
+
+        const result = await response.json();
+        console.log('📥 Résultat:', result);
+
+        document.getElementById('importLoading').classList.remove('active');
+
+        if (result.success) {
+          showAlert('importAlert', 'success', `✅ ${excelData.length} clients importés avec succès ! (${result.version || ''})`);
+          
+          // Réinitialiser le formulaire
+          document.getElementById('excelFile').value = '';
+          document.getElementById('fileName').textContent = '';
+          excelData = [];
+          currentAgence = null;
+          document.getElementById('previewSection').style.display = 'none';
+          
+          // Réactiver le sélecteur
+          const select = document.getElementById('agenceSelect');
+          select.innerHTML = '<option value="">-- Chargez un fichier Excel --</option>';
+          select.disabled = true;
+        } else {
+          showAlert('importAlert', 'error', `❌ Erreur: ${result.message}`);
+        }
+
+      } catch (error) {
+        console.error('❌ Erreur import:', error);
+        document.getElementById('importLoading').classList.remove('active');
+        showAlert('importAlert', 'error', '❌ Erreur de connexion au serveur: ' + error.message);
+      }
+    }
+
+    // ============================================
+// LOAD DATA FROM GOOGLE SHEETS
+// ============================================
+async function loadData() {
+  const agence = currentAgence;
+  
+  if (!agence) {
+    showAlert('consultationAlert', 'error', '❌ Aucune agence sélectionnée');
+    return;
+  }
+
+  console.log('📥 Chargement des balances pour:', agence);
+
+  try {
+    const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${encodeURIComponent(agence)}`);
+    
+    if (!response.ok) {
+      throw new Error('Erreur serveur: ' + response.status);
+    }
+
+    const result = await response.json();
+    console.log('📥 Réponse serveur:', result);
+
+    if (result.success) {
+      allData = result.data || [];
+      filteredData = [...allData];
+      
+      console.log('✅ Balances chargées:', allData.length, 'clients');
+      
+      // Charger les commentaires
+      await loadComments();
+      
+      // Afficher les statistiques
+      updateStats();
+      
+      // Afficher les graphiques
+      updateCharts();
+      
+      // Afficher le tableau
+      renderTable();
+      
+      showAlert('consultationAlert', 'success', `✅ ${allData.length} clients chargés`);
+    } else {
+      showAlert('consultationAlert', 'error', `❌ ${result.message}`);
+    }
+
+  } catch (error) {
+    console.error('❌ Erreur chargement:', error);
+    showAlert('consultationAlert', 'error', '❌ Erreur de chargement des données: ' + error.message);
+  }
+}
+// === Variables pour tri et graphique ===
+let consultData = [];
+let consultSummary = {};
+let chartAgeConsult = null;
+let chartTop10Consult = null;
+let currentSortColumnConsult = 'solde';
+let currentSortDirectionConsult = 'desc';
+
+// === Mapping des données (depuis Worker) ===
+// Appelle cette fonction après avoir reçu les données de l'agence
+function processConsultData(rawData) {
+  // Adapter le mapping si besoin
+  consultData = rawData.map(client => ({
+    codeClient: client.Code_Client,
+    nomClient: client.Nom_Client,
+    solde: parseFloat(client.Solde) || 0,
+    ageMoyen: parseInt(client.Age_Moyen) || 0,
+    echeance0: parseFloat(client.Echeance_0_29) || 0,
+    echeance30: parseFloat(client.Echeance_30_59) || 0,
+    echeance60: parseFloat(client.Echeance_60_89) || 0,
+    echeance90: parseFloat(client.Echeance_90_119) || 0,
+    echeance120: parseFloat(client.Echeance_120_plus) || 0,
+    paiement: parseFloat(client.Paiement) || 0,
+    agence: client.Agence
+  }));
+  consultSummary = calculateConsultSummary(consultData);
+  updateConsultSynthese();
+  updateConsultCharts();
+  fillConsultDetailsTable(applyConsultFilters(consultData));
+  generateConsultRecommendations();
+}
+
+// === Calculs de synthèse ===
+function calculateConsultSummary(data) {
+  let soldesDebiteurs = 0, soldesCrediteurs = 0, balanceTotale = 0;
+  let count = data.length, countCritical = 0, montantRisque = 0;
+  let soldeParAnciennete = { gt120: 0, between90_119: 0, between60_89: 0, between30_59: 0, lt30: 0 };
+  let topRisks = [], clientsCritiques = [];
+
+  data.forEach(row => {
+    if (row.solde > 0) soldesDebiteurs += row.solde;
+    else soldesCrediteurs += row.solde;
+
+    soldeParAnciennete.gt120 += row.echeance120;
+    soldeParAnciennete.between90_119 += row.echeance90;
+    soldeParAnciennete.between60_89 += row.echeance60;
+    soldeParAnciennete.between30_59 += row.echeance30;
+    soldeParAnciennete.lt30 += row.echeance0;
+
+    const montantCritique = row.echeance120 + row.echeance90;
+    if (montantCritique > 0) {
+      countCritical++;
+      clientsCritiques.push({ code: row.codeClient, nom: row.nomClient, montantCritique });
+    }
+    montantRisque += row.echeance120 + row.echeance90 + row.echeance60;
+  });
+
+  balanceTotale = soldesDebiteurs + soldesCrediteurs;
+  const tauxRisque = soldesDebiteurs > 0 ? (montantRisque / soldesDebiteurs) * 100 : 0;
+  topRisks = data.filter(r => r.solde > 0)
+    .sort((a, b) => (b.echeance120 + b.echeance90 + b.echeance60) - (a.echeance120 + a.echeance90 + a.echeance60))
+    .slice(0, 10);
+
+  return {
+    soldesDebiteurs, soldesCrediteurs, balanceTotale, count, countCritical, montantRisque,
+    soldeParAnciennete, topRisks, clientsCritiques, tauxRisque
+  };
+}
+
+// === Synthèse Globale ===
+function updateConsultSynthese() {
+  document.getElementById('soldesDebiteurs').textContent = formatCurrency(consultSummary.soldesDebiteurs);
+  document.getElementById('soldesCrediteurs').textContent = formatCurrency(consultSummary.soldesCrediteurs);
+  document.getElementById('balanceTotale').textContent = formatCurrency(consultSummary.balanceTotale);
+  document.getElementById('clientsCritiques').textContent = consultSummary.countCritical + ' clients';
+  document.getElementById('tauxRisque').textContent = consultSummary.tauxRisque.toFixed(1) + '%';
+  document.getElementById('nombreClients').textContent = consultSummary.count + ' clients';
+  document.getElementById('montantRisque').textContent = formatCurrency(consultSummary.montantRisque);
+}
+
+// === Graphiques ===
+function updateConsultCharts() {
+  // Répartition des soldes par ancienneté
+  const ctxAge = document.getElementById('chartAge').getContext('2d');
+  if (chartAgeConsult) chartAgeConsult.destroy();
+  chartAgeConsult = new Chart(ctxAge, {
+    type: 'doughnut',
+    data: {
+      labels: ['> 120 jours', '90-119 jours', '60-89 jours', '30-59 jours', '< 30 jours'],
+      datasets: [{
+        data: [
+          consultSummary.soldeParAnciennete.gt120,
+          consultSummary.soldeParAnciennete.between90_119,
+          consultSummary.soldeParAnciennete.between60_89,
+          consultSummary.soldeParAnciennete.between30_59,
+          consultSummary.soldeParAnciennete.lt30
+        ],
+        backgroundColor: ['#991b1b', '#ef4444', '#f59e0b', '#eab308', '#10b981']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Top 10 soldes à risque
+  const ctxTop10 = document.getElementById('chartTop10').getContext('2d');
+  if (chartTop10Consult) chartTop10Consult.destroy();
+  chartTop10Consult = new Chart(ctxTop10, {
+    type: 'bar',
+    data: {
+      labels: consultSummary.topRisks.map(r => r.nomClient.substring(0, 30)),
+      datasets: [
+        {
+          label: 'Solde > 90 jours',
+          data: consultSummary.topRisks.map(r => r.echeance120 + r.echeance90),
+          backgroundColor: '#dc2626'
+        },
+        {
+          label: 'Solde 60-90 jours',
+          data: consultSummary.topRisks.map(r => r.echeance60),
+          backgroundColor: '#f59e0b'
+        },
+        {
+          label: 'Solde < 60 jours',
+          data: consultSummary.topRisks.map(r => r.echeance30 + r.echeance0),
+          backgroundColor: '#10b981'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      scales: {
+        x: { stacked: true, ticks: { callback: value => formatCurrency(value) } },
+        y: { stacked: true }
+      },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// === Remplissage du tableau détaillé ===
+function fillConsultDetailsTable(data) {
+  const tbody = document.getElementById('detailsTableConsult');
+  tbody.innerHTML = '';
+  data.forEach((client, idx) => {
+    // Détermination du risque
+    let risque = '';
+    let risqueClass = '';
+    if (client.echeance120 > 0 || client.echeance90 > 0) {
+      risque = 'Critique';
+      risqueClass = 'color:#b91c1c;font-weight:bold;';
+    } else if (client.echeance60 > 0) {
+      risque = 'Élevé';
+      risqueClass = 'color:#f59e0b;font-weight:bold;';
+    } else if (client.echeance30 > 0) {
+      risque = 'Modéré';
+      risqueClass = 'color:#eab308;font-weight:bold;';
+    } else {
+      risque = 'Faible';
+      risqueClass = 'color:#10b981;font-weight:bold;';
+    }
+    // % ancienneté
+    const totalSolde = client.solde;
+    let pctAnciennete = totalSolde > 0 ? ((client.echeance120 + client.echeance90 + client.echeance60) / totalSolde) * 100 : 0;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${client.codeClient}</td>
+        <td>${client.nomClient}</td>
+        <td style="font-weight:bold;">${formatCurrency(client.solde)}</td>
+        <td>${pctAnciennete.toFixed(1)}%</td>
+        <td style="${risqueClass}">${risque}</td>
+        <td>
+          <button class="btn btn-secondary" onclick="actionRelanceConsult('${client.codeClient}')">Relancer</button>
+        </td>
+        <td><input type="text" style="width:120px;" placeholder="Commentaire..."></td>
+        <td>
+          <button class="btn btn-danger" onclick="deleteClientConsult('${client.codeClient}')">Supprimer</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// === Filtres ===
+function applyConsultFilters(data) {
+  let filtered = [...data];
+  // Filtre risque
+  const risk = document.getElementById('riskFilter').value;
+  if (risk !== 'all') {
+    filtered = filtered.filter(c => {
+      if (risk === 'critical') return c.echeance120 > 0 || c.echeance90 > 0;
+      if (risk === 'high') return c.echeance60 > 0;
+      if (risk === 'medium') return c.echeance30 > 0;
+      if (risk === 'low') return c.echeance0 > 0;
+      return true;
+    });
+  }
+  // Filtre type solde
+  const soldeType = document.getElementById('soldeTypeFilter').value;
+  if (soldeType !== 'all') {
+    filtered = filtered.filter(c => {
+      if (soldeType === 'debiteur') return c.solde > 0;
+      if (soldeType === 'crediteur') return c.solde < 0;
+      return true;
+    });
+  }
+  // Filtre solde minimum
+  const minBalance = parseFloat(document.getElementById('minBalance').value) || 0;
+  if (minBalance > 0) {
+    filtered = filtered.filter(c => Math.abs(c.solde) >= minBalance);
+  }
+  // Tri
+  filtered = sortConsultData(filtered, currentSortColumnConsult, currentSortDirectionConsult);
+  return filtered;
+}
+
+// === Tri ===
+function sortConsultData(data, column, direction) {
+  let sorted = [...data];
+  sorted.sort((a, b) => {
+    let valA = a[column], valB = b[column];
+    if (typeof valA === 'string') valA = valA.toLowerCase();
+    if (typeof valB === 'string') valB = valB.toLowerCase();
+    if (valA < valB) return direction === 'asc' ? -1 : 1;
+    if (valA > valB) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  return sorted;
+}
+
+function sortTableConsult(column) {
+  if (currentSortColumnConsult === column) {
+    currentSortDirectionConsult = currentSortDirectionConsult === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSortColumnConsult = column;
+    currentSortDirectionConsult = 'desc';
+  }
+  fillConsultDetailsTable(applyConsultFilters(consultData));
+}
+
+// === Listeners pour filtres ===
+document.getElementById('riskFilter').addEventListener('change', () => {
+  fillConsultDetailsTable(applyConsultFilters(consultData));
+});
+document.getElementById('soldeTypeFilter').addEventListener('change', () => {
+  fillConsultDetailsTable(applyConsultFilters(consultData));
+});
+document.getElementById('minBalance').addEventListener('input', () => {
+  fillConsultDetailsTable(applyConsultFilters(consultData));
+});
+
+// === Actions recommandées ===
+function generateConsultRecommendations() {
+  // Clients critiques
+  if (consultSummary.countCritical > 0) {
+    document.getElementById('criticalClientsCardConsult').style.display = '';
+    document.getElementById('criticalClientsCountConsult').textContent =
+      consultSummary.countCritical + ' clients à risque (>90j)';
+    const list = document.getElementById('criticalClientsListConsult');
+    list.innerHTML = '';
+    consultSummary.clientsCritiques.forEach(client => {
+      list.innerHTML += `<li>${client.code} - ${client.nom} (${formatCurrency(client.montantCritique)})</li>`;
+    });
+  } else {
+    document.getElementById('criticalClientsCardConsult').style.display = 'none';
+  }
+
+  // Alertes urgentes
+  if (consultSummary.tauxRisque > 10) {
+    document.getElementById('urgentAlertConsult').style.display = '';
+    document.getElementById('urgentTitleConsult').textContent = 'Alerte : Taux de risque élevé !';
+    document.getElementById('urgentTextConsult').textContent =
+      `Le taux de risque dépasse 10%. Vérifiez les clients en retard et priorisez les relances.`;
+  } else {
+    document.getElementById('urgentAlertConsult').style.display = 'none';
+  }
+}
+
+// === Actions sur client ===
+function actionRelanceConsult(codeClient) {
+  alert(`Relance envoyée au client : ${codeClient}`);
+}
+function deleteClientConsult(codeClient) {
+  if (confirm(`Supprimer le client ${codeClient} ?`)) {
+    consultData = consultData.filter(c => c.codeClient !== codeClient);
+    consultSummary = calculateConsultSummary(consultData);
+    updateConsultSynthese();
+    updateConsultCharts();
+    fillConsultDetailsTable(applyConsultFilters(consultData));
+    generateConsultRecommendations();
+  }
+}
+
+// === Calcul du taux d'impayés ===
+function calculateTauxImpaye() {
+  const chiffreAffaires = parseFloat(document.getElementById('chiffreAffaires').value) || 0;
+  if (chiffreAffaires <= 0) {
+    alert('Veuillez saisir un chiffre d\'affaires valide.');
+    return;
+  }
+  const impayes = consultSummary.montantRisque;
+  const taux = impayes / chiffreAffaires * 100;
+  document.getElementById('tauxImpayeResult').style.display = '';
+  document.getElementById('tauxImpayeValue').textContent = taux.toFixed(2) + '%';
+  let status = '';
+  if (taux < 2) status = '✅ Excellent';
+  else if (taux < 5) status = '⚠️ À surveiller';
+  else status = '❌ Risque élevé';
+  document.getElementById('tauxImpayeStatus').textContent = status;
+}
+
+// === Formatage monnaie ===
+function formatCurrency(val) {
+  return (val || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 });
+}
+
+
+    // ============================================
+    // LOAD COMMENTS
+    // ============================================
+    async function loadComments() {
+      try {
+        const response = await fetch(`${WORKER_URL}?action=getCommentaires&agence=${currentAgence}`);
+        const result = await response.json();
+
+        if (result.success) {
+          commentsData = result.data;
+          console.log('💬 Commentaires chargés:', Object.keys(commentsData).length);
+        }
+      } catch (error) {
+        console.error('❌ Erreur chargement commentaires:', error);
+      }
+    }
+
+    // ============================================
+    // FILTERS
+    // ============================================
+    function applyFilters() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const minSolde = parseFloat(document.getElementById('minSolde').value) || -Infinity;
+      const maxSolde = parseFloat(document.getElementById('maxSolde').value) || Infinity;
+      const ageFilter = document.getElementById('ageFilter').value;
+
+      filteredData = allData.filter(client => {
+        // Recherche
+        const matchSearch = !searchTerm || 
+          client.Code_Client.toLowerCase().includes(searchTerm) ||
+          client.Nom_Client.toLowerCase().includes(searchTerm);
+
+        // Solde
+        const solde = parseFloat(client.Solde) || 0;
+        const matchSolde = solde >= minSolde && solde <= maxSolde;
+
+        // Âge
+        let matchAge = true;
+        if (ageFilter) {
+          const age = parseInt(client.Age_Moyen) || 0;
+          if (ageFilter === '0-30') matchAge = age <= 30;
+          else if (ageFilter === '31-60') matchAge = age > 30 && age <= 60;
+          else if (ageFilter === '61-90') matchAge = age > 60 && age <= 90;
+          else if (ageFilter === '90+') matchAge = age > 90;
+        }
+
+        return matchSearch && matchSolde && matchAge;
+      });
+
+      updateStats();
+      updateCharts();
+      renderTable();
+    }
+
+    // ============================================
+// STATS
+// ============================================
+function updateStats() {
+  console.log('📊 Calcul des statistiques pour', filteredData.length, 'clients');
+
+  if (!filteredData || filteredData.length === 0) {
+    console.log('⚠️ Aucune donnée à afficher');
+    document.getElementById('statNbClients').textContent = '0';
+    document.getElementById('statSoldeTotal').textContent = '0 €';
+    document.getElementById('statTauxImpayes').textContent = '0%';
+    document.getElementById('statMoyenne').textContent = '0 €';
+    return;
+  }
+
+  // 1. Nombre de clients
+  const nbClients = filteredData.length;
+
+  // 2. Solde total (somme des soldes)
+  const soldeTotal = filteredData.reduce((sum, client) => {
+    const solde = parseFloat(client.Solde) || 0;
+    return sum + solde;
+  }, 0);
+
+  // 3. Nombre de clients impayés (solde NÉGATIF = impayé)
+  const nbImpayes = filteredData.filter(client => {
+    const solde = parseFloat(client.Solde) || 0;
+    return solde < 0; // Solde négatif = client doit de l'argent
+  }).length;
+
+  const tauxImpayes = nbClients > 0 ? (nbImpayes / nbClients * 100) : 0;
+
+  // 4. Moyenne par client
+  const moyenne = nbClients > 0 ? (soldeTotal / nbClients) : 0;
+
+  // Afficher les statistiques
+  document.getElementById('statNbClients').textContent = nbClients.toLocaleString('fr-FR');
+  
+  document.getElementById('statSoldeTotal').textContent = soldeTotal.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + ' €';
+  
+  document.getElementById('statTauxImpayes').textContent = tauxImpayes.toFixed(1) + '%';
+  
+  document.getElementById('statMoyenne').textContent = moyenne.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + ' €';
+
+  console.log('✅ Statistiques affichées:', {
+    clients: nbClients,
+    solde: soldeTotal,
+    impayes: tauxImpayes,
+    moyenne: moyenne
+  });
+}
+
+
+    // ============================================
+    // CHARTS
+    // ============================================
+    function updateCharts() {
+      updateChartAge();
+      updateChartTop10();
+    }
+
+    function updateChartAge() {
+      const tranches = {
+        '0-30': 0,
+        '31-60': 0,
+        '61-90': 0,
+        '90+': 0
+      };
+
+      filteredData.forEach(client => {
+        const age = parseInt(client.Age_Moyen) || 0;
+        if (age <= 30) tranches['0-30']++;
+        else if (age <= 60) tranches['31-60']++;
+        else if (age <= 90) tranches['61-90']++;
+        else tranches['90+']++;
+      });
+
+      const ctx = document.getElementById('chartAge').getContext('2d');
+      
+      if (chartAge) chartAge.destroy();
+
+      chartAge = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(tranches),
+          datasets: [{
+            data: Object.values(tranches),
+            backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
+
+    function updateChartTop10() {
+      const sorted = [...filteredData]
+        .sort((a, b) => Math.abs(parseFloat(b.Solde) || 0) - Math.abs(parseFloat(a.Solde) || 0))
+        .slice(0, 10);
+
+      const ctx = document.getElementById('chartTop10').getContext('2d');
+      
+      if (chartTop10) chartTop10.destroy();
+
+      chartTop10 = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(c => c.Code_Client),
+          datasets: [{
+            label: 'Solde',
+            data: sorted.map(c => parseFloat(c.Solde) || 0),
+            backgroundColor: '#667eea'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    // ============================================
+    // TABLE
+    // ============================================
+    function renderTable() {
+      const tbody = document.getElementById('dataTableBody');
+      tbody.innerHTML = '';
+
+      filteredData.forEach(client => {
+        const tr = document.createElement('tr');
+        const solde = parseFloat(client.Solde) || 0;
+        const codeClient = client.Code_Client;
+        const comments = commentsData[codeClient] || [];
+
+        tr.innerHTML = `
+          <td>${client.Code_Client}</td>
+          <td>${client.Nom_Client}</td>
+          <td class="${solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(solde)}</td>
+          <td>${client.Age_Moyen || 0} jours</td>
+          <td>
+            <button class="add-comment-btn" onclick="openCommentModal('${codeClient}', '${client.Nom_Client}')">
+              💬 Ajouter (${comments.length})
+            </button>
+            <div class="comments-section" style="display: ${comments.length > 0 ? 'block' : 'none'}">
+              ${comments.map(c => `
+                <div class="comment">
+                  <div class="comment-author">${c.author}</div>
+                  <div class="comment-date">${c.timestamp}</div>
+                  <div class="comment-text">${c.text}</div>
+                </div>
+              `).join('')}
+            </div>
+          </td>
+          <td>
+            <button class="btn btn-danger" style="padding: 8px 15px; font-size: 12px;" 
+                    onclick="openDeleteModal('${codeClient}', '${client.Nom_Client}', ${solde})">
+              🗑️ Supprimer
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ============================================
+    // SORT TABLE
+    // ============================================
+    let sortDirection = {};
+
+    function sortTable(column) {
+      const direction = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+      sortDirection[column] = direction;
+
+      filteredData.sort((a, b) => {
+        let valA, valB;
+
+        if (column === 'codeClient') {
+          valA = a.Code_Client;
+          valB = b.Code_Client;
+        } else if (column === 'nomClient') {
+          valA = a.Nom_Client;
+          valB = b.Nom_Client;
+        } else if (column === 'solde') {
+          valA = parseFloat(a.Solde) || 0;
+          valB = parseFloat(b.Solde) || 0;
+        } else if (column === 'age') {
+          valA = parseInt(a.Age_Moyen) || 0;
+          valB = parseInt(b.Age_Moyen) || 0;
+        }
+
+        if (direction === 'asc') {
+          return valA > valB ? 1 : -1;
+        } else {
+          return valA < valB ? 1 : -1;
+        }
+      });
+
+      renderTable();
+    }
+
+    // ============================================
+    // COMMENTS
+    // ============================================
+    function openCommentModal(codeClient, nomClient) {
+      currentClientForComment = { codeClient, nomClient };
+      document.getElementById('commentText').value = '';
+      document.getElementById('modalComment').classList.add('active');
+    }
+
+    async function saveComment() {
+      const text = document.getElementById('commentText').value.trim();
+
+      if (!text) {
+        alert('⚠️ Veuillez saisir un commentaire');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${WORKER_URL}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'ajouterCommentaire',
+            agence: currentAgence,
+            codeClient: currentClientForComment.codeClient,
+            nomClient: currentClientForComment.nomClient,
+            author: currentUser.nom,
+            text: text,
+            timestamp: new Date().toLocaleString('fr-FR')
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeModal('modalComment');
+          await loadComments();
+          renderTable();
+          showAlert('consultationAlert', 'success', '✅ Commentaire ajouté');
+        } else {
+          alert('❌ Erreur: ' + result.message);
+        }
+
+      } catch (error) {
+        console.error('❌ Erreur ajout commentaire:', error);
+        alert('❌ Erreur de connexion');
+      }
+    }
+
+    // ============================================
+    // DELETE CLIENT
+    // ============================================
+    function openDeleteModal(codeClient, nomClient, solde) {
+      currentClientForDelete = { codeClient, nomClient, solde };
+      document.getElementById('deleteReason').value = '';
+      document.getElementById('modalDelete').classList.add('active');
+    }
+
+    async function confirmDelete() {
+      const reason = document.getElementById('deleteReason').value.trim();
+
+      if (!reason) {
+        alert('⚠️ Veuillez indiquer la raison de la suppression');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${WORKER_URL}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'supprimerClient',
+            agence: currentAgence,
+            codeClient: currentClientForDelete.codeClient,
+            nomClient: currentClientForDelete.nomClient,
+            solde: currentClientForDelete.solde,
+            author: currentUser.nom,
+            reason: reason,
+            timestamp: new Date().toLocaleString('fr-FR')
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeModal('modalDelete');
+          await loadData();
+          showAlert('consultationAlert', 'success', '✅ Client supprimé');
+        } else {
+          alert('❌ Erreur: ' + result.message);
+        }
+
+      } catch (error) {
+        console.error('❌ Erreur suppression:', error);
+        alert('❌ Erreur de connexion');
+      }
+    }
+
+    // ============================================
+    // HISTORIQUE
+    // ============================================
+    async function loadHistorique() {
+      try {
+        const response = await fetch(`${WORKER_URL}?action=getHistorique&agence=${currentAgence}`);
+        const result = await response.json();
+
+        if (result.success) {
+          const tbody = document.getElementById('historiqueTableBody');
+          tbody.innerHTML = '';
+
+          result.data.forEach(action => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${action.Date}</td>
+              <td>${action.Heure}</td>
+              <td><strong>${action.Type}</strong></td>
+              <td>${action.Code_Client}</td>
+              <td>${action.Nom_Client}</td>
+              <td class="${action.Solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(action.Solde)}</td>
+              <td>${action.Auteur}</td>
+              <td>${action.Raison}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+      } catch (error) {
+        console.error('❌ Erreur chargement historique:', error);
+      }
+    }
+
+    // ============================================
+    // EXPORT
+    // ============================================
+    function exportToExcel() {
+      const ws = XLSX.utils.json_to_sheet(filteredData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Balances');
+      XLSX.writeFile(wb, `balances_agence_${currentAgence}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    function exportToHTML() {
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Balances Âgées - Agence ${currentAgence}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+            th { background: #667eea; color: white; }
+            .solde-positif { color: green; font-weight: bold; }
+            .solde-negatif { color: red; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1>Balances Âgées - Agence ${currentAgence}</h1>
+          <p>Généré le ${new Date().toLocaleString('fr-FR')}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Code Client</th>
+                <th>Nom Client</th>
+                <th>Solde</th>
+                <th>Âge (jours)</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      filteredData.forEach(client => {
+        const solde = parseFloat(client.Solde) || 0;
+        html += `
+          <tr>
+            <td>${client.Code_Client}</td>
+            <td>${client.Nom_Client}</td>
+            <td class="${solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(solde)}</td>
+            <td>${client.Age_Moyen || 0}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `balances_agence_${currentAgence}_${new Date().toISOString().split('T')[0]}.html`;
+      a.click();
+    }
+
+    // ============================================
+    // MODAL
+    // ============================================
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    // ============================================
+    // UTILS
+    // ============================================
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'EUR'
+      }).format(value);
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('active');
+      }
+    });
   </script>
-
-  <!-- Bibliothèques externes -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-
 </body>
 </html>
-
 
