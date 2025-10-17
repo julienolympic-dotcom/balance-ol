@@ -1960,19 +1960,35 @@ function analyzeBalanceConsultation() {
   generateRecommendationsConsultation(clientsData, soldesDebiteurs);
 }
 
-    // ============================================
+// ============================================
 // 📊 GÉNÉRATION DES GRAPHIQUES (CONSULTATION)
 // ============================================
 function generateChartsConsultation(clientsData) {
-  // Détruire les anciens graphiques s'ils existent
-  if (window.riskChartConsultation) {
-    window.riskChartConsultation.destroy();
+  console.log('📊 Génération des graphiques pour', clientsData.length, 'clients');
+  
+  // ✅ DÉTRUIRE LES ANCIENS GRAPHIQUES (avec vérification robuste)
+  try {
+    if (window.riskChartConsultation && typeof window.riskChartConsultation.destroy === 'function') {
+      window.riskChartConsultation.destroy();
+    }
+  } catch (e) {
+    console.warn('Erreur destruction riskChart:', e);
   }
-  if (window.ageChartConsultation) {
-    window.ageChartConsultation.destroy();
+  
+  try {
+    if (window.ageChartConsultation && typeof window.ageChartConsultation.destroy === 'function') {
+      window.ageChartConsultation.destroy();
+    }
+  } catch (e) {
+    console.warn('Erreur destruction ageChart:', e);
   }
-  if (window.topClientsChartConsultation) {
-    window.topClientsChartConsultation.destroy();
+  
+  try {
+    if (window.topClientsChartConsultation && typeof window.topClientsChartConsultation.destroy === 'function') {
+      window.topClientsChartConsultation.destroy();
+    }
+  } catch (e) {
+    console.warn('Erreur destruction topClientsChart:', e);
   }
 
   // ============================================
@@ -1985,36 +2001,48 @@ function generateChartsConsultation(clientsData) {
     low: clientsData.filter(c => c.risque === 'low').length
   };
 
-  const ctxRisk = document.getElementById('riskChartConsultation').getContext('2d');
-  window.riskChartConsultation = new Chart(ctxRisk, {
-    type: 'bar',  // ✅ CHANGÉ de 'horizontalBar' à 'bar'
-    data: {
-      labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
-      datasets: [{
-        label: 'Nombre de clients',
-        data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
-        backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
-      }]
-    },
-    options: {
-      indexAxis: 'y',  // ✅ AJOUTÉ pour rendre horizontal
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        title: {
-          display: true,
-          text: 'Répartition par niveau de risque'
-        }
+  console.log('📊 Répartition risques:', riskCounts);
+
+  try {
+    const ctxRisk = document.getElementById('riskChartConsultation');
+    if (!ctxRisk) {
+      console.error('❌ Canvas riskChartConsultation introuvable');
+      return;
+    }
+    
+    window.riskChartConsultation = new Chart(ctxRisk, {
+      type: 'bar',
+      data: {
+        labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
+        datasets: [{
+          label: 'Nombre de clients',
+          data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
+          backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
+        }]
       },
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: { precision: 0 }
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Répartition par niveau de risque'
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
         }
       }
-    }
-  });
+    });
+    console.log('✅ Graphique risque créé');
+  } catch (error) {
+    console.error('❌ Erreur création graphique risque:', error);
+  }
 
   // ============================================
   // 📊 GRAPHIQUE 2 : RÉPARTITION PAR ÂGE MOYEN
@@ -2026,28 +2054,40 @@ function generateChartsConsultation(clientsData) {
     '90+j': clientsData.filter(c => c.ageMoyen > 90).length
   };
 
-  const ctxAge = document.getElementById('ageChartConsultation').getContext('2d');
-  window.ageChartConsultation = new Chart(ctxAge, {
-    type: 'doughnut',
-    data: {
-      labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
-      datasets: [{
-        data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
-        backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' },
-        title: {
-          display: true,
-          text: 'Répartition par âge moyen de créance'
+  console.log('📊 Répartition âges:', ageBuckets);
+
+  try {
+    const ctxAge = document.getElementById('ageChartConsultation');
+    if (!ctxAge) {
+      console.error('❌ Canvas ageChartConsultation introuvable');
+      return;
+    }
+    
+    window.ageChartConsultation = new Chart(ctxAge, {
+      type: 'doughnut',
+      data: {
+        labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
+        datasets: [{
+          data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
+          backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: {
+            display: true,
+            text: 'Répartition par âge moyen de créance'
+          }
         }
       }
-    }
-  });
+    });
+    console.log('✅ Graphique âge créé');
+  } catch (error) {
+    console.error('❌ Erreur création graphique âge:', error);
+  }
 
   // ============================================
   // 📊 GRAPHIQUE 3 : TOP 10 CLIENTS PAR SOLDE
@@ -2057,54 +2097,67 @@ function generateChartsConsultation(clientsData) {
     .sort((a, b) => b.solde - a.solde)
     .slice(0, 10);
 
-  const ctxTop = document.getElementById('topClientsChartConsultation').getContext('2d');
-  window.topClientsChartConsultation = new Chart(ctxTop, {
-    type: 'bar',  // ✅ CHANGÉ de 'horizontalBar' à 'bar'
-    data: {
-      labels: topClients.map(c => c.nom.substring(0, 20)),
-      datasets: [{
-        label: 'Solde (€)',
-        data: topClients.map(c => c.solde),
-        backgroundColor: topClients.map(c => {
-          if (c.risque === 'critical') return '#dc3545';
-          if (c.risque === 'high') return '#fd7e14';
-          if (c.risque === 'medium') return '#ffc107';
-          return '#28a745';
-        })
-      }]
-    },
-    options: {
-      indexAxis: 'y',  // ✅ AJOUTÉ pour rendre horizontal
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        title: {
-          display: true,
-          text: 'Top 10 clients par solde'
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return formatCurrency(context.parsed.x);
+  console.log('📊 Top 10 clients:', topClients.length);
+
+  try {
+    const ctxTop = document.getElementById('topClientsChartConsultation');
+    if (!ctxTop) {
+      console.error('❌ Canvas topClientsChartConsultation introuvable');
+      return;
+    }
+    
+    window.topClientsChartConsultation = new Chart(ctxTop, {
+      type: 'bar',
+      data: {
+        labels: topClients.map(c => c.nom.substring(0, 20)),
+        datasets: [{
+          label: 'Solde (€)',
+          data: topClients.map(c => c.solde),
+          backgroundColor: topClients.map(c => {
+            if (c.risque === 'critical') return '#dc3545';
+            if (c.risque === 'high') return '#fd7e14';
+            if (c.risque === 'medium') return '#ffc107';
+            return '#28a745';
+          })
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Top 10 clients par solde'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return formatCurrency(context.parsed.x);
+              }
             }
           }
-        }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return formatCurrency(value);
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return formatCurrency(value);
+              }
             }
           }
         }
       }
-    }
-  });
+    });
+    console.log('✅ Graphique top clients créé');
+  } catch (error) {
+    console.error('❌ Erreur création graphique top clients:', error);
+  }
+  
+  console.log('✅ Tous les graphiques générés');
 }
-
 
     // ==========================================
     // TABLEAU DÉTAILLÉ
@@ -2753,6 +2806,7 @@ function generateChartsConsultation(clientsData) {
 
 </body>
 </html>
+
 
 
 
