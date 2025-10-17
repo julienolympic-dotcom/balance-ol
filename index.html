@@ -984,143 +984,153 @@
       const file = event.target.files[0];
       if (file) {
         document.getElementById('fileName').textContent = file.name;
-        parseExcel(file);
+        (file);
       }
     }
 
     function parseExcel(file) {
-      const reader = new FileReader();
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
       
-      reader.onload = function(e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-          
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
-          
-          console.log('📊 Nombre de lignes Excel:', jsonData.length);
-          console.log('📊 Ligne 1 (titre):', jsonData[0]);
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
+      
+      console.log('📊 Nombre de lignes Excel:', jsonData.length);
+      console.log('📊 Ligne 1 (titre):', jsonData[0]);
 
-          if (jsonData.length < 3) {
-            showAlert('importAlert', 'error', '❌ Fichier Excel vide ou invalide');
-            return;
-          }
+      if (jsonData.length < 3) {
+        showAlert('importAlert', 'error', '❌ Fichier Excel vide ou invalide');
+        return;
+      }
 
-          // ============================================
-          // EXTRACTION DU CODE AGENCE DEPUIS LE TITRE
-          // ============================================
-          let agenceDetectee = null;
-          let codeAgence = null;
+      // ============================================
+      // EXTRACTION DU CODE AGENCE DEPUIS LE TITRE
+      // ============================================
+      let agenceDetectee = null;
+      let codeAgence = null;
 
-          const titre = String(jsonData[0][0]).trim();
-          console.log('📋 Titre Excel:', titre);
+      const titre = String(jsonData[0][0]).trim();
+      console.log('📋 Titre Excel:', titre);
 
-          // Extraire le code agence (ex: "BALANCE AGEE : CLIENTS 09" → "09")
-          const matchCode = titre.match(/CLIENTS?\s+(\d{2})/i);
-          
-          if (matchCode) {
-            codeAgence = matchCode[1];
-            agenceDetectee = AGENCE_CODES[codeAgence];
-            
-            console.log('🔍 Code agence détecté:', codeAgence);
-            console.log('🏢 Agence correspondante:', agenceDetectee);
-          }
+      const matchCode = titre.match(/CLIENTS?\s+(\d{2})/i);
+      
+      if (matchCode) {
+        codeAgence = matchCode[1];
+        agenceDetectee = AGENCE_CODES[codeAgence];
+        
+        console.log('🔍 Code agence détecté:', codeAgence);
+        console.log('🏢 Agence correspondante:', agenceDetectee);
+      }
 
-          if (!agenceDetectee) {
-            showAlert('importAlert', 'error', `❌ Code agence "${codeAgence}" non reconnu dans le titre "${titre}". Codes valides : ${Object.keys(AGENCE_CODES).join(', ')}`);
-            return;
-          }
+      if (!agenceDetectee) {
+        showAlert('importAlert', 'error', `❌ Code agence "${codeAgence}" non reconnu dans le titre "${titre}". Codes valides : ${Object.keys(AGENCE_CODES).join(', ')}`);
+        return;
+      }
 
-          // Vérifier les permissions utilisateur
-          if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agenceDetectee)) {
-            showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence "${agenceDetectee}" (code ${codeAgence}). Vos agences : ${currentUser.agences.join(', ')}`);
-            return;
-          }
+      // Vérifier les permissions utilisateur
+      if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agenceDetectee)) {
+        showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence "${agenceDetectee}" (code ${codeAgence}). Vos agences : ${currentUser.agences.join(', ')}`);
+        return;
+      }
 
-          // Mettre à jour le sélecteur d'agence automatiquement
-          const select = document.getElementById('agenceSelect');
-          select.innerHTML = `<option value="${agenceDetectee}" selected>${agenceDetectee} (code ${codeAgence})</option>`;
-          select.disabled = true;
-          currentAgence = agenceDetectee;
-          
-          console.log('✅ Agence sélectionnée automatiquement:', agenceDetectee);
+      // Mettre à jour le sélecteur d'agence automatiquement
+      const select = document.getElementById('agenceSelect');
+      select.innerHTML = `<option value="${agenceDetectee}" selected>${agenceDetectee} (code ${codeAgence})</option>`;
+      select.disabled = true;
+      currentAgence = agenceDetectee;
+      
+      console.log('✅ Agence sélectionnée automatiquement:', agenceDetectee);
 
-          // ============================================
-          // PARSING DES DONNÉES CLIENTS
-          // ============================================
-          console.log('📊 Ligne 2 (en-têtes):', jsonData[1]);
-          console.log('📊 Ligne 3 (premier client):', jsonData[2]);
+      // ============================================
+      // PARSING DES DONNÉES CLIENTS
+      // ============================================
+      console.log('📊 Ligne 2 (en-têtes):', jsonData[1]);
+      console.log('📊 Ligne 3 (premier client):', jsonData[2]);
 
-          excelData = [];
-          
-          for (let i = 2; i < jsonData.length; i++) {
-            const row = jsonData[i];
-            
-            if (!row || !row[0] || row[0].trim() === '') continue;
-            
-            const codeClient = String(row[0]).trim();
-            const nomClient = String(row[1]).trim();
-            
-            const tranche120 = parseFloat(row[2]) || 0;
-            const tranche90 = parseFloat(row[3]) || 0;
-            const tranche60 = parseFloat(row[4]) || 0;
-            const tranche30 = parseFloat(row[5]) || 0;
-            const tranche0 = parseFloat(row[6]) || 0;
-            const paiement = parseFloat(row[7]) || 0;
-            const solde = parseFloat(row[8]) || 0;
+      excelData = [];
+      
+      for (let i = 2; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        
+        if (!row || !row[0] || row[0].trim() === '') continue;
+        
+        const codeClient = String(row[0]).trim();
+        const nomClient = String(row[1]).trim();
+        
+        // ✅ ORDRE CORRECT DES COLONNES EXCEL
+        // Col 2: 120+ jours
+        // Col 3: 90-119 jours
+        // Col 4: 60-89 jours
+        // Col 5: 30-59 jours
+        // Col 6: 0-29 jours
+        // Col 7: Paiement
+        // Col 8: Solde
+        const tranche120 = parseFloat(row[2]) || 0;
+        const tranche90 = parseFloat(row[3]) || 0;
+        const tranche60 = parseFloat(row[4]) || 0;
+        const tranche30 = parseFloat(row[5]) || 0;
+        const tranche0 = parseFloat(row[6]) || 0;
+        const paiement = parseFloat(row[7]) || 0;
+        const solde = parseFloat(row[8]) || 0;
 
-            if (!codeClient || codeClient === '') continue;
+        if (!codeClient || codeClient === '') continue;
 
-            const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
-            let ageMoyen = 0;
+        // Calcul de l'âge moyen
+        const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
+        let ageMoyen = 0;
 
-            if (totalEchu > 0) {
-              ageMoyen = Math.round(
-                (Math.abs(tranche120) * 135 + 
-                 Math.abs(tranche90) * 105 + 
-                 Math.abs(tranche60) * 75 + 
-                 Math.abs(tranche30) * 45 + 
-                 Math.abs(tranche0) * 15) / totalEchu
-              );
-            }
-
-            excelData.push({
-              codeClient: codeClient,
-              nomClient: nomClient,
-              solde: solde,
-              age: ageMoyen,
-              tranche120: tranche120,
-              tranche90: tranche90,
-              tranche60: tranche60,
-              tranche30: tranche30,
-              tranche0: tranche0,
-              paiement: paiement,
-              agence: agenceDetectee
-            });
-          }
-
-          console.log('✅ Données Excel chargées:', excelData.length, 'lignes pour l\'agence', agenceDetectee);
-          
-          if (excelData.length === 0) {
-            showAlert('importAlert', 'error', '❌ Aucune donnée valide trouvée dans le fichier');
-            return;
-          }
-          
-          console.log('📊 Premier client parsé:', excelData[0]);
-          console.log('📊 Dernier client parsé:', excelData[excelData.length - 1]);
-          
-          showPreview();
-          showAlert('importAlert', 'success', `✅ ${excelData.length} clients chargés pour l'agence "${agenceDetectee}" (code ${codeAgence})`);
-
-        } catch (error) {
-          console.error('❌ Erreur parsing Excel:', error);
-          showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel: ' + error.message);
+        if (totalEchu > 0) {
+          ageMoyen = Math.round(
+            (Math.abs(tranche120) * 135 + 
+             Math.abs(tranche90) * 105 + 
+             Math.abs(tranche60) * 75 + 
+             Math.abs(tranche30) * 45 + 
+             Math.abs(tranche0) * 15) / totalEchu
+          );
         }
-      };
 
-      reader.readAsArrayBuffer(file);
+        // ✅ FORMAT ADAPTÉ AU GOOGLE SHEET
+        excelData.push({
+          codeClient: codeClient,
+          nomClient: nomClient,
+          solde: solde,
+          ageMoyen: ageMoyen,
+          echeance0: tranche0,
+          echeance30: tranche30,
+          echeance60: tranche60,
+          echeance90: tranche90,
+          echeance120: tranche120,
+          paiement: paiement,
+          agence: agenceDetectee
+        });
+      }
+
+      console.log('✅ Données Excel chargées:', excelData.length, 'lignes pour l\'agence', agenceDetectee);
+      
+      if (excelData.length === 0) {
+        showAlert('importAlert', 'error', '❌ Aucune donnée valide trouvée dans le fichier');
+        return;
+      }
+      
+      console.log('📊 Premier client parsé:', excelData[0]);
+      console.log('📊 Dernier client parsé:', excelData[excelData.length - 1]);
+      
+      showPreview();
+      showAlert('importAlert', 'success', `✅ ${excelData.length} clients chargés pour l'agence "${agenceDetectee}" (code ${codeAgence})`);
+
+    } catch (error) {
+      console.error('❌ Erreur parsing Excel:', error);
+      showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel: ' + error.message);
     }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
 
     function showAlert(elementId, type, message) {
       const alertDiv = document.getElementById(elementId);
@@ -1737,5 +1747,6 @@
   </script>
 </body>
 </html>
+
 
 
