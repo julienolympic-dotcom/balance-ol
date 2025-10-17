@@ -1472,62 +1472,56 @@
     }
 
     function detectAgenceFromFile(data) {
-      let detectedAgence = null;
-      
-      for (let i = 0; i < Math.min(10, data.length); i++) {
-        const row = data[i];
-        const rowText = row.join(' ').toLowerCase();
-        
-        if (rowText.includes('geze') || rowText.includes('gèze')) {
-          detectedAgence = 'Gèze';
-          break;
-        } else if (rowText.includes('plombiere') || rowText.includes('plombière')) {
-          detectedAgence = 'Plombières';
-          break;
-        } else if (rowText.includes('5 av') || rowText.includes('5av') || rowText.includes('cinq av')) {
-          detectedAgence = '5 Av';
-          break;
-        } else if (rowText.includes('gare') && rowText.includes('charles')) {
-          detectedAgence = 'Gare St Charles';
-          break;
-        } else if (rowText.includes('valentine')) {
-          detectedAgence = 'La Valentine';
-          break;
-        } else if (rowText.includes('aubagne')) {
-          detectedAgence = 'Aubagne';
-          break;
-        } else if (rowText.includes('ciotat')) {
-          detectedAgence = 'La Ciotat';
-          break;
-        } else if (rowText.includes('toulon')) {
-          detectedAgence = 'Toulon';
-          break;
-        } else if (rowText.includes('garde') && !rowText.includes('garderie')) {
-          detectedAgence = 'La Garde';
-          break;
-        }
-      }
-      
-      const agenceSelect = document.getElementById('agenceSelect');
-      
-      if (detectedAgence) {
-        if (currentUser.agences.includes(detectedAgence)) {
-          agenceSelect.innerHTML = `<option value="${detectedAgence}">${detectedAgence}</option>`;
-          agenceSelect.value = detectedAgence;
-          currentAgence = detectedAgence;
-          showAlert('importAlert', 'success', `✅ Agence détectée: ${detectedAgence}`);
-        } else {
-          showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence ${detectedAgence}`);
-        }
-      } else {
-        agenceSelect.innerHTML = '<option value="">-- Sélectionner une agence --</option>';
-        currentUser.agences.forEach(agence => {
-          agenceSelect.innerHTML += `<option value="${agence}">${agence}</option>`;
-        });
-        agenceSelect.disabled = false;
-        showAlert('importAlert', 'info', 'ℹ️ Agence non détectée automatiquement. Veuillez sélectionner manuellement.');
-      }
+  // MAPPING CODE → NOM
+  const AGENCE_CODES = {
+    '00': 'Gèze',
+    '01': '5 Av',
+    '02': 'Gare St Charles',
+    '03': 'Aubagne',
+    '06': 'La Valentine',
+    '08': 'Toulon',
+    '09': 'Plombières',
+    '12': 'La Garde',
+    '13': 'La Ciotat'
+  };
+
+  let agenceDetectee = null;
+  let codeAgence = null;
+
+  // Chercher le code dans le titre en 1ère ligne, 1ère cellule
+  const titre = String(data[0][0] || '').trim();
+  const matchCode = titre.match(/CLIENTS?\s+(\d{2})/i);
+
+  if (matchCode) {
+    codeAgence = matchCode[1];
+    agenceDetectee = AGENCE_CODES[codeAgence];
+  }
+
+  const agenceSelect = document.getElementById('agenceSelect');
+
+  if (agenceDetectee) {
+    // Vérifier droits utilisateur
+    if (currentUser.agences.includes('Toutes') || currentUser.agences.includes(agenceDetectee)) {
+      agenceSelect.innerHTML = `<option value="${agenceDetectee}" selected>${agenceDetectee} (code ${codeAgence})</option>`;
+      agenceSelect.disabled = true;
+      agenceSelect.value = agenceDetectee;
+      currentAgence = agenceDetectee;
+      showAlert('importAlert', 'success', `✅ Agence détectée automatiquement : ${agenceDetectee} (code ${codeAgence})`);
+    } else {
+      agenceSelect.innerHTML = `<option value="">-- Accès refusé à ${agenceDetectee} --</option>`;
+      agenceSelect.disabled = true;
+      showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence "${agenceDetectee}" (code ${codeAgence})`);
     }
+  } else {
+    // Sélection manuelle si non détectée
+    agenceSelect.innerHTML = '<option value="">-- Sélectionner une agence --</option>';
+    currentUser.agences.forEach(agence => {
+      agenceSelect.innerHTML += `<option value="${agence}">${agence}</option>`;
+    });
+    agenceSelect.disabled = false;
+    showAlert('importAlert', 'info', 'ℹ️ Agence non détectée automatiquement. Veuillez sélectionner manuellement.');
+  }
+}
 
     function displayPreview(data) {
       const previewSection = document.getElementById('previewSection');
@@ -2790,3 +2784,4 @@
 
 </body>
 </html>
+
