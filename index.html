@@ -1585,17 +1585,19 @@
         });
         
         const response = await fetch(`${WORKER_URL}/balances`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            agence: currentAgence,
-            data: formattedData,
-            user: currentUser.email,
-            timestamp: new Date().toISOString()
-          })
-        });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    action: 'importBalances',    // ✅ Obligatoire pour Apps Script !
+    agence: currentAgence,
+    clients: formattedData,      // ✅ Bonne clé !
+    userEmail: currentUser.email,
+    userName: currentUser.name
+  })
+});
+
         
         if (response.ok) {
           showAlert('importAlert', 'success', `✅ Import réussi ! ${formattedData.length} lignes importées pour ${currentAgence}`);
@@ -2784,4 +2786,5 @@
 
 </body>
 </html>
+
 
