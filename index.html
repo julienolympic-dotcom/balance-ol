@@ -1,1096 +1,1351 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Balance Âgée - Olympic Location</title>
-  
-  <!-- Tailwind CSS via CDN Play (meilleur pour production que cdn.tailwindcss.com) -->
-  <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwindcss.js"></script>
-  
-  <!-- SheetJS pour Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  
-  <style>
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100%); opacity: 0; }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #3b82f6;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    
-    .tab-active {
-      background-color: #3b82f6 !important;
-      color: white !important;
-    }
-    
-    .fade-in {
-      animation: fadeIn 0.3s ease-in;
-    }
-    
-    .table-container {
-      max-height: 600px;
-      overflow-y: auto;
-    }
-    
-    .sticky-header th {
-      position: sticky;
-      top: 0;
-      background-color: #1e40af;
-      z-index: 10;
-    }
-    
-    /* Notifications */
-    .notification {
-      animation: slideIn 0.3s ease;
-    }
-    
-    .notification.slide-out {
-      animation: slideOut 0.3s ease;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Âgée OL - Version 6.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+        }
+        .loading {
+            display: none;
+        }
+        .loading.active {
+            display: block;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .comment-input-cell {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 40px;
+            background-color: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .comment-input-cell:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .comment-input-cell.has-comment {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+            font-weight: 500;
+        }
+        .comment-history-item {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #3b82f6;
+            position: relative;
+        }
+        .comment-history-item .author {
+            font-weight: bold;
+            color: #1f2937;
+            font-size: 0.875rem;
+        }
+        .comment-history-item .timestamp {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        .comment-history-item .text {
+            margin-top: 6px;
+            color: #374151;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+        }
+        .comment-delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .comment-history-item:hover .comment-delete-btn {
+            opacity: 1;
+        }
+        .comment-delete-btn:hover {
+            background: #dc2626;
+        }
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            display: none;
+            z-index: 2000;
+            animation: fadeInOut 2s ease;
+        }
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Indicateur de sauvegarde -->
+    <div class="save-indicator" id="saveIndicator">✓ Sauvegarde effectuée</div>
 
-  <!-- HEADER -->
-  <header class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg">
-    <div class="container mx-auto px-4 py-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold">📊 Balance Âgée</h1>
-          <p class="text-blue-200 text-sm">Olympic Location - Gestion des créances clients</p>
-        </div>
-        <div id="userInfo" class="text-right hidden">
-          <p class="font-semibold" id="userName"></p>
-          <p class="text-sm text-blue-200" id="userEmail"></p>
-          <button onclick="logout()" class="mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded text-sm transition">
-            Déconnexion
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN CONTAINER -->
-  <div class="container mx-auto px-4 py-8">
-
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">🔐 Connexion</h2>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <input type="email" id="emailInput" placeholder="votre.email@olympiclocation.com"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            onkeypress="if(event.key==='Enter') login()">
-        </div>
-        <button onclick="login()" 
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
-          Se connecter
-        </button>
-        <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"></div>
-      </div>
-      
-      <!-- Section de test de connexion -->
-      <div class="mt-8 pt-6 border-t border-gray-200">
-        <p class="text-sm text-gray-600 mb-3">🔧 Tester la connexion API</p>
-        <button onclick="testerConnexionInitiale()" 
-          class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg transition duration-200 text-sm">
-          Tester l'API
-        </button>
-        <div id="testMessage" class="mt-3 text-sm"></div>
-      </div>
-    </div>
-
-    <!-- MAIN APP -->
-    <div id="mainApp" class="hidden">
-      
-      <!-- TABS -->
-      <div class="bg-white rounded-lg shadow-lg mb-6">
-        <div class="flex border-b">
-          <button onclick="switchTab('import')" id="tab-import" 
-            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition tab-active">
-            📤 Import
-          </button>
-          <button onclick="switchTab('consultation')" id="tab-consultation"
-            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition">
-            📋 Consultation
-          </button>
-          <button onclick="switchTab('historique')" id="tab-historique"
-            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition">
-            📜 Historique
-          </button>
-          <button onclick="switchTab('config')" id="tab-config"
-            class="flex-1 py-4 px-6 font-semibold text-gray-700 hover:bg-gray-50 transition">
-            ⚙️ Configuration
-          </button>
-        </div>
-      </div>
-
-      <!-- TAB CONTENT: IMPORT -->
-      <div id="content-import" class="tab-content">
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">📤 Import de Balance</h2>
-          
-          <div class="space-y-6">
-            <!-- Sélection agence -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Agence</label>
-              <select id="agenceSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                <option value="">-- Sélectionnez une agence --</option>
-              </select>
-            </div>
-
-            <!-- Upload fichier -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Fichier Excel</label>
-              <input type="file" id="fileInput" accept=".xlsx,.xls" 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <!-- Bouton import -->
-            <button onclick="importerFichier()" 
-              class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200">
-              🚀 Importer
-            </button>
-
-            <!-- Messages -->
-            <div id="importMessage" class="hidden"></div>
-            
-            <!-- Loader -->
-            <div id="importLoader" class="hidden flex justify-center items-center py-8">
-              <div class="spinner"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB CONTENT: CONSULTATION -->
-      <div id="content-consultation" class="tab-content hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Consultation des Balances</h2>
-          
-          <div class="space-y-4 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Agence</label>
-                <select id="consultAgenceSelect" onchange="chargerVersions()" 
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="">-- Sélectionnez une agence --</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Version</label>
-                <select id="versionSelect" 
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="latest">Dernière version</option>
-                </select>
-              </div>
+    <!-- Modal Commentaires -->
+    <div id="commentModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">💬 Commentaires Client</h3>
+            <div class="bg-blue-50 p-3 rounded mb-4">
+                <p class="text-sm"><strong>Code:</strong> <span id="modalClientCode"></span></p>
+                <p class="text-sm"><strong>Nom:</strong> <span id="modalClientName"></span></p>
+                <p class="text-sm"><strong>Solde:</strong> <span id="modalClientSolde"></span></p>
             </div>
             
-            <button onclick="chargerBalance()" 
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
-              📊 Charger la balance
-            </button>
-          </div>
-
-          <!-- Résultats -->
-          <div id="balanceResults" class="hidden">
-            <div class="mb-4 p-4 bg-blue-50 rounded-lg">
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <p class="text-sm text-gray-600">Version</p>
-                  <p class="text-xl font-bold text-blue-700" id="resultVersion"></p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600">Date</p>
-                  <p class="text-xl font-bold text-blue-700" id="resultDate"></p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600">Clients</p>
-                  <p class="text-xl font-bold text-blue-700" id="resultNbClients"></p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600">Solde Total</p>
-                  <p class="text-xl font-bold text-blue-700" id="resultSoldeTotal"></p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recherche -->
             <div class="mb-4">
-              <input type="text" id="searchInput" placeholder="🔍 Rechercher un client..." 
-                onkeyup="filtrerClients()"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nom de l'utilisateur :</label>
+                <input type="text" id="commentAuthor" class="w-full border rounded px-3 py-2" placeholder="Votre nom">
             </div>
-
-            <!-- Tableau -->
-            <div class="table-container border rounded-lg">
-              <table class="w-full text-sm">
-                <thead class="sticky-header text-white">
-                  <tr>
-                    <th class="px-4 py-3 text-left">Code</th>
-                    <th class="px-4 py-3 text-left">Client</th>
-                    <th class="px-4 py-3 text-right">Solde</th>
-                    <th class="px-4 py-3 text-right">0-29j</th>
-                    <th class="px-4 py-3 text-right">30-59j</th>
-                    <th class="px-4 py-3 text-right">60-89j</th>
-                    <th class="px-4 py-3 text-right">90-119j</th>
-                    <th class="px-4 py-3 text-right">+120j</th>
-                    <th class="px-4 py-3 text-right">Paiement</th>
-                  </tr>
-                </thead>
-                <tbody id="clientsTableBody" class="bg-white divide-y divide-gray-200">
-                </tbody>
-              </table>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Historique des commentaires :</label>
+                <div id="commentHistory" class="max-h-48 overflow-y-auto"></div>
             </div>
-          </div>
-
-          <div id="consultLoader" class="hidden flex justify-center items-center py-8">
-            <div class="spinner"></div>
-          </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nouveau commentaire :</label>
+                <textarea id="newCommentText" class="w-full border rounded px-3 py-2" rows="3" placeholder="Entrez votre commentaire..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeCommentModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                    Annuler
+                </button>
+                <button onclick="saveNewComment()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Enregistrer
+                </button>
+            </div>
         </div>
-      </div>
-
-      <!-- TAB CONTENT: HISTORIQUE -->
-      <div id="content-historique" class="tab-content hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">📜 Historique des Imports</h2>
-          
-          <button onclick="chargerHistorique()" 
-            class="mb-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
-            🔄 Actualiser
-          </button>
-
-          <div id="historiqueContent" class="space-y-2">
-            <!-- Historique dynamique -->
-          </div>
-
-          <div id="historiqueLoader" class="hidden flex justify-center items-center py-8">
-            <div class="spinner"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB CONTENT: CONFIG -->
-      <div id="content-config" class="tab-content hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Configuration</h2>
-          
-          <div class="space-y-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">URL de l'API Worker</label>
-              <input type="text" id="apiUrlInput" 
-                placeholder="https://votre-worker.workers.dev"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-              <p class="mt-2 text-xs text-gray-500">💡 Trouvez votre URL dans Cloudflare Dashboard → Workers & Pages</p>
-            </div>
-
-            <div class="flex gap-4">
-              <button onclick="sauvegarderConfig()" 
-                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200">
-                💾 Sauvegarder
-              </button>
-              <button onclick="testerConnexion()" 
-                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
-                🔌 Tester la connexion
-              </button>
-            </div>
-
-            <div id="configMessage" class="hidden"></div>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </div>
 
-  <script>
-// ============================================
-// CONFIGURATION API
-// ============================================
-const API_CONFIG = {
-    // ⚠️ REMPLACEZ PAR VOTRE URL WORKER CLOUDFLARE
-    workerUrl: 'https://twilight-resonance-5291.julienolympic.workers.dev',
-    
-    agencesMap: {
-        '00': 'Gèze',
-        '01': '5 Av',
-        '02': 'Gare St Charles',
-        '03': 'Aubagne',
-        '06': 'La Valentine',
-        '08': 'Toulon',
-        '09': 'Plombières',
-        '12': 'La Garde',
-        '13': 'La Ciotat'
-    }
-};
+    <!-- Modal de suppression -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">⚠️ Confirmation de suppression</h3>
+            <p class="text-gray-700 mb-4">Êtes-vous sûr de vouloir supprimer ce client ?</p>
+            <div id="deleteClientInfo" class="text-sm text-gray-600 mb-4 bg-gray-100 p-3 rounded"></div>
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                <p class="text-sm text-yellow-800">
+                    <strong>⚠️ Important :</strong> S'il s'agit d'un partenariat, vous devez entreprendre les démarches nécessaires pour le déclarer (CERFA).
+                </p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Votre nom :</label>
+                <input type="text" id="deleteAuthor" class="w-full border rounded px-3 py-2" placeholder="Votre nom">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Raison de la suppression :</label>
+                <textarea id="deleteReason" class="w-full border rounded px-3 py-2" rows="3" placeholder="Expliquez la raison de cette suppression..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                    Annuler
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                    Confirmer la suppression
+                </button>
+            </div>
+        </div>
+    </div>
 
-// État global
-let currentUser = null;
-let currentAgence = null;
-let currentData = null;
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">🏦 Balance Âgée OL - Version 6.0</h1>
+            <p class="text-gray-600">Analyse complète avec synchronisation cloud</p>
+        </div>
 
-// ============================================
-// INITIALISATION
-// ============================================
-window.onload = function() {
-  console.log('🚀 Application démarrée');
-  console.log('📡 URL API:', API_CONFIG.workerUrl);
-  
-  // Charger config
-  const savedUrl = localStorage.getItem('apiUrl');
-  if (savedUrl) {
-    API_CONFIG.workerUrl = savedUrl;
-    document.getElementById('apiUrlInput').value = savedUrl;
-    console.log('✅ URL chargée depuis localStorage:', savedUrl);
-  } else {
-    document.getElementById('apiUrlInput').value = API_CONFIG.workerUrl;
-  }
+        <!-- Section Configuration -->
+        <div id="configSection" class="bg-white rounded-lg shadow-md p-6 mb-8 no-print">
+            <h2 class="text-xl font-semibold mb-4">⚙️ Configuration</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agence :</label>
+                    <select id="agenceSelect" class="w-full border rounded px-3 py-2">
+                        <option value="00">00 - Gèze</option>
+                        <option value="01">01 - 5 Av</option>
+                        <option value="02">02 - Gare St Charles</option>
+                        <option value="03">03 - Aubagne</option>
+                        <option value="06">06 - La Valentine</option>
+                        <option value="08">08 - Toulon</option>
+                        <option value="09">09 - Plombières</option>
+                        <option value="12">12 - La Garde</option>
+                        <option value="13">13 - La Ciotat</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Votre nom :</label>
+                    <input type="text" id="userName" class="w-full border rounded px-3 py-2" placeholder="Ex: Julien">
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-sm text-blue-700">
+                    <strong>💡 Info :</strong> Les données seront automatiquement sauvegardées dans Google Sheets pour votre agence.
+                </p>
+            </div>
+        </div>
 
-  // Vérifier session
-  const savedUser = localStorage.getItem('currentUser');
-  if (savedUser) {
-    currentUser = JSON.parse(savedUser);
-    console.log('✅ Session restaurée:', currentUser.email);
-    afficherMainApp();
-  }
-};
+        <div id="uploadSection" class="bg-white rounded-lg shadow-md p-6 mb-8 no-print">
+            <h2 class="text-xl font-semibold mb-4">📤 Charger votre fichier Excel</h2>
+            
+            <div id="dropZone" class="drop-zone rounded-lg p-8 text-center cursor-pointer">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="text-gray-600 mb-2">Glissez-déposez votre fichier Excel ici</p>
+                <p class="text-sm text-gray-500">ou</p>
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.csv">
+                <button onclick="document.getElementById('fileInput').click()" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Parcourir
+                </button>
+            </div>
 
-// ============================================
-// TEST DE CONNEXION INITIAL
-// ============================================
-async function testerConnexionInitiale() {
-  const testDiv = document.getElementById('testMessage');
-  testDiv.innerHTML = '<p class="text-blue-600">🔄 Test en cours...</p>';
-  
-  try {
-    console.log('🧪 Test de connexion vers:', API_CONFIG.workerUrl);
-    
-    const response = await fetch(`${API_CONFIG.workerUrl}?action=test`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    console.log('📥 Réponse HTTP:', response.status, response.statusText);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log('✅ Données reçues:', data);
-    
-    testDiv.innerHTML = `
-      <div class="p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-        ✅ Connexion réussie !<br>
-        <span class="text-xs">Status: ${data.status || 'OK'}</span>
-      </div>
-    `;
-    
-  } catch (error) {
-    console.error('❌ Erreur de connexion:', error);
-    testDiv.innerHTML = `
-      <div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-        ❌ Erreur: ${error.message}<br>
-        <span class="text-xs">Vérifiez l'URL du Worker dans Cloudflare</span>
-      </div>
-    `;
-  }
-}
+            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 class="font-semibold text-blue-800 mb-2">💡 Méthode de calcul :</h3>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• La <strong>balance totale</strong> = différence entre soldes débiteurs et soldes créditeurs</li>
+                    <li>• Les <strong>soldes débiteurs</strong> = clients qui nous doivent de l'argent (positifs)</li>
+                    <li>• Les <strong>soldes créditeurs</strong> = clients à qui nous devons de l'argent (négatifs)</li>
+                    <li>• Les tranches d'ancienneté montrent la composition de ces soldes</li>
+                </ul>
+            </div>
+        </div>
 
-// ============================================
-// AUTHENTIFICATION
-// ============================================
-async function login() {
-  const email = document.getElementById('emailInput').value.trim();
-  
-  if (!email) {
-    document.getElementById('loginError').textContent = 'Veuillez entrer votre email';
-    document.getElementById('loginError').classList.remove('hidden');
-    return;
-  }
+        <div id="loadingIndicator" class="loading bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center">
+                <div class="animate-pulse mr-4">
+                    <div class="h-4 w-4 bg-blue-500 rounded-full"></div>
+                </div>
+                <p class="text-gray-600">Analyse et import en cours...</p>
+            </div>
+        </div>
 
-  try {
-    console.log('🔐 Tentative de connexion:', email);
-    showLoading('Authentification en cours...');
-    
-    const url = `${API_CONFIG.workerUrl}?action=authentifier&email=${encodeURIComponent(email)}`;
-    console.log('📡 URL appelée:', url);
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    console.log('📥 Réponse HTTP:', response.status);
-    
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP ${response.status}`);
-    }
-    
-    const result = await response.json();
-    console.log('✅ Résultat authentification:', result);
-    
-    hideLoading();
-    
-    if (result.success) {
-      currentUser = result;
-      localStorage.setItem('currentUser', JSON.stringify(result));
-      
-      document.getElementById('loginError').classList.add('hidden');
-      afficherMainApp();
-      
-      showSuccess(`Bienvenue ${result.nom} !`);
-    } else {
-      document.getElementById('loginError').textContent = result.message || 'Email non autorisé';
-      document.getElementById('loginError').classList.remove('hidden');
-    }
-    
-  } catch (error) {
-    console.error('❌ Erreur login:', error);
-    hideLoading();
-    document.getElementById('loginError').textContent = 'Erreur de connexion : ' + error.message;
-    document.getElementById('loginError').classList.remove('hidden');
-  }
-}
+        <div id="analysisResults" class="hidden">
+            <!-- Zone Chiffre d'Affaires -->
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-md p-6 mb-8 border-2 border-purple-200">
+                <h2 class="text-xl font-semibold mb-4 text-purple-800">💼 Calcul du Taux d'Impayés</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Chiffre d'Affaires Annuel (€)</label>
+                        <input type="number" id="chiffreAffaires" class="w-full border-2 border-purple-300 rounded-lg px-4 py-2 focus:border-purple-500 focus:outline-none" placeholder="Ex: 1000000" min="0">
+                    </div>
+                    <div>
+                        <button onclick="calculateTauxImpaye()" class="w-full bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-semibold">
+                            Calculer le Taux d'Impayés
+                        </button>
+                    </div>
+                    <div id="tauxImpayeResult" class="hidden bg-white rounded-lg p-4 border-2 border-purple-300">
+                        <p class="text-sm text-gray-600">Taux d'Impayés</p>
+                        <p id="tauxImpayeValue" class="text-2xl font-bold"></p>
+                        <p id="tauxImpayeStatus" class="text-xs mt-1"></p>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm text-purple-700">
+                    <strong>Objectif :</strong> Maintenir le taux d'impayés <strong>sous 2%</strong> pour une gestion saine
+                </div>
+            </div>
 
-function logout() {
-  localStorage.removeItem('currentUser');
-  currentUser = null;
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('mainApp').classList.add('hidden');
-  document.getElementById('userInfo').classList.add('hidden');
-  document.getElementById('emailInput').value = '';
-}
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">📊 Synthèse Globale</h2>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="bg-red-50 rounded-lg p-4">
+                        <p class="text-sm text-red-600">Soldes Débiteurs</p>
+                        <p id="soldesDebiteurs" class="text-2xl font-bold text-red-800">-</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <p class="text-sm text-green-600">Soldes Créditeurs</p>
+                        <p id="soldesCrediteurs" class="text-2xl font-bold text-green-800">-</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm text-blue-600">Balance Totale</p>
+                        <p id="balanceTotale" class="text-2xl font-bold text-blue-800">-</p>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-4">
+                        <p class="text-sm text-orange-600">Clients > 90j</p>
+                        <p id="clientsCritiques" class="text-2xl font-bold text-orange-800">-</p>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-4">
+                        <p class="text-sm text-yellow-600">Taux de risque</p>
+                        <p id="tauxRisque" class="text-2xl font-bold text-yellow-800">-</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-purple-600">Nombre de clients</p>
+                            <p id="nombreClients" class="text-xl font-bold text-purple-800">-</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-purple-600">Montant à risque (>60j)</p>
+                            <p id="montantRisque" class="text-xl font-bold text-purple-800">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-function afficherMainApp() {
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('mainApp').classList.remove('hidden');
-  document.getElementById('userInfo').classList.remove('hidden');
-  document.getElementById('userName').textContent = currentUser.nom;
-  document.getElementById('userEmail').textContent = currentUser.email;
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Répartition des soldes par ancienneté</h3>
+                    <canvas id="ageChart"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Top 10 soldes à risque</h3>
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
 
-  // Remplir les selects d'agences
-  remplirAgences();
-}
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">📋 Détail par Client</h2>
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
+                    <div>
+                        <label class="text-sm text-gray-600">Filtrer par niveau de risque:</label>
+                        <select id="riskFilter" class="w-full mt-1 border rounded px-3 py-2">
+                            <option value="all">Tous</option>
+                            <option value="critical">Critique (>90j)</option>
+                            <option value="high">Élevé (60-90j)</option>
+                            <option value="medium">Modéré (30-60j)</option>
+                            <option value="low">Faible (<30j)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Type de solde:</label>
+                        <select id="soldeTypeFilter" class="w-full mt-1 border rounded px-3 py-2">
+                            <option value="all">Tous</option>
+                            <option value="debiteur">Débiteurs uniquement</option>
+                            <option value="crediteur">Créditeurs uniquement</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Solde minimum (valeur absolue):</label>
+                        <input type="number" id="minBalance" class="w-full mt-1 border rounded px-3 py-2" placeholder="0" min="0">
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-auto">
+                        <thead class="bg-gray-50">
+                           <tr>
+                                <th onclick="sortTable('code')" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                   Code Client
+                                </th>
+                                <th onclick="sortTable('nom')" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                    Nom Client
+                                </th>
+                                <th onclick="sortTable('solde')" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                    Solde
+                                </th>
+                                <th onclick="sortTable('anciennete')" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                    % Ancienneté
+                                </th>
+                                <th onclick="sortTable('risque')" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                    Risque
+                                </th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 200px;">Commentaire</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider no-print">Supprimer</th>
+                           </tr>
+                        </thead>
+                        <tbody id="detailsTable" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-function remplirAgences() {
-  const agences = currentUser.agencesArray || [];
-  const select1 = document.getElementById('agenceSelect');
-  const select2 = document.getElementById('consultAgenceSelect');
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">🎯 Actions Recommandées</h2>
+                
+                <!-- Alerte Urgent -->
+                <div id="urgentAlert" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded mb-4">
+                    <h3 class="font-semibold text-red-800 mb-2">🚨 <span id="urgentTitle"></span></h3>
+                    <p class="text-sm text-red-700" id="urgentText"></p>
+                </div>
 
-  select1.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
-  select2.innerHTML = '<option value="">-- Sélectionnez une agence --</option>';
+                <!-- Alerte Taux de risque -->
+                <div id="riskAlert" class="hidden bg-orange-50 border-l-4 border-orange-500 p-4 rounded mb-4">
+                    <h3 class="font-semibold text-orange-800 mb-2">⚠️ <span id="riskTitle"></span></h3>
+                    <p class="text-sm text-orange-700" id="riskText"></p>
+                    <ul class="text-sm text-orange-700 mt-2 space-y-1 list-disc list-inside">
+                        <li>Contacter immédiatement tous les clients avec soldes > 90 jours</li>
+                        <li>Suspendre les locations pour les clients à risque</li>
+                    </ul>
+                </div>
 
-  agences.forEach(code => {
-    const nom = API_CONFIG.agencesMap[code] || code;
-    select1.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
-    select2.innerHTML += `<option value="${code}">${code} - ${nom}</option>`;
-  });
-}
+                <!-- Concentration du risque -->
+                <div id="riskConcentrationCard" class="hidden bg-white border border-gray-200 p-4 rounded mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-2">📊 Concentration du risque</h3>
+                    <p id="riskConcentrationText" class="text-gray-600 mb-3 text-sm"></p>
+                    <ul class="text-sm text-gray-700 space-y-1 list-disc list-inside">
+                        <li>Prioriser le recouvrement auprès de ces clients.</li>
+                          <li>Établir un suivi hebdomadaire personnalisé.</li>
+                          <li>Évaluer l'opportunité d'une action en justice si nécessaire.</li>
+                      </ul>
+                  </div>
 
-// ============================================
-// GESTION DES ONGLETS
-// ============================================
-function switchTab(tabName) {
-  console.log('📑 Changement d\'onglet:', tabName);
-  
-  // Désactiver tous les onglets
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('tab-active'));
+                  <!-- Clients critiques à contacter -->
+                  <div id="criticalClientsCard" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                      <h3 class="font-semibold text-yellow-800 mb-2">📞 Clients critiques à contacter</h3>
+                      <p class="text-sm text-yellow-700 mb-3" id="criticalClientsCount"></p>
+                      <div class="bg-white rounded p-3 mb-3">
+                          <p class="text-xs font-semibold text-gray-600 mb-2">Liste des clients :</p>
+                          <ul id="criticalClientsList" class="text-xs text-gray-700 space-y-1"></ul>
+                      </div>
+                      <ul class="text-sm text-yellow-700 space-y-1 list-disc list-inside">
+                          <li>Prioriser les relances téléphoniques</li>
+                          <li>Envoyer des mises en demeure si nécessaire</li>
+                      </ul>
+                  </div>
+              </div>
 
-  // Activer l'onglet sélectionné
-  document.getElementById('content-' + tabName).classList.remove('hidden');
-  document.getElementById('tab-' + tabName).classList.add('tab-active');
-}
+              <div class="bg-white rounded-lg shadow-md p-6 no-print">
+                                      <h2 class="text-xl font-semibold mb-4">💾 Export des Résultats</h2>
+                    <div class="flex space-x-4 flex-wrap gap-2">
+                        <button onclick="exportToExcel()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                            📊 Exporter en Excel
+                        </button>
+                        <button onclick="saveAsHTML()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            💾 Sauvegarder HTML (avec commentaires)
+                        </button>
+                        <button onclick="window.print()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                            📄 Imprimer
+                        </button>
+                    </div>
+                    <div class="mt-3 text-sm text-gray-600">
+                        <strong>💡 Astuce :</strong> Le fichier HTML sauvegardé contient tous vos commentaires et peut être partagé par email. Il s'ouvre directement dans n'importe quel navigateur !
+                    </div>
+                </div>
+            </div>
+        </div>
 
-// ============================================
-// IMPORT DE FICHIER
-// ============================================
-async function importerFichier() {
-  const agence = document.getElementById('agenceSelect').value;
-  const fileInput = document.getElementById('fileInput');
-  const file = fileInput.files[0];
-
-  if (!agence) {
-    showMessage('importMessage', 'Veuillez sélectionner une agence', 'error');
-    return;
-  }
-
-  if (!file) {
-    showMessage('importMessage', 'Veuillez sélectionner un fichier', 'error');
-    return;
-  }
-
-  document.getElementById('importLoader').classList.remove('hidden');
-  document.getElementById('importMessage').classList.add('hidden');
-
-  try {
-    const data = await lireFichierExcel(file);
-    console.log('📊 Données Excel parsées:', data.metadata);
-
-    if (!data || !data.clients || data.clients.length === 0) {
-      throw new Error('Aucune donnée valide trouvée dans le fichier');
-    }
-
-    console.log('📤 Envoi de', data.clients.length, 'clients pour l\'agence', agence);
-
-    // ✅ CORRECTION ICI : Structure attendue par le Worker
-    const response = await fetch(API_CONFIG.workerUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        agence: agence,                    // ✅ Pas de "action"
-        clients: data.clients,             // ✅ "clients" au lieu de "data"
-        userEmail: currentUser.email,      // ✅ "userEmail" au lieu de "user"
-        userName: currentUser.nom          // ✅ "userName"
-      })
-    });
-
-    console.log('📥 Status HTTP:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('✅ Réponse import:', result);
-
-    if (result.success) {
-      showMessage('importMessage', 
-        `✅ Import réussi ! ${result.nbClients} clients importés`, 
-        'success');
-      fileInput.value = '';
-      showSuccess(`Import terminé : ${result.nbClients} clients`);
-      
-      // Optionnel : Passer automatiquement à l'onglet consultation
-      setTimeout(() => {
-        switchTab('consultation');
-      }, 2000);
-    } else {
-      showMessage('importMessage', '❌ ' + (result.message || 'Erreur inconnue'), 'error');
-    }
-
-  } catch (error) {
-    console.error('❌ Erreur import:', error);
-    showMessage('importMessage', '❌ Erreur : ' + error.message, 'error');
-  } finally {
-    document.getElementById('importLoader').classList.add('hidden');
-  }
-}
-
-async function lireFichierExcel(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        console.log('📊 Feuilles Excel:', workbook.SheetNames);
-        
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
-          header: 1,
-          defval: '',
-          blankrows: false
-        });
-        
-        console.log('📊 Lignes totales:', jsonData.length);
-        
-        if (jsonData.length < 3) {
-          reject(new Error('Fichier vide ou invalide'));
-          return;
-        }
-
-        // Détection des en-têtes
-        let headerRowIndex = 0;
-        for (let i = 0; i < Math.min(5, jsonData.length); i++) {
-          const row = jsonData[i];
-          const rowStr = row.join('|').toLowerCase();
-          
-          if (rowStr.includes('compte') && rowStr.includes('intitulé')) {
-            headerRowIndex = i;
-            console.log('✅ En-têtes ligne', i + 1);
-            break;
-          }
-        }
-
-        const headers = jsonData[headerRowIndex].map(h => 
-          String(h || '').toLowerCase().replace(/\s+/g, ' ').replace(/\n/g, ' ').trim()
-        );
-        
-        console.log('📋 En-têtes:', headers);
-
-        // Mapping colonnes
-        const colonnes = {
-          compte: headers.findIndex(h => h.includes('compte')),
-          intitule: headers.findIndex(h => h.includes('intitulé') || h.includes('intitule')),
-          solde: headers.findIndex(h => h.includes('solde')),
-          e120plus: headers.findIndex(h => h.includes('120') || h.includes('+120')),
-          e90_119: headers.findIndex(h => h.includes('90') && h.includes('119')),
-          e60_89: headers.findIndex(h => h.includes('60') && h.includes('89')),
-          e30_59: headers.findIndex(h => h.includes('30') && h.includes('59')),
-           e0_29: headers.findIndex(h => h.includes('0') && h.includes('29')),
-          paiement: headers.findIndex(h => h.includes('paiement'))
+    <script>
+        // ============================================
+        // CONFIGURATION API
+        // ============================================
+        const API_CONFIG = {
+            workerUrl: 'https://balance-agee-ol.julien-delamare.workers.dev',
+            agencesMap: {
+                '00': 'Gèze',
+                '01': '5 Av',
+                '02': 'Gare St Charles',
+                '03': 'Aubagne',
+                '06': 'La Valentine',
+                '08': 'Toulon',
+                '09': 'Plombières',
+                '12': 'La Garde',
+                '13': 'La Ciotat'
+            }
         };
 
-        console.log('📊 Mapping colonnes:', colonnes);
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        let analysisData = null;
+        let ageChart = null;
+        let riskChart = null;
+        let allDataGlobal = [];
+        let clientToDelete = null;
+        let commentsData = {};
+        let currentCommentClient = null;
+        let currentSortColumn = 'solde';
+        let currentSortDirection = 'desc';
 
-        // Vérification colonnes obligatoires
-        if (colonnes.compte === -1) {
-          reject(new Error('Colonne "Compte" non trouvée'));
-          return;
-        }
-        if (colonnes.intitule === -1) {
-          reject(new Error('Colonne "Intitulé" non trouvée'));
-          return;
-        }
-        if (colonnes.solde === -1) {
-          reject(new Error('Colonne "Solde" non trouvée'));
-          return;
+        // ============================================
+        // GESTION DES COMMENTAIRES
+        // ============================================
+        function loadComments() {
+            const saved = localStorage.getItem('balanceAgeeComments');
+            if (saved) {
+                try {
+                    commentsData = JSON.parse(saved);
+                    console.log('💬 Commentaires chargés:', commentsData);
+                } catch (e) {
+                    console.error('❌ Erreur chargement commentaires:', e);
+                    commentsData = {};
+                }
+            }
         }
 
-        const clients = [];
+        function saveComments() {
+            localStorage.setItem('balanceAgeeComments', JSON.stringify(commentsData));
+            console.log('💾 Commentaires sauvegardés:', commentsData);
+            showSaveIndicator();
+        }
+
+        async function syncCommentsToCloud(agence, clientCode, comment) {
+            try {
+                const response = await fetch(`${API_CONFIG.workerUrl}?action=ajouterCommentaire`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agence: agence,
+                        codeClient: clientCode,
+                        author: comment.author,
+                        text: comment.text,
+                        timestamp: comment.timestamp
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('☁️ Commentaire synchronisé:', result);
+                return result.success;
+            } catch (error) {
+                console.error('❌ Erreur sync commentaire:', error);
+                return false;
+            }
+        }
+
+        function openCommentModal(clientCode, clientName, clientSolde) {
+            currentCommentClient = clientCode;
+            document.getElementById('modalClientCode').textContent = clientCode;
+            document.getElementById('modalClientName').textContent = clientName;
+            document.getElementById('modalClientSolde').textContent = formatCurrency(clientSolde);
+            
+            const history = Array.isArray(commentsData[clientCode]) ? commentsData[clientCode] : [];
+            const historyDiv = document.getElementById('commentHistory');
+            
+            if (history.length === 0) {
+                historyDiv.innerHTML = '<p class="text-sm text-gray-500 italic">Aucun commentaire pour ce client.</p>';
+            } else {
+                historyDiv.innerHTML = history.map((comment, index) => `
+                    <div class="comment-history-item">
+                        <button class="comment-delete-btn" onclick="deleteComment(${index})" title="Supprimer ce commentaire">
+                            🗑️ Supprimer
+                        </button>
+                        <div class="flex justify-between items-start" style="padding-right: 80px;">
+                            <span class="author">👤 ${comment.author || 'Anonyme'}</span>
+                            <span class="timestamp">${new Date(comment.timestamp).toLocaleString('fr-FR')}</span>
+                        </div>
+                        <div class="text">${comment.text || ''}</div>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('newCommentText').value = '';
+            document.getElementById('commentModal').classList.add('active');
+        }
+
+        function closeCommentModal() {
+            document.getElementById('commentModal').classList.remove('active');
+            currentCommentClient = null;
+        }
+
+        async function saveNewComment() {
+            const author = document.getElementById('commentAuthor').value.trim();
+            const text = document.getElementById('newCommentText').value.trim();
+            
+            if (!author) {
+                alert('Veuillez entrer votre nom.');
+                return;
+            }
+            
+            if (!text) {
+                alert('Veuillez entrer un commentaire.');
+                return;
+            }
+            
+            if (!Array.isArray(commentsData[currentCommentClient])) {
+                commentsData[currentCommentClient] = [];
+            }
+            
+            const newComment = {
+                author: author,
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+            
+            commentsData[currentCommentClient].push(newComment);
+            
+            saveComments();
+            
+            // Synchroniser avec le cloud
+            const agence = document.getElementById('agenceSelect').value;
+            await syncCommentsToCloud(agence, currentCommentClient, newComment);
+            
+            closeCommentModal();
+            fillDetailsTable(applyFilters(allDataGlobal));
+        }
+
+        function deleteComment(commentIndex) {
+            if (!currentCommentClient) return;
+            
+            const clientComments = commentsData[currentCommentClient];
+            if (!Array.isArray(clientComments) || commentIndex >= clientComments.length) return;
+            
+            const comment = clientComments[commentIndex];
+            const confirmMsg = `Êtes-vous sûr de vouloir supprimer ce commentaire ?\n\n` +
+                                 `Auteur: ${comment.author}\n` +
+                                 `Date: ${new Date(comment.timestamp).toLocaleString('fr-FR')}\n` +
+                                 `Texte: ${comment.text.substring(0, 100)}${comment.text.length > 100 ? '...' : ''}`;
+            
+            if (!confirm(confirmMsg)) return;
+            
+            commentsData[currentCommentClient].splice(commentIndex, 1);
+            
+            if (commentsData[currentCommentClient].length === 0) {
+                delete commentsData[currentCommentClient];
+            }
+            
+            saveComments();
+            
+            const clientCode = currentCommentClient;
+            const clientName = document.getElementById('modalClientName').textContent;
+            const clientSoldeText = document.getElementById('modalClientSolde').textContent;
+            const clientSolde = parseFloat(clientSoldeText.replace(/[^0-9,-]/g, '').replace(',', '.'));
+            
+            openCommentModal(clientCode, clientName, clientSolde);
+            fillDetailsTable(applyFilters(allDataGlobal));
+            showDeleteNotification();
+        }
+
+        function showDeleteNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'save-indicator';
+            notification.textContent = '🗑️ Commentaire supprimé';
+            notification.style.display = 'block';
+            notification.style.background = '#ef4444';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }
+
+        // ============================================
+        // GESTION DE LA SUPPRESSION CLIENT
+        // ============================================
+        function openDeleteModal(clientCode, clientName, clientSolde) {
+            clientToDelete = { code: clientCode, name: clientName, solde: clientSolde };
+            document.getElementById('deleteClientInfo').innerHTML = `
+                <strong>Code:</strong> ${clientCode}<br>
+                <strong>Nom:</strong> ${clientName}<br>
+                <strong>Solde:</strong> ${formatCurrency(clientSolde)}
+            `;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            clientToDelete = null;
+            document.getElementById('deleteReason').value = '';
+        }
+
+        function confirmDelete() {
+            const author = document.getElementById('deleteAuthor').value.trim();
+            const reason = document.getElementById('deleteReason').value.trim();
+            
+            if (!author) {
+                alert('Veuillez entrer votre nom.');
+                return;
+            }
+            
+            if (!reason) {
+                alert('Veuillez indiquer la raison de la suppression.');
+                return;
+            }
+            
+            const deletionRecord = {
+                author: author,
+                text: `🗑️ CLIENT SUPPRIMÉ - Raison: ${reason}`,
+                timestamp: new Date().toISOString()
+            };
+            
+            if (!Array.isArray(commentsData[clientToDelete.code])) {
+                commentsData[clientToDelete.code] = [];
+            }
+            commentsData[clientToDelete.code].push(deletionRecord);
+            
+            allDataGlobal = allDataGlobal.filter(row => row.codeClient !== clientToDelete.code);
+            analysisData.allData = allDataGlobal;
+            analysisData.summary = calculateSummary(allDataGlobal);
+            
+            saveComments();
+            displayResults(analysisData);
+            closeDeleteModal();
+            
+            alert(`Client ${clientToDelete.name} supprimé avec succès.`);
+        }
+
+        // ============================================
+        // GESTION DES FICHIERS
+        // ============================================
+        async function handleFile(file) {
+            if (!file.name.match(/\.(xlsx|xls|csv)$/)) {
+                alert('Veuillez sélectionner un fichier Excel (.xlsx, .xls) ou CSV');
+                return;
+            }
+            
+            const agence = document.getElementById('agenceSelect').value;
+            const userName = document.getElementById('userName').value.trim();
+            
+            if (!userName) {
+                alert('Veuillez entrer votre nom avant de charger un fichier.');
+                return;
+            }
+            
+            document.getElementById('loadingIndicator').classList.add('active');
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                    analysisData = analyzeWorkbook(workbook);
+                    
+                    // Afficher les résultats localement
+                    displayResults(analysisData);
+                    document.getElementById('analysisResults').classList.remove('hidden');
+                    document.getElementById('uploadSection').classList.add('hidden');
+                    
+                    // Importer vers Google Sheets
+                    await importToSheets(agence, analysisData.allData, userName);
+                    
+                    document.getElementById('loadingIndicator').classList.remove('active');
+                } catch (error) {
+                    console.error('❌ Erreur lors de l\'analyse:', error);
+                    alert('Erreur lors de l\'analyse du fichier. Vérifiez le format.');
+                    document.getElementById('loadingIndicator').classList.remove('active');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function importToSheets(agence, clients, userName) {
+            try {
+                console.log(`📤 Envoi de ${clients.length} clients pour l'agence ${agence}`);
+                
+                const response = await fetch(API_CONFIG.workerUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agence: agence,
+                        clients: clients,
+                        userEmail: userName + '@ol.com',
+                        userName: userName
+                    })
+                });
+
+                console.log('📥 Status HTTP:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ Réponse import:', result);
+                
+                if (result.success) {
+                    showNotification('✅ Import réussi vers Google Sheets !', 'success');
+                } else {
+                    showNotification('⚠️ Import partiel : ' + result.message, 'warning');
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('❌ Erreur import:', error);
+                showNotification('❌ Erreur import : ' + error.message, 'error');
+                return { success: false, message: error.message };
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'save-indicator';
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            if (type === 'error') {
+                notification.style.background = '#ef4444';
+            } else if (type === 'warning') {
+                notification.style.background = '#f59e0b';
+            }
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ============================================
+        // ANALYSE & CALCULS
+        // ============================================
+        function analyzeWorkbook(workbook) {
+            const allData = [];
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, {header: 1, raw: false});
+                
+                for (let i = 2; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || !row[0] || row.length < 9) continue;
+                    
+                    const compte = String(row[0]).trim();
+                    const nom = String(row[1]).trim();
+                    const tranche120Plus = parseFloat(row[2]) || 0;
+                    const tranche90_119 = parseFloat(row[3]) || 0;
+                    const tranche60_89 = parseFloat(row[4]) || 0;
+                    const tranche30_59 = parseFloat(row[5]) || 0;
+                    const tranche0_29 = parseFloat(row[6]) || 0;
+                    const paiement = parseFloat(row[7]) || 0;
+                    const solde = parseFloat(row[8]) || 0;
+                    
+                    let totalMontant = tranche120Plus + tranche90_119 + tranche60_89 + tranche30_59 + tranche0_29;
+                    let soldeGt120 = 0, solde90_119 = 0, solde60_89 = 0, solde30_59 = 0, solde0_29 = 0;
+                    
+                    if (totalMontant > 0 && solde > 0) {
+                        const ratio = solde / totalMontant;
+                        soldeGt120 = tranche120Plus * ratio;
+                        solde90_119 = tranche90_119 * ratio;
+                        solde60_89 = tranche60_89 * ratio;
+                        solde30_59 = tranche30_59 * ratio;
+                        solde0_29 = tranche0_29 * ratio;
+                    } else if (solde > 0) {
+                        solde0_29 = solde;
+                    }
+                    
+                    const processedRow = {
+                        codeClient: compte,
+                        nomClient: nom,
+                        agence: sheetName,
+                        solde: solde,
+                        soldeGt120: soldeGt120,
+                        solde90_119: solde90_119,
+                        solde60_89: solde60_89,
+                        solde30_59: solde30_59,
+                        solde0_29: solde0_29,
+                        montantCritique: soldeGt120 + solde90_119,
+                        montantRisque: soldeGt120 + solde90_119 + solde60_89,
+                        pourcentageAncien: solde > 0 ? ((soldeGt120 + solde90_119 + solde60_89) / solde) * 100 : 0
+                    };
+                    
+                    if (processedRow.solde !== 0) {
+                        allData.push(processedRow);
+                    }
+                }
+            });
+
+            allDataGlobal = [...allData];
+            const summary = calculateSummary(allData);
+            return { allData, summary };
+        }
         
-        // Parser les données (après la ligne d'en-têtes)
-        for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
-          const row = jsonData[i];
-          
-          // Ignorer lignes vides
-          if (!row || row.length === 0 || row.every(cell => !cell || cell === '')) {
-            continue;
-          }
-          
-          const compte = String(row[colonnes.compte] || '').trim();
-          const intitule = String(row[colonnes.intitule] || '').trim();
-          
-          // Ignorer si pas de compte
-          if (!compte || compte === '') {
-            continue;
-          }
+        function calculateSummary(data) {
+            const summary = {
+                soldesDebiteurs: 0, soldesCrediteurs: 0, balanceTotale: 0,
+                count: data.length, countCritical: 0, montantRisque: 0,
+                soldeParAnciennete: { gt120: 0, between90_119: 0, between60_89: 0, between30_59: 0, lt30: 0 },
+                topRisks: [], clientsCritiques: []
+            };
 
-          // Parser montants
-          const parseMontant = (val) => {
-            if (!val || val === '') return 0;
-            const num = parseFloat(String(val).replace(/,/g, '.').replace(/\s/g, ''));
-            return isNaN(num) ? 0 : num;
-          };
+            data.forEach(row => {
+                if (row.solde > 0) summary.soldesDebiteurs += row.solde;
+                else summary.soldesCrediteurs += row.solde;
 
-          const solde = parseMontant(row[colonnes.solde]);
-          const e0_29 = colonnes.e0_29 !== -1 ? parseMontant(row[colonnes.e0_29]) : 0;
-          const e30_59 = colonnes.e30_59 !== -1 ? parseMontant(row[colonnes.e30_59]) : 0;
-          const e60_89 = colonnes.e60_89 !== -1 ? parseMontant(row[colonnes.e60_89]) : 0;
-          const e90_119 = colonnes.e90_119 !== -1 ? parseMontant(row[colonnes.e90_119]) : 0;
-          const e120plus = colonnes.e120plus !== -1 ? parseMontant(row[colonnes.e120plus]) : 0;
-          const paiement = colonnes.paiement !== -1 ? parseMontant(row[colonnes.paiement]) : 0;
+                summary.soldeParAnciennete.gt120 += row.soldeGt120;
+                summary.soldeParAnciennete.between90_119 += row.solde90_119;
+                summary.soldeParAnciennete.between60_89 += row.solde60_89;
+                summary.soldeParAnciennete.between30_59 += row.solde30_59;
+                summary.soldeParAnciennete.lt30 += row.solde0_29;
 
-          const client = {
-            code: compte,
-            nom: intitule,
-            solde: solde,
-            e0_29: e0_29,
-            e30_59: e30_59,
-            e60_89: e60_89,
-            e90_119: e90_119,
-            e120plus: e120plus,
-            paiement: paiement
-          };
+                if (row.montantCritique > 0) {
+                    summary.countCritical++;
+                    summary.clientsCritiques.push({ 
+                        code: row.codeClient, 
+                        nom: row.nomClient, 
+                        montantCritique: row.montantCritique 
+                    });
+                }
+                summary.montantRisque += row.montantRisque;
+            });
 
-          clients.push(client);
+            summary.balanceTotale = summary.soldesDebiteurs + summary.soldesCrediteurs;
+            summary.tauxRisque = summary.soldesDebiteurs > 0 ? (summary.montantRisque / summary.soldesDebiteurs) * 100 : 0;
+            
+            summary.topRisks = data
+                .filter(r => r.solde > 0)
+                .sort((a, b) => b.montantRisque - a.montantRisque)
+                .slice(0, 10);
+                
+            return summary;
         }
 
-        console.log('✅ Total clients:', clients.length);
+        function calculateTauxImpaye() {
+            const caInput = document.getElementById('chiffreAffaires');
+            const ca = parseFloat(caInput.value);
+            const resultDiv = document.getElementById('tauxImpayeResult');
+            const valueDiv = document.getElementById('tauxImpayeValue');
+            const statusDiv = document.getElementById('tauxImpayeStatus');
 
-        if (clients.length === 0) {
-          reject(new Error('Aucun client valide trouvé'));
-          return;
+            if (!ca || ca <= 0 || !analysisData) {
+                alert("Veuillez entrer un chiffre d'affaires valide et charger un fichier.");
+                return;
+            }
+
+            const montantRisque = analysisData.summary.montantRisque;
+            const taux = (montantRisque / ca) * 100;
+
+            resultDiv.classList.remove('hidden');
+            valueDiv.textContent = taux.toFixed(2) + '%';
+
+            if (taux < 2) {
+                valueDiv.className = 'text-2xl font-bold text-green-600';
+                statusDiv.textContent = '✅ Excellent ! Objectif atteint.';
+                statusDiv.className = 'text-xs mt-1 text-green-600 font-semibold';
+            } else if (taux <= 2.5) {
+                valueDiv.className = 'text-2xl font-bold text-orange-600';
+                statusDiv.textContent = '⚠️ Légèrement au-dessus de l\'objectif';
+                statusDiv.className = 'text-xs mt-1 text-orange-600 font-semibold';
+            } else {
+                valueDiv.className = 'text-2xl font-bold text-red-600';
+                statusDiv.textContent = '🚨 Action urgente requise !';
+                statusDiv.className = 'text-xs mt-1 text-red-600 font-semibold';
+            }
         }
 
-        resolve({
-          clients: clients,
-          metadata: {
-            nbLignesTotal: jsonData.length,
-            nbClients: clients.length,
-            headerRow: headerRowIndex + 1
-          }
+        // ============================================
+        // AFFICHAGE & INTERFACE
+        // ============================================
+        function displayResults(data) {
+            const summary = data.summary;
+            document.getElementById('soldesDebiteurs').textContent = formatCurrency(summary.soldesDebiteurs);
+            document.getElementById('soldesCrediteurs').textContent = formatCurrency(summary.soldesCrediteurs);
+            document.getElementById('balanceTotale').textContent = formatCurrency(summary.balanceTotale);
+            document.getElementById('nombreClients').textContent = summary.count + ' clients';
+            document.getElementById('clientsCritiques').textContent = summary.countCritical + ' clients';
+            document.getElementById('montantRisque').textContent = formatCurrency(summary.montantRisque);
+            document.getElementById('tauxRisque').textContent = summary.tauxRisque.toFixed(1) + '%';
+            
+            createAgeChart(summary);
+            createRiskChart(summary.topRisks);
+            fillDetailsTable(data.allData);
+            generateRecommendations(data);
+            setupFilters(data.allData);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+        }
+        
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.style.display = 'block';
+            setTimeout(() => { indicator.style.display = 'none'; }, 2000);
+        }
+
+        function createAgeChart(summary) {
+            const ctx = document.getElementById('ageChart').getContext('2d');
+            if (ageChart) ageChart.destroy();
+            const data = summary.soldeParAnciennete;
+            ageChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['> 120 jours', '90-119 jours', '60-89 jours', '30-59 jours', '< 30 jours'],
+                    datasets: [{
+                        data: [data.gt120, data.between90_119, data.between60_89, data.between30_59, data.lt30],
+                        backgroundColor: ['#991b1b', '#ef4444', '#f59e0b', '#eab308', '#10b981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = formatCurrency(context.parsed);
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createRiskChart(topRisks) {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            if (riskChart) riskChart.destroy();
+            
+            const labels = topRisks.map(r => r.nomClient.substring(0, 30));
+            const dataGt90 = topRisks.map(r => r.soldeGt120 + r.solde90_119);
+            const data60_90 = topRisks.map(r => r.solde60_89);
+            const dataLt60 = topRisks.map(r => r.solde30_59 + r.solde0_29);
+            
+            riskChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Solde > 90 jours',
+                            data: dataGt90,
+                            backgroundColor: '#dc2626'
+                        },
+                        {
+                            label: 'Solde 60-90 jours',
+                            data: data60_90,
+                            backgroundColor: '#f59e0b'
+                        },
+                        {
+                            label: 'Solde < 60 jours',
+                            data: dataLt60,
+                            backgroundColor: '#10b981'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.x);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function fillDetailsTable(data) {
+            const sortedData = [...data].sort((a, b) => sortData(a, b, currentSortColumn, currentSortDirection));
+            const tbody = document.getElementById('detailsTable');
+            tbody.innerHTML = '';
+            
+            sortedData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                
+                let riskLevel = 'Faible', riskColor = 'green', actionText = 'Suivi normal';
+                
+                if (row.montantCritique > 0) {
+                    riskLevel = 'Critique';
+                    riskColor = 'red';
+                    actionText = 'Relance urgente';
+                } else if (row.solde60_89 > 0) {
+                    riskLevel = 'Élevé';
+                    riskColor = 'orange';
+                    actionText = 'Relance';
+                } else if (row.solde30_59 > 0) {
+                    riskLevel = 'Modéré';
+                    riskColor = 'yellow';
+                    actionText = 'Surveiller';
+                }
+                
+                const clientComments = Array.isArray(commentsData[row.codeClient]) ? commentsData[row.codeClient] : [];
+                const hasComments = clientComments.length > 0;
+                const commentCount = clientComments.length;
+                const commentCellClass = hasComments ? 'comment-input-cell has-comment' : 'comment-input-cell';
+                const commentText = hasComments ? `💬 ${commentCount} commentaire${commentCount > 1 ? 's' : ''}` : '➕ Ajouter un commentaire';
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-sm">${row.codeClient}</td>
+                    <td class="px-4 py-2 text-sm">${row.nomClient}</td>
+                    <td class="px-4 py-2 text-sm text-right font-semibold ${row.solde > 0 ? 'text-red-600' : 'text-green-600'}">
+                        ${formatCurrency(row.solde)}
+                    </td>
+                    <td class="px-4 py-2 text-sm text-right">${row.pourcentageAncien.toFixed(1)}%</td>
+                    <td class="px-4 py-2 text-center">
+                        <span class="px-2 py-1 text-xs rounded-full bg-${riskColor}-100 text-${riskColor}-800">
+                            ${riskLevel}
+                        </span>
+                    </td>
+                    <td class="px-4 py-2 text-center text-sm">${actionText}</td>
+                    <td class="px-4 py-2">
+                        <div class="${commentCellClass}" onclick="openCommentModal('${row.codeClient}', '${row.nomClient.replace(/'/g, "\\'")}', ${row.solde})">
+                            ${commentText}
+                        </div>
+                    </td>
+                    <td class="px-4 py-2 text-center no-print">
+                                                <button onclick="openDeleteModal('${row.codeClient}', '${row.nomClient.replace(/'/g, "\\'")}', ${row.solde})" 
+                                class="text-red-600 hover:text-red-800 font-bold">
+                            🗑️
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sortData(a, b, column, direction) {
+            let aVal, bVal;
+            switch(column) {
+                case 'code': aVal = a.codeClient; bVal = b.codeClient; break;
+                case 'nom': aVal = a.nomClient; bVal = b.nomClient; break;
+                case 'solde': aVal = a.solde; bVal = b.solde; break;
+                case 'anciennete': aVal = a.pourcentageAncien; bVal = b.pourcentageAncien; break;
+                case 'risque': aVal = a.montantRisque; bVal = b.montantRisque; break;
+                default: aVal = a.solde; bVal = b.solde;
+            }
+            
+            if (typeof aVal === 'string') {
+                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            }
+            return direction === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+
+        function sortTable(column) {
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = column === 'solde' ? 'desc' : 'asc';
+            }
+            fillDetailsTable(applyFilters(allDataGlobal));
+        }
+
+        function generateRecommendations(data) {
+            const summary = data.summary;
+            
+            // Alerte Urgent
+            if (summary.countCritical > 0) {
+                const montantCritique = summary.soldeParAnciennete.gt120 + summary.soldeParAnciennete.between90_119;
+                document.getElementById('urgentAlert').classList.remove('hidden');
+                document.getElementById('urgentTitle').textContent = `Urgent : ${summary.countCritical} clients critiques`;
+                document.getElementById('urgentText').textContent = `Actions immédiates requises pour ${formatCurrency(montantCritique)}`;
+            }
+
+            // Alerte Taux de risque
+            const pourcentageGt60 = summary.soldesDebiteurs > 0 
+                ? ((summary.soldeParAnciennete.gt120 + summary.soldeParAnciennete.between90_119 + summary.soldeParAnciennete.between60_89) / summary.soldesDebiteurs) * 100
+                : 0;
+            
+            if (pourcentageGt60 > 30) {
+                document.getElementById('riskAlert').classList.remove('hidden');
+                document.getElementById('riskTitle').textContent = `Taux de risque critique (${pourcentageGt60.toFixed(1)}%)`;
+                document.getElementById('riskText').textContent = `${pourcentageGt60.toFixed(1)}% des soldes ont plus de 60 jours.`;
+            }
+
+            // Concentration du risque
+            if (summary.topRisks.length > 0) {
+                const top5Total = summary.topRisks.slice(0, 5).reduce((sum, r) => sum + r.montantRisque, 0);
+                const concentration = summary.soldesDebiteurs > 0 ? (top5Total / summary.soldesDebiteurs) * 100 : 0;
+                
+                if (concentration > 50) {
+                    document.getElementById('riskConcentrationCard').classList.remove('hidden');
+                    document.getElementById('riskConcentrationText').textContent = 
+                        `Les 5 plus gros débiteurs représentent ${formatCurrency(top5Total)} (${concentration.toFixed(1)}% du total).`;
+                }
+            }
+
+            // Clients critiques à contacter
+            if (summary.clientsCritiques.length > 0) {
+                document.getElementById('criticalClientsCard').classList.remove('hidden');
+                document.getElementById('criticalClientsCount').textContent = 
+                    `${summary.clientsCritiques.length} clients ont des soldes de plus de 90 jours :`;
+                
+                const listHTML = summary.clientsCritiques
+                    .sort((a, b) => b.montantCritique - a.montantCritique)
+                    .map(client => `<li>• ${client.nom} (${client.code}) - ${formatCurrency(client.montantCritique)}</li>`)
+                    .join('');
+                
+                document.getElementById('criticalClientsList').innerHTML = listHTML;
+            }
+        }
+
+        function applyFilters(data) {
+            const riskFilter = document.getElementById('riskFilter').value;
+            const soldeTypeFilter = document.getElementById('soldeTypeFilter').value;
+            const minBalance = parseFloat(document.getElementById('minBalance').value) || 0;
+
+            return data.filter(row => {
+                if (Math.abs(row.solde) < minBalance) return false;
+                
+                if (soldeTypeFilter === 'debiteur' && row.solde <= 0) return false;
+                if (soldeTypeFilter === 'crediteur' && row.solde >= 0) return false;
+                
+                if (riskFilter === 'critical' && row.montantCritique <= 0) return false;
+                if (riskFilter === 'high' && row.solde60_89 <= 0) return false;
+                if (riskFilter === 'medium' && row.solde30_59 <= 0) return false;
+                if (riskFilter === 'low' && (row.montantCritique > 0 || row.solde60_89 > 0 || row.solde30_59 > 0)) return false;
+                
+                return true;
+            });
+        }
+
+        function setupFilters(data) {
+            ['riskFilter', 'soldeTypeFilter', 'minBalance'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    fillDetailsTable(applyFilters(allDataGlobal));
+                });
+            });
+        }
+
+        // ============================================
+        // EXPORT
+        // ============================================
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const wsData = [
+                ['Code Client', 'Nom Client', 'Agence', 'Solde', '>120j', '90-119j', '60-89j', '30-59j', '<30j', 'Risque', 'Commentaires']
+            ];
+
+            allDataGlobal.forEach(row => {
+                const clientComments = Array.isArray(commentsData[row.codeClient]) ? commentsData[row.codeClient] : [];
+                const comments = clientComments
+                    .map(c => `[${c.author} - ${new Date(c.timestamp).toLocaleString('fr-FR')}] ${c.text}`)
+                    .join(' | ');
+                
+                wsData.push([
+                    row.codeClient,
+                    row.nomClient,
+                    row.agence,
+                    row.solde,
+                    row.soldeGt120,
+                    row.solde90_119,
+                    row.solde60_89,
+                    row.solde30_59,
+                    row.solde0_29,
+                    row.montantRisque,
+                    comments
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Analyse');
+            XLSX.writeFile(wb, `Balance_Agee_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function saveAsHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Balance_Agee_${new Date().toISOString().split('T')[0]}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================
+        // INITIALISATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadComments();
+            
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) handleFile(file);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) handleFile(file);
+            });
         });
-
-      } catch (error) {
-        console.error('❌ Erreur parsing:', error);
-        reject(error);
-      }
-    };
-
-    reader.onerror = function(error) {
-      reject(error);
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-// ============================================
-// CONSULTATION
-// ============================================
-async function chargerVersions() {
-  const agence = document.getElementById('consultAgenceSelect').value;
-  if (!agence) return;
-
-  try {
-    const response = await fetch(`${API_CONFIG.workerUrl}?action=getVersions&agence=${agence}`);
-    const data = await response.json();
-
-    const select = document.getElementById('versionSelect');
-    select.innerHTML = '<option value="latest">Dernière version</option>';
-
-    if (data.success && data.versions) {
-      data.versions.forEach(v => {
-        select.innerHTML += `<option value="${v.version}">${v.version} - ${v.date} ${v.heure} (${v.nbClients} clients)</option>`;
-      });
-    }
-  } catch (error) {
-    console.error('❌ Erreur versions:', error);
-  }
-}
-
-async function chargerBalance() {
-  const agence = document.getElementById('consultAgenceSelect').value;
-  const version = document.getElementById('versionSelect').value;
-
-  if (!agence) {
-    showError('Veuillez sélectionner une agence');
-    return;
-  }
-
-  document.getElementById('consultLoader').classList.remove('hidden');
-  document.getElementById('balanceResults').classList.add('hidden');
-
-  try {
-    const response = await fetch(`${API_CONFIG.workerUrl}?action=getBalance&agence=${agence}&version=${version}`);
-    const data = await response.json();
-
-    if (data.success) {
-      currentData = data.clients;
-      currentAgence = agence;
-      afficherBalance(data);
-    } else {
-      showError('Erreur : ' + data.message);
-    }
-  } catch (error) {
-    console.error('❌ Erreur balance:', error);
-    showError('Erreur de chargement : ' + error.message);
-  } finally {
-    document.getElementById('consultLoader').classList.add('hidden');
-  }
-}
-
-function afficherBalance(data) {
-  document.getElementById('resultVersion').textContent = data.version;
-  document.getElementById('resultDate').textContent = data.dateImport;
-  document.getElementById('resultNbClients').textContent = data.nbClients;
-  
-  const soldeTotal = data.clients.reduce((sum, c) => sum + (c.solde || 0), 0);
-  document.getElementById('resultSoldeTotal').textContent = formatMontant(soldeTotal);
-
-  afficherClients(data.clients);
-  document.getElementById('balanceResults').classList.remove('hidden');
-}
-
-function afficherClients(clients) {
-  const tbody = document.getElementById('clientsTableBody');
-  tbody.innerHTML = '';
-
-  clients.forEach(client => {
-    const tr = document.createElement('tr');
-    tr.className = 'hover:bg-gray-50';
-    tr.innerHTML = `
-      <td class="px-4 py-2 font-mono text-sm">${client.codeClient}</td>
-      <td class="px-4 py-2">${client.nomClient}</td>
-      <td class="px-4 py-2 text-right font-semibold">${formatMontant(client.solde)}</td>
-      <td class="px-4 py-2 text-right">${formatMontant(client.echeance0)}</td>
-      <td class="px-4 py-2 text-right">${formatMontant(client.echeance30)}</td>
-      <td class="px-4 py-2 text-right">${formatMontant(client.echeance60)}</td>
-      <td class="px-4 py-2 text-right">${formatMontant(client.echeance90)}</td>
-      <td class="px-4 py-2 text-right text-red-600 font-semibold">${formatMontant(client.echeancePlus120)}</td>
-      <td class="px-4 py-2 text-right text-green-600">${formatMontant(client.paiement)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function filtrerClients() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  
-  if (!currentData) return;
-  
-  const filtered = currentData.filter(c => 
-    c.codeClient.toLowerCase().includes(search) || 
-    c.nomClient.toLowerCase().includes(search)
-  );
-  
-  afficherClients(filtered);
-}
-
-// ============================================
-// HISTORIQUE
-// ============================================
-async function chargerHistorique() {
-  document.getElementById('historiqueLoader').classList.remove('hidden');
-  
-  try {
-    const response = await fetch(`${API_CONFIG.workerUrl}?action=getHistorique`);
-    const data = await response.json();
-
-    if (data.success) {
-      afficherHistorique(data.historique);
-    } else {
-      showError('Erreur : ' + data.message);
-    }
-  } catch (error) {
-    console.error('❌ Erreur historique:', error);
-    showError('Erreur de chargement : ' + error.message);
-  } finally {
-    document.getElementById('historiqueLoader').classList.add('hidden');
-  }
-}
-
-function afficherHistorique(historique) {
-  const container = document.getElementById('historiqueContent');
-  container.innerHTML = '';
-
-  if (!historique || historique.length === 0) {
-    container.innerHTML = '<p class="text-gray-500 text-center py-8">Aucun historique disponible</p>';
-    return;
-  }
-
-  historique.forEach(h => {
-    const div = document.createElement('div');
-    div.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition';
-    div.innerHTML = `
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="font-semibold text-gray-800">
-            ${API_CONFIG.agencesMap[h.agence] || h.agence} - ${h.version}
-          </p>
-          <p class="text-sm text-gray-600">
-            ${h.utilisateur} (${h.email})
-          </p>
-          <p class="text-sm text-gray-500">
-            ${h.nbClients} clients importés
-          </p>
-        </div>
-        <div class="text-right">
-          <p class="text-sm font-medium text-blue-600">${h.date}</p>
-          <p class="text-xs text-gray-500">${h.heure}</p>
-        </div>
-      </div>
-    `;
-    container.appendChild(div);
-  });
-}
-
-// ============================================
-// CONFIGURATION
-// ============================================
-function sauvegarderConfig() {
-  const url = document.getElementById('apiUrlInput').value.trim();
-  
-  if (!url) {
-    showMessage('configMessage', 'Veuillez entrer une URL', 'error');
-    return;
-  }
-
-  API_CONFIG.workerUrl = url;
-  localStorage.setItem('apiUrl', url);
-  showMessage('configMessage', '✅ Configuration sauvegardée', 'success');
-  console.log('💾 URL sauvegardée:', url);
-}
-
-async function testerConnexion() {
-  const url = document.getElementById('apiUrlInput').value.trim() || API_CONFIG.workerUrl;
-  
-  showMessage('configMessage', '🔄 Test en cours...', 'info');
-
-  try {
-    console.log('🧪 Test connexion:', url);
-    
-    const response = await fetch(`${url}?action=test`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    console.log('📥 Status:', response.status);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Réponse:', data);
-
-    if (data.status === 'success' || data.success) {
-      showMessage('configMessage', '✅ Connexion réussie ! API opérationnelle', 'success');
-      showSuccess('API connectée avec succès');
-    } else {
-      showMessage('configMessage', '⚠️ Connexion établie mais réponse inattendue', 'warning');
-    }
-  } catch (error) {
-    console.error('❌ Erreur test:', error);
-    showMessage('configMessage', '❌ Erreur de connexion : ' + error.message, 'error');
-  }
-}
-
-// ============================================
-// HELPERS UI
-// ============================================
-function showLoading(message) {
-  let loadingDiv = document.getElementById('globalLoading');
-  
-  if (!loadingDiv) {
-    loadingDiv = document.createElement('div');
-    loadingDiv.id = 'globalLoading';
-    loadingDiv.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
-    
-    loadingDiv.innerHTML = `
-      <div style="background: white; padding: 30px 50px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); text-align: center;">
-        <div class="spinner" style="margin: 0 auto 15px;"></div>
-        <p id="loadingText" style="font-weight: 600; color: #1e40af; margin: 0;"></p>
-      </div>
-    `;
-    
-    document.body.appendChild(loadingDiv);
-  }
-  
-  document.getElementById('loadingText').textContent = message;
-  loadingDiv.style.display = 'flex';
-}
-
-function hideLoading() {
-  const loadingDiv = document.getElementById('globalLoading');
-  if (loadingDiv) {
-    loadingDiv.style.display = 'none';
-  }
-}
-
-function showSuccess(message) {
-  showNotification(message, 'success');
-}
-
-function showError(message) {
-  showNotification(message, 'error');
-}
-
-function showNotification(message, type) {
-  const notification = document.createElement('div');
-  notification.className = 'notification';
-  
-  const bgColor = type === 'success' ? '#10b981' : 
-                  type === 'error' ? '#ef4444' : 
-                  type === 'warning' ? '#f59e0b' : '#3b82f6';
-  
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px 25px;
-    background: ${bgColor};
-    color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    z-index: 10001;
-    max-width: 400px;
-    font-weight: 500;
-  `;
-  
-  notification.textContent = message;
-  document.body.appendChild(notification);
-  
-  setTimeout(() => {
-    notification.classList.add('slide-out');
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
-}
-
-// ============================================
-// UTILITAIRES
-// ============================================
-function formatMontant(montant) {
-  if (!montant || isNaN(montant)) return '0,00 €';
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(montant);
-}
-
-function showMessage(elementId, message, type) {
-  const el = document.getElementById(elementId);
-  el.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'bg-blue-100', 'bg-yellow-100');
-  el.classList.remove('border-red-400', 'border-green-400', 'border-blue-400', 'border-yellow-400');
-  el.classList.remove('text-red-700', 'text-green-700', 'text-blue-700', 'text-yellow-700');
-
-  if (type === 'error') {
-    el.className = 'p-4 rounded-lg border bg-red-100 border-red-400 text-red-700';
-  } else if (type === 'success') {
-    el.className = 'p-4 rounded-lg border bg-green-100 border-green-400 text-green-700';
-  } else if (type === 'warning') {
-    el.className = 'p-4 rounded-lg border bg-yellow-100 border-yellow-400 text-yellow-700';
-  } else {
-    el.className = 'p-4 rounded-lg border bg-blue-100 border-blue-400 text-blue-700';
-  }
-
-  el.textContent = message;
-  el.classList.add('fade-in');
-}
-
-// ============================================
-// LOGS DE DEBUG
-// ============================================
-console.log('✅ Script chargé avec succès');
-console.log('📡 Configuration API:', API_CONFIG);
-  </script>
+    </script>
 </body>
 </html>
-          
-
 
