@@ -1040,16 +1040,34 @@
           </div>
 
           <!-- Graphiques -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div class="bg-white rounded-lg shadow-md p-6">
-                  <h3 class="text-lg font-semibold mb-4">Répartition des soldes par ancienneté</h3>
-                  <canvas id="ageChartConsultation"></canvas>
-              </div>
-              <div class="bg-white rounded-lg shadow-md p-6">
-                  <h3 class="text-lg font-semibold mb-4">Top 10 soldes à risque</h3>
-                  <canvas id="riskChartConsultation"></canvas>
-              </div>
-          </div>
+          <div class="row mb-4">
+  <!-- Graphique 1 : Risques -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <canvas id="riskChartConsultation" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphique 2 : Âges -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <canvas id="ageChartConsultation" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphique 3 : Top Clients -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <canvas id="topClientsChartConsultation" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
 
           <!-- Détail par Client -->
           <div class="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -1966,30 +1984,24 @@ function analyzeBalanceConsultation() {
 function generateChartsConsultation(clientsData) {
   console.log('📊 Génération des graphiques pour', clientsData.length, 'clients');
   
-  // ✅ DÉTRUIRE LES ANCIENS GRAPHIQUES (avec vérification robuste)
+  // ✅ DÉTRUIRE LES ANCIENS GRAPHIQUES
   try {
     if (window.riskChartConsultation && typeof window.riskChartConsultation.destroy === 'function') {
       window.riskChartConsultation.destroy();
     }
-  } catch (e) {
-    console.warn('Erreur destruction riskChart:', e);
-  }
+  } catch (e) {}
   
   try {
     if (window.ageChartConsultation && typeof window.ageChartConsultation.destroy === 'function') {
       window.ageChartConsultation.destroy();
     }
-  } catch (e) {
-    console.warn('Erreur destruction ageChart:', e);
-  }
+  } catch (e) {}
   
   try {
     if (window.topClientsChartConsultation && typeof window.topClientsChartConsultation.destroy === 'function') {
       window.topClientsChartConsultation.destroy();
     }
-  } catch (e) {
-    console.warn('Erreur destruction topClientsChart:', e);
-  }
+  } catch (e) {}
 
   // ============================================
   // 📊 GRAPHIQUE 1 : RÉPARTITION PAR NIVEAU DE RISQUE
@@ -2005,43 +2017,41 @@ function generateChartsConsultation(clientsData) {
 
   try {
     const ctxRisk = document.getElementById('riskChartConsultation');
-    if (!ctxRisk) {
-      console.error('❌ Canvas riskChartConsultation introuvable');
-      return;
-    }
-    
-    window.riskChartConsultation = new Chart(ctxRisk, {
-      type: 'bar',
-      data: {
-        labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
-        datasets: [{
-          label: 'Nombre de clients',
-          data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
-          backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: 'Répartition par niveau de risque'
-          }
+    if (ctxRisk) {
+      window.riskChartConsultation = new Chart(ctxRisk, {
+        type: 'bar',
+        data: {
+          labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
+          datasets: [{
+            label: 'Nombre de clients',
+            data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
+            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
+          }]
         },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: { precision: 0 }
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false, // ✅ DÉSACTIVER ANIMATIONS
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Répartition par niveau de risque'
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            }
           }
         }
-      }
-    });
-    console.log('✅ Graphique risque créé');
+      });
+      console.log('✅ Graphique risque créé');
+    }
   } catch (error) {
-    console.error('❌ Erreur création graphique risque:', error);
+    console.error('❌ Erreur graphique risque:', error);
   }
 
   // ============================================
@@ -2058,35 +2068,33 @@ function generateChartsConsultation(clientsData) {
 
   try {
     const ctxAge = document.getElementById('ageChartConsultation');
-    if (!ctxAge) {
-      console.error('❌ Canvas ageChartConsultation introuvable');
-      return;
-    }
-    
-    window.ageChartConsultation = new Chart(ctxAge, {
-      type: 'doughnut',
-      data: {
-        labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
-        datasets: [{
-          data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
-          backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom' },
-          title: {
-            display: true,
-            text: 'Répartition par âge moyen de créance'
+    if (ctxAge) {
+      window.ageChartConsultation = new Chart(ctxAge, {
+        type: 'doughnut',
+        data: {
+          labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
+          datasets: [{
+            data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
+            backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false, // ✅ DÉSACTIVER ANIMATIONS
+          plugins: {
+            legend: { position: 'bottom' },
+            title: {
+              display: true,
+              text: 'Répartition par âge moyen de créance'
+            }
           }
         }
-      }
-    });
-    console.log('✅ Graphique âge créé');
+      });
+      console.log('✅ Graphique âge créé');
+    }
   } catch (error) {
-    console.error('❌ Erreur création graphique âge:', error);
+    console.error('❌ Erreur graphique âge:', error);
   }
 
   // ============================================
@@ -2101,59 +2109,59 @@ function generateChartsConsultation(clientsData) {
 
   try {
     const ctxTop = document.getElementById('topClientsChartConsultation');
-    if (!ctxTop) {
-      console.error('❌ Canvas topClientsChartConsultation introuvable');
-      return;
-    }
-    
-    window.topClientsChartConsultation = new Chart(ctxTop, {
-      type: 'bar',
-      data: {
-        labels: topClients.map(c => c.nom.substring(0, 20)),
-        datasets: [{
-          label: 'Solde (€)',
-          data: topClients.map(c => c.solde),
-          backgroundColor: topClients.map(c => {
-            if (c.risque === 'critical') return '#dc3545';
-            if (c.risque === 'high') return '#fd7e14';
-            if (c.risque === 'medium') return '#ffc107';
-            return '#28a745';
-          })
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: 'Top 10 clients par solde'
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                return formatCurrency(context.parsed.x);
+    if (ctxTop) {
+      window.topClientsChartConsultation = new Chart(ctxTop, {
+        type: 'bar',
+        data: {
+          labels: topClients.map(c => c.nom.substring(0, 20)),
+          datasets: [{
+            label: 'Solde (€)',
+            data: topClients.map(c => c.solde),
+            backgroundColor: topClients.map(c => {
+              if (c.risque === 'critical') return '#dc3545';
+              if (c.risque === 'high') return '#fd7e14';
+              if (c.risque === 'medium') return '#ffc107';
+              return '#28a745';
+            })
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false, // ✅ DÉSACTIVER ANIMATIONS
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Top 10 clients par solde'
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return formatCurrency(context.parsed.x);
+                }
               }
             }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: {
-              callback: function(value) {
-                return formatCurrency(value);
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return formatCurrency(value);
+                }
               }
             }
           }
         }
-      }
-    });
-    console.log('✅ Graphique top clients créé');
+      });
+      console.log('✅ Graphique top clients créé');
+    } else {
+      console.error('❌ Canvas topClientsChartConsultation introuvable dans le DOM');
+    }
   } catch (error) {
-    console.error('❌ Erreur création graphique top clients:', error);
+    console.error('❌ Erreur graphique top clients:', error);
   }
   
   console.log('✅ Tous les graphiques générés');
@@ -2400,51 +2408,57 @@ function generateChartsConsultation(clientsData) {
     }
 
     async function saveNewCommentConsultation() {
-      const author = document.getElementById('commentAuthorConsultation').value.trim();
-      const text = document.getElementById('newCommentTextConsultation').value.trim();
-      
-      if (!author || !text) {
-        alert('⚠️ Veuillez remplir tous les champs');
-        return;
-      }
-      
-      const clientCode = currentClientForCommentConsultation.code;
-      
-      if (!commentsDataConsultation[clientCode]) {
-        commentsDataConsultation[clientCode] = [];
-      }
-      
-      const newComment = {
-        author,
-        text,
+  const agence = document.getElementById('agenceSelectConsultation').value;
+  const commentText = document.getElementById('newCommentTextConsultation').value.trim();
+  
+  console.log('💾 Tentative sauvegarde commentaire:', { agence, commentText });
+
+  if (!commentText) {
+    alert('Veuillez saisir un commentaire');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/comments/${encodeURIComponent(agence)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: commentText,
+        author: currentUser.name,
         timestamp: new Date().toISOString()
-      };
+      })
+    });
+
+    console.log('📡 Réponse serveur:', response.status, response.statusText);
+    
+    const result = await response.json();
+    console.log('📦 Données reçues:', result);
+
+    if (result.success) {
+      console.log('✅ Commentaire sauvegardé avec succès');
       
-      commentsDataConsultation[clientCode].push(newComment);
+      // Réinitialiser le champ
+      document.getElementById('newCommentTextConsultation').value = '';
       
-      // Sauvegarder sur le serveur
-      try {
-        await fetch(`${WORKER_URL}/comments/${currentAgence}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(commentsDataConsultation)
-        });
-        
-        showSaveIndicator('saveIndicatorConsultation');
-        
-        // Enregistrer dans l'historique
-        await logAction('comment', clientCode, currentClientForCommentConsultation.nom, currentClientForCommentConsultation.solde, author, text);
-        
-        // Rafraîchir l'affichage
-        displayCommentHistoryConsultation(clientCode);
-        document.getElementById('newCommentTextConsultation').value = '';
-        analyzeBalanceConsultation();
-        
-      } catch (error) {
-        console.error('Erreur sauvegarde commentaire:', error);
-        alert('❌ Erreur lors de la sauvegarde du commentaire');
-      }
+      // Recharger les commentaires
+      await loadCommentsConsultation(agence);
+      
+      // Log l'action
+      await logAction('Commentaire ajouté', agence);
+      
+      // Réanalyser pour mettre à jour l'affichage
+      await analyzeBalanceConsultation();
+      
+      alert('✅ Commentaire ajouté avec succès');
+    } else {
+      console.error('❌ Échec sauvegarde:', result.error);
+      alert('❌ Erreur lors de la sauvegarde du commentaire');
     }
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde commentaire:', error);
+    alert('❌ Erreur lors de la sauvegarde du commentaire');
+  }
+}
 
     async function deleteCommentConsultation(clientCode, index) {
       if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
@@ -2806,6 +2820,7 @@ function generateChartsConsultation(clientsData) {
 
 </body>
 </html>
+
 
 
 
