@@ -980,13 +980,19 @@
     // ============================================
     // IMPORT EXCEL
     // ============================================
-    function handleFileSelect(event) {
-      const file = event.target.files[0];
-      if (file) {
-        document.getElementById('fileName').textContent = file.name;
-        (file);
-      }
-    }
+   function handleFileSelect(event) {
+  const file = event.target.files[0];
+  console.log('📁 Fichier sélectionné:', file);
+  
+  if (file) {
+    document.getElementById('fileName').textContent = file.name;
+    console.log('📊 Début du parsing...');
+    parseExcel(file);
+  } else {
+    console.warn('⚠️ Aucun fichier sélectionné');
+  }
+}
+
 
     function parseExcel(file) {
   const reader = new FileReader();
@@ -1192,69 +1198,86 @@
     // ============================================
     // IMPORT DATA TO GOOGLE SHEETS
     // ============================================
-    async function importData() {
-      const agence = currentAgence;
+    // ============================================
+// IMPORT DATA TO GOOGLE SHEETS
+// ============================================
+async function importData() {
+  // ✅ Vérifier d'abord si des données sont chargées
+  if (excelData.length === 0) {
+    showAlert('importAlert', 'error', '❌ Veuillez d\'abord charger un fichier Excel valide');
+    return;
+  }
 
-      if (!agence) {
-        showAlert('importAlert', 'error', '❌ Veuillez d\'abord charger un fichier Excel');
-        return;
-      }
+  const agence = currentAgence;
 
-      if (excelData.length === 0) {
-        showAlert('importAlert', 'error', '❌ Aucune donnée à importer');
-        return;
-      }
+  if (!agence) {
+    showAlert('importAlert', 'error', '❌ Agence non détectée. Vérifiez le format du fichier Excel');
+    return;
+  }
 
-      // Vérifier les permissions
-      if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agence)) {
-        showAlert('importAlert', 'error', '❌ Vous n\'avez pas accès à cette agence');
-        return;
-      }
+  // Vérifier les permissions
+  if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agence)) {
+    showAlert('importAlert', 'error', '❌ Vous n\'avez pas accès à cette agence');
+    return;
+  }
 
-      // Afficher le loading
-      document.getElementById('importLoading').classList.add('active');
-      showAlert('importAlert', 'info', '⏳ Import en cours...');
+  // Afficher le loading
+  document.getElementById('importLoading').classList.add('active');
+  showAlert('importAlert', 'info', `⏳ Import de ${excelData.length} clients vers ${agence}...`);
 
-      try {
-        const response = await fetch(WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'importBalances',
-            agence: agence,
-            clients: excelData,
-            userEmail: currentUser.email,
-            userName: currentUser.nom
-          })
-        });
+  console.log('📤 Envoi des données:', {
+    agence: agence,
+    nbClients: excelData.length,
+    premierClient: excelData[0],
+    userEmail: currentUser.email,
+    userName: currentUser.nom
+  });
 
-        const result = await response.json();
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'importBalances',
+        agence: agence,
+        clients: excelData,
+        userEmail: currentUser.email,
+        userName: currentUser.nom
+      })
+    });
 
-        document.getElementById('importLoading').classList.remove('active');
+    console.log('📥 Réponse HTTP:', response.status, response.statusText);
 
-        if (result.success) {
-          showAlert('importAlert', 'success', `✅ ${excelData.length} clients importés avec succès !`);
-          
-          // Réinitialiser le formulaire
-          document.getElementById('excelFile').value = '';
-          document.getElementById('fileName').textContent = '';
-          excelData = [];
-          document.getElementById('previewSection').style.display = 'none';
-          
-          // Réactiver le sélecteur
-          const select = document.getElementById('agenceSelect');
-          select.innerHTML = '<option value="">-- Chargez un fichier Excel --</option>';
-          select.disabled = true;
-        } else {
-          showAlert('importAlert', 'error', `❌ Erreur: ${result.message}`);
-        }
+    const result = await response.json();
+    console.log('📥 Résultat:', result);
 
-      } catch (error) {
-        console.error('❌ Erreur import:', error);
-        document.getElementById('importLoading').classList.remove('active');
-        showAlert('importAlert', 'error', '❌ Erreur de connexion au serveur');
-      }
+    document.getElementById('importLoading').classList.remove('active');
+
+    if (result.success) {
+      showAlert('importAlert', 'success', `✅ ${excelData.length} clients importés avec succès ! (${result.version || ''})`);
+      
+      // Réinitialiser le formulaire
+      document.getElementById('excelFile').value = '';
+      document.getElementById('fileName').textContent = '';
+      excelData = [];
+      currentAgence = null;
+      document.getElementById('previewSection').style.display = 'none';
+      
+      // Réactiver le sélecteur
+      const select = document.getElementById('agenceSelect');
+      select.innerHTML = '<option value="">-- Chargez un fichier Excel --</option>';
+      select.disabled = true;
+    } else {
+      showAlert('importAlert', 'error', `❌ Erreur: ${result.message}`);
     }
+
+  } catch (error) {
+    console.error('❌ Erreur import:', error);
+    document.getElementById('importLoading').classList.remove('active');
+    showAlert('importAlert', 'error', '❌ Erreur de connexion au serveur: ' + error.message);
+  }
+}
+
 
     // ============================================
     // LOAD DATA FROM GOOGLE SHEETS
@@ -1747,6 +1770,7 @@
   </script>
 </body>
 </html>
+
 
 
 
