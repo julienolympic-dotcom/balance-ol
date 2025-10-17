@@ -1698,107 +1698,127 @@
     // ==========================================
     // ANALYSE DE BALANCE ÂGÉE
     // ==========================================
-    function analyzeBalanceConsultation() {
-      if (!balanceDataConsultation || balanceDataConsultation.length === 0) {
-        showAlert('consultationAlert', 'error', '❌ Aucune donnée à analyser');
-        return;
-      }
+   // ==========================================
+// ANALYSE DE BALANCE ÂGÉE (✅ ANCIEN CODE RESTAURÉ)
+// ==========================================
+function analyzeBalanceConsultation() {
+  if (!balanceDataConsultation || balanceDataConsultation.length === 0) {
+    showAlert('consultationAlert', 'error', '❌ Aucune donnée à analyser');
+    return;
+  }
 
-      // Identifier les colonnes
-      const headers = Object.keys(balanceDataConsultation[0]);
-      
-      // Recherche intelligente des colonnes importantes
-      const codeCol = headers.find(h => h.toLowerCase().includes('code') || h.toLowerCase().includes('client'));
-      const nomCol = headers.find(h => h.toLowerCase().includes('nom') || h.toLowerCase().includes('raison'));
-      const soldeCol = headers.find(h => h.toLowerCase().includes('solde') || h.toLowerCase().includes('balance'));
-      
-      // Colonnes d'ancienneté
-      const col30 = headers.find(h => h.includes('30') || h.toLowerCase().includes('moins de 30'));
-      const col60 = headers.find(h => h.includes('60') || h.toLowerCase().includes('30') && h.toLowerCase().includes('60'));
-      const col90 = headers.find(h => h.includes('90') || h.toLowerCase().includes('60') && h.toLowerCase().includes('90'));
-      const col90plus = headers.find(h => h.includes('90') && (h.includes('+') || h.toLowerCase().includes('plus')));
+  console.log('📊 Analyse de', balanceDataConsultation.length, 'lignes');
+  console.log('📊 Première ligne:', balanceDataConsultation[0]);
 
-      // Calculer les statistiques
-      let soldesDebiteurs = 0;
-      let soldesCrediteurs = 0;
-      let clientsCritiques = 0;
-      let montantRisque = 0;
-      let nombreClients = 0;
+  // ============================================
+  // ✅ PARSING AVEC L'ANCIEN CODE QUI MARCHAIT
+  // ============================================
+  const clientsData = [];
+  let soldesDebiteurs = 0;
+  let soldesCrediteurs = 0;
+  let clientsCritiques = 0;
+  let montantRisque = 0;
+  let nombreClients = 0;
 
-      const clientsData = [];
+  balanceDataConsultation.forEach(row => {
+    // ✅ EXTRACTION DES COLONNES (format Google Sheets)
+    const codeClient = String(row.Code_Client || row.code_client || row['Code Client'] || '').trim();
+    const nomClient = String(row.Nom_Client || row.nom_client || row['Nom Client'] || 'Client inconnu').trim();
+    
+    // ✅ SOLDE ET TRANCHES (colonnes exactes du Google Sheet)
+    const solde = parseFloat(row.Solde || row.solde || 0);
+    const tranche0 = parseFloat(row.Echeance_0 || row.echeance0 || row['0-29j'] || 0);
+    const tranche30 = parseFloat(row.Echeance_30 || row.echeance30 || row['30-59j'] || 0);
+    const tranche60 = parseFloat(row.Echeance_60 || row.echeance60 || row['60-89j'] || 0);
+    const tranche90 = parseFloat(row.Echeance_90 || row.echeance90 || row['90-119j'] || 0);
+    const tranche120 = parseFloat(row.Echeance_120 || row.echeance120 || row['120+j'] || 0);
 
-      balanceDataConsultation.forEach(row => {
-        const code = row[codeCol] || 'N/A';
-        const nom = row[nomCol] || 'Client inconnu';
-        const solde = parseFloat(row[soldeCol]) || 0;
-        
-        const montant30 = parseFloat(row[col30]) || 0;
-        const montant60 = parseFloat(row[col60]) || 0;
-        const montant90 = parseFloat(row[col90]) || 0;
-        const montant90plus = parseFloat(row[col90plus]) || 0;
-
-        if (solde !== 0) {
-          nombreClients++;
-          
-          if (solde > 0) {
-            soldesDebiteurs += solde;
-          } else {
-            soldesCrediteurs += Math.abs(solde);
-          }
-
-          // Calcul de l'ancienneté
-          const totalAncien = montant60 + montant90 + montant90plus;
-          const pourcentageAncien = solde !== 0 ? (totalAncien / Math.abs(solde)) * 100 : 0;
-
-          // Niveau de risque
-          let risque = 'low';
-          if (montant90plus > 0 || pourcentageAncien > 75) {
-            risque = 'critical';
-            clientsCritiques++;
-          } else if (montant90 > 0 || pourcentageAncien > 50) {
-            risque = 'high';
-          } else if (montant60 > 0 || pourcentageAncien > 25) {
-            risque = 'medium';
-          }
-
-          if (totalAncien > 0 && solde > 0) {
-            montantRisque += totalAncien;
-          }
-
-          clientsData.push({
-            code,
-            nom,
-            solde,
-            montant30,
-            montant60,
-            montant90,
-            montant90plus,
-            pourcentageAncien,
-            risque
-          });
-        }
-      });
-
-      // Afficher les statistiques
-      document.getElementById('soldesDebiteursConsultation').textContent = formatCurrency(soldesDebiteurs);
-      document.getElementById('soldesCrediteursConsultation').textContent = formatCurrency(soldesCrediteurs);
-      document.getElementById('balanceTotaleConsultation').textContent = formatCurrency(soldesDebiteurs - soldesCrediteurs);
-      document.getElementById('clientsCritiquesConsultation').textContent = clientsCritiques;
-      document.getElementById('nombreClientsConsultation').textContent = nombreClients;
-      document.getElementById('montantRisqueConsultation').textContent = formatCurrency(montantRisque);
-      
-      const tauxRisque = soldesDebiteurs > 0 ? ((montantRisque / soldesDebiteurs) * 100).toFixed(1) : 0;
-      document.getElementById('tauxRisqueConsultation').textContent = tauxRisque + '%';
-
-      // Générer les graphiques
-      generateChartsConsultation(clientsData);
-
-      // Remplir le tableau
-      fillDetailsTableConsultation(clientsData);
-
-      // Générer les recommandations
-      generateRecommendationsConsultation(clientsData, soldesDebiteurs);
+    // Ignorer les lignes vides
+    if (!codeClient || codeClient === '' || solde === 0) {
+      return;
     }
+
+    nombreClients++;
+
+    // ✅ CALCUL DE L'ÂGE MOYEN (ANCIEN CODE)
+    const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
+    let ageMoyen = 0;
+
+    if (totalEchu > 0) {
+      ageMoyen = Math.round(
+        (Math.abs(tranche120) * 135 + 
+         Math.abs(tranche90) * 105 + 
+         Math.abs(tranche60) * 75 + 
+         Math.abs(tranche30) * 45 + 
+         Math.abs(tranche0) * 15) / totalEchu
+      );
+    }
+
+    // Calcul des soldes
+    if (solde > 0) {
+      soldesDebiteurs += solde;
+    } else {
+      soldesCrediteurs += Math.abs(solde);
+    }
+
+    // ✅ CALCUL DU POURCENTAGE D'ANCIENNETÉ
+    const montantsAnciens = Math.abs(tranche60) + Math.abs(tranche90) + Math.abs(tranche120);
+    const pourcentageAncien = solde !== 0 ? (montantsAnciens / Math.abs(solde)) * 100 : 0;
+
+    // ✅ NIVEAU DE RISQUE
+    let risque = 'low';
+    if (Math.abs(tranche120) > 0 || ageMoyen > 90) {
+      risque = 'critical';
+      clientsCritiques++;
+    } else if (Math.abs(tranche90) > 0 || ageMoyen > 60) {
+      risque = 'high';
+    } else if (Math.abs(tranche60) > 0 || ageMoyen > 30) {
+      risque = 'medium';
+    }
+
+    // Montant à risque (>60j pour les débiteurs)
+    if (solde > 0 && montantsAnciens > 0) {
+      montantRisque += montantsAnciens;
+    }
+
+    // ✅ STOCKER LES DONNÉES CLIENT
+    clientsData.push({
+      code: codeClient,
+      nom: nomClient,
+      solde: solde,
+      montant30: tranche0,
+      montant60: tranche30,
+      montant90: tranche60,
+      montant90plus: tranche90 + tranche120, // Regrouper 90+ et 120+
+      ageMoyen: ageMoyen,
+      pourcentageAncien: pourcentageAncien,
+      risque: risque
+    });
+  });
+
+  console.log('✅ Clients analysés:', nombreClients);
+  console.log('✅ Premier client:', clientsData[0]);
+
+  // Afficher les statistiques
+  document.getElementById('soldesDebiteursConsultation').textContent = formatCurrency(soldesDebiteurs);
+  document.getElementById('soldesCrediteursConsultation').textContent = formatCurrency(soldesCrediteurs);
+  document.getElementById('balanceTotaleConsultation').textContent = formatCurrency(soldesDebiteurs - soldesCrediteurs);
+  document.getElementById('clientsCritiquesConsultation').textContent = clientsCritiques;
+  document.getElementById('nombreClientsConsultation').textContent = nombreClients;
+  document.getElementById('montantRisqueConsultation').textContent = formatCurrency(montantRisque);
+  
+  const tauxRisque = soldesDebiteurs > 0 ? ((montantRisque / soldesDebiteurs) * 100).toFixed(1) : 0;
+  document.getElementById('tauxRisqueConsultation').textContent = tauxRisque + '%';
+
+  // Générer les graphiques
+  generateChartsConsultation(clientsData);
+
+  // Remplir le tableau
+  fillDetailsTableConsultation(clientsData);
+
+  // Générer les recommandations
+  generateRecommendationsConsultation(clientsData, soldesDebiteurs);
+}
 
     // ==========================================
     // GRAPHIQUES
@@ -2520,6 +2540,7 @@
 
 </body>
 </html>
+
 
 
 
