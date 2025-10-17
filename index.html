@@ -579,7 +579,6 @@
       </div>
     </div>
   </div>
-
   <!-- MAIN APP -->
   <div id="mainApp" style="display: none;">
     <div class="container">
@@ -868,7 +867,6 @@
     let chartTop10 = null;
 
     let WORKER_URL = 'https://twilight-resonance-5291.julienolympic.workers.dev';
-
     // ============================================
     // AUTHENTICATION
     // ============================================
@@ -978,165 +976,156 @@
     }
 
     // ============================================
-    // IMPORT EXCEL
+    // IMPORT EXCEL (✅ ANCIEN CODE QUI MARCHAIT)
     // ============================================
-   function handleFileSelect(event) {
-  const file = event.target.files[0];
-  console.log('📁 Fichier sélectionné:', file);
-  
-  if (file) {
-    document.getElementById('fileName').textContent = file.name;
-    console.log('📊 Début du parsing...');
-    parseExcel(file);
-  } else {
-    console.warn('⚠️ Aucun fichier sélectionné');
-  }
-}
-
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      console.log('📁 Fichier sélectionné:', file);
+      
+      if (file) {
+        document.getElementById('fileName').textContent = file.name;
+        console.log('📊 Début du parsing...');
+        parseExcel(file);
+      } else {
+        console.warn('⚠️ Aucun fichier sélectionné');
+      }
+    }
 
     function parseExcel(file) {
-  const reader = new FileReader();
-  
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      const reader = new FileReader();
       
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
-      
-      console.log('📊 Nombre de lignes Excel:', jsonData.length);
-      console.log('📊 Ligne 1 (titre):', jsonData[0]);
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
+          
+          console.log('📊 Nombre de lignes Excel:', jsonData.length);
+          console.log('📊 Ligne 1 (titre):', jsonData[0]);
 
-      if (jsonData.length < 3) {
-        showAlert('importAlert', 'error', '❌ Fichier Excel vide ou invalide');
-        return;
-      }
+          if (jsonData.length < 3) {
+            showAlert('importAlert', 'error', '❌ Fichier Excel vide ou invalide');
+            return;
+          }
 
-      // ============================================
-      // EXTRACTION DU CODE AGENCE DEPUIS LE TITRE
-      // ============================================
-      let agenceDetectee = null;
-      let codeAgence = null;
+          // ============================================
+          // ✅ EXTRACTION DU CODE AGENCE (ANCIEN CODE)
+          // ============================================
+          let agenceDetectee = null;
+          let codeAgence = null;
 
-      const titre = String(jsonData[0][0]).trim();
-      console.log('📋 Titre Excel:', titre);
+          const titre = String(jsonData[0][0]).trim();
+          console.log('📋 Titre Excel:', titre);
 
-      const matchCode = titre.match(/CLIENTS?\s+(\d{2})/i);
-      
-      if (matchCode) {
-        codeAgence = matchCode[1];
-        agenceDetectee = AGENCE_CODES[codeAgence];
-        
-        console.log('🔍 Code agence détecté:', codeAgence);
-        console.log('🏢 Agence correspondante:', agenceDetectee);
-      }
+          const matchCode = titre.match(/CLIENTS?\s+(\d{2})/i);
+          
+          if (matchCode) {
+            codeAgence = matchCode[1];
+            agenceDetectee = AGENCE_CODES[codeAgence];
+            
+            console.log('🔍 Code agence détecté:', codeAgence);
+            console.log('🏢 Agence correspondante:', agenceDetectee);
+          }
 
-      if (!agenceDetectee) {
-        showAlert('importAlert', 'error', `❌ Code agence "${codeAgence}" non reconnu dans le titre "${titre}". Codes valides : ${Object.keys(AGENCE_CODES).join(', ')}`);
-        return;
-      }
+          if (!agenceDetectee) {
+            showAlert('importAlert', 'error', `❌ Code agence "${codeAgence}" non reconnu dans le titre "${titre}". Codes valides : ${Object.keys(AGENCE_CODES).join(', ')}`);
+            return;
+          }
 
-      // Vérifier les permissions utilisateur
-      if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agenceDetectee)) {
-        showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence "${agenceDetectee}" (code ${codeAgence}). Vos agences : ${currentUser.agences.join(', ')}`);
-        return;
-      }
+          // Vérifier les permissions utilisateur
+          if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agenceDetectee)) {
+            showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence "${agenceDetectee}" (code ${codeAgence}). Vos agences : ${currentUser.agences.join(', ')}`);
+            return;
+          }
 
-      // Mettre à jour le sélecteur d'agence automatiquement
-      const select = document.getElementById('agenceSelect');
-      select.innerHTML = `<option value="${agenceDetectee}" selected>${agenceDetectee} (code ${codeAgence})</option>`;
-      select.disabled = true;
-      currentAgence = agenceDetectee;
-      
-      console.log('✅ Agence sélectionnée automatiquement:', agenceDetectee);
+          // Mettre à jour le sélecteur d'agence automatiquement
+          const select = document.getElementById('agenceSelect');
+          select.innerHTML = `<option value="${agenceDetectee}" selected>${agenceDetectee} (code ${codeAgence})</option>`;
+          select.disabled = true;
+          currentAgence = agenceDetectee;
+          
+          console.log('✅ Agence sélectionnée automatiquement:', agenceDetectee);
 
-      // ============================================
-      // PARSING DES DONNÉES CLIENTS
-      // ============================================
-      console.log('📊 Ligne 2 (en-têtes):', jsonData[1]);
-      console.log('📊 Ligne 3 (premier client):', jsonData[2]);
+          // ============================================
+          // ✅ PARSING DES DONNÉES (ANCIEN CODE)
+          // ============================================
+          console.log('📊 Ligne 2 (en-têtes):', jsonData[1]);
+          console.log('📊 Ligne 3 (premier client):', jsonData[2]);
 
-      excelData = [];
-      
-      for (let i = 2; i < jsonData.length; i++) {
-        const row = jsonData[i];
-        
-        if (!row || !row[0] || row[0].trim() === '') continue;
-        
-        const codeClient = String(row[0]).trim();
-        const nomClient = String(row[1]).trim();
-        
-        // ✅ ORDRE CORRECT DES COLONNES EXCEL
-        // Col 2: 120+ jours
-        // Col 3: 90-119 jours
-        // Col 4: 60-89 jours
-        // Col 5: 30-59 jours
-        // Col 6: 0-29 jours
-        // Col 7: Paiement
-        // Col 8: Solde
-        const tranche120 = parseFloat(row[2]) || 0;
-        const tranche90 = parseFloat(row[3]) || 0;
-        const tranche60 = parseFloat(row[4]) || 0;
-        const tranche30 = parseFloat(row[5]) || 0;
-        const tranche0 = parseFloat(row[6]) || 0;
-        const paiement = parseFloat(row[7]) || 0;
-        const solde = parseFloat(row[8]) || 0;
+          excelData = [];
+          
+          for (let i = 2; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            
+            if (!row || !row[0] || row[0].trim() === '') continue;
+            
+            const codeClient = String(row[0]).trim();
+            const nomClient = String(row[1]).trim();
+            
+            // ✅ ORDRE CORRECT DES COLONNES EXCEL
+            const tranche120 = parseFloat(row[2]) || 0;
+            const tranche90 = parseFloat(row[3]) || 0;
+            const tranche60 = parseFloat(row[4]) || 0;
+            const tranche30 = parseFloat(row[5]) || 0;
+            const tranche0 = parseFloat(row[6]) || 0;
+            const paiement = parseFloat(row[7]) || 0;
+            const solde = parseFloat(row[8]) || 0;
 
-        if (!codeClient || codeClient === '') continue;
+            if (!codeClient || codeClient === '') continue;
 
-        // Calcul de l'âge moyen
-        const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
-        let ageMoyen = 0;
+            // ✅ CALCUL DE L'ÂGE MOYEN (ANCIEN CODE)
+            const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
+            let ageMoyen = 0;
 
-        if (totalEchu > 0) {
-          ageMoyen = Math.round(
-            (Math.abs(tranche120) * 135 + 
-             Math.abs(tranche90) * 105 + 
-             Math.abs(tranche60) * 75 + 
-             Math.abs(tranche30) * 45 + 
-             Math.abs(tranche0) * 15) / totalEchu
-          );
+            if (totalEchu > 0) {
+              ageMoyen = Math.round(
+                (Math.abs(tranche120) * 135 + 
+                 Math.abs(tranche90) * 105 + 
+                 Math.abs(tranche60) * 75 + 
+                 Math.abs(tranche30) * 45 + 
+                 Math.abs(tranche0) * 15) / totalEchu
+              );
+            }
+
+            // ✅ FORMAT ADAPTÉ AU GOOGLE SHEET
+            excelData.push({
+              codeClient: codeClient,
+              nomClient: nomClient,
+              solde: solde,
+              ageMoyen: ageMoyen,
+              echeance0: tranche0,
+              echeance30: tranche30,
+              echeance60: tranche60,
+              echeance90: tranche90,
+              echeance120: tranche120,
+              paiement: paiement,
+              agence: agenceDetectee
+            });
+          }
+
+          console.log('✅ Données Excel chargées:', excelData.length, 'lignes pour l\'agence', agenceDetectee);
+          
+          if (excelData.length === 0) {
+            showAlert('importAlert', 'error', '❌ Aucune donnée valide trouvée dans le fichier');
+            return;
+          }
+          
+          console.log('📊 Premier client parsé:', excelData[0]);
+          console.log('📊 Dernier client parsé:', excelData[excelData.length - 1]);
+          
+          showPreview();
+          showAlert('importAlert', 'success', `✅ ${excelData.length} clients chargés pour l'agence "${agenceDetectee}" (code ${codeAgence})`);
+
+        } catch (error) {
+          console.error('❌ Erreur parsing Excel:', error);
+          showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel: ' + error.message);
         }
+      };
 
-        // ✅ FORMAT ADAPTÉ AU GOOGLE SHEET
-        excelData.push({
-          codeClient: codeClient,
-          nomClient: nomClient,
-          solde: solde,
-          ageMoyen: ageMoyen,
-          echeance0: tranche0,
-          echeance30: tranche30,
-          echeance60: tranche60,
-          echeance90: tranche90,
-          echeance120: tranche120,
-          paiement: paiement,
-          agence: agenceDetectee
-        });
-      }
-
-      console.log('✅ Données Excel chargées:', excelData.length, 'lignes pour l\'agence', agenceDetectee);
-      
-      if (excelData.length === 0) {
-        showAlert('importAlert', 'error', '❌ Aucune donnée valide trouvée dans le fichier');
-        return;
-      }
-      
-      console.log('📊 Premier client parsé:', excelData[0]);
-      console.log('📊 Dernier client parsé:', excelData[excelData.length - 1]);
-      
-      showPreview();
-      showAlert('importAlert', 'success', `✅ ${excelData.length} clients chargés pour l'agence "${agenceDetectee}" (code ${codeAgence})`);
-
-    } catch (error) {
-      console.error('❌ Erreur parsing Excel:', error);
-      showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel: ' + error.message);
+      reader.readAsArrayBuffer(file);
     }
-  };
-
-  reader.readAsArrayBuffer(file);
-}
-
 
     function showAlert(elementId, type, message) {
       const alertDiv = document.getElementById(elementId);
@@ -1182,12 +1171,12 @@
           <td>${row.codeClient}</td>
           <td>${row.nomClient}</td>
           <td class="${row.solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(row.solde)}</td>
-          <td>${row.age} jours</td>
-          <td>${formatCurrency(row.tranche120)}</td>
-          <td>${formatCurrency(row.tranche90)}</td>
-          <td>${formatCurrency(row.tranche60)}</td>
-          <td>${formatCurrency(row.tranche30)}</td>
-          <td>${formatCurrency(row.tranche0)}</td>
+          <td>${row.ageMoyen} jours</td>
+          <td>${formatCurrency(row.echeance120)}</td>
+          <td>${formatCurrency(row.echeance90)}</td>
+          <td>${formatCurrency(row.echeance60)}</td>
+          <td>${formatCurrency(row.echeance30)}</td>
+          <td>${formatCurrency(row.echeance0)}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1198,88 +1187,83 @@
     // ============================================
     // IMPORT DATA TO GOOGLE SHEETS
     // ============================================
-    // ============================================
-// IMPORT DATA TO GOOGLE SHEETS
-// ============================================
-async function importData() {
-  // ✅ Vérifier d'abord si des données sont chargées
-  if (excelData.length === 0) {
-    showAlert('importAlert', 'error', '❌ Veuillez d\'abord charger un fichier Excel valide');
-    return;
-  }
+    async function importData() {
+      if (excelData.length === 0) {
+        showAlert('importAlert', 'error', '❌ Veuillez d\'abord charger un fichier Excel valide');
+        return;
+      }
 
-  const agence = currentAgence;
+      const agence = currentAgence;
 
-  if (!agence) {
-    showAlert('importAlert', 'error', '❌ Agence non détectée. Vérifiez le format du fichier Excel');
-    return;
-  }
+      if (!agence) {
+        showAlert('importAlert', 'error', '❌ Agence non détectée. Vérifiez le format du fichier Excel');
+        return;
+      }
 
-  // Vérifier les permissions
-  if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agence)) {
-    showAlert('importAlert', 'error', '❌ Vous n\'avez pas accès à cette agence');
-    return;
-  }
+      // Vérifier les permissions
+      if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agence)) {
+        showAlert('importAlert', 'error', '❌ Vous n\'avez pas accès à cette agence');
+        return;
+      }
 
-  // Afficher le loading
-  document.getElementById('importLoading').classList.add('active');
-  showAlert('importAlert', 'info', `⏳ Import de ${excelData.length} clients vers ${agence}...`);
+      // Afficher le loading
+      document.getElementById('importLoading').classList.add('active');
+      showAlert('importAlert', 'info', `⏳ Import de ${excelData.length} clients vers ${agence}...`);
 
-  console.log('📤 Envoi des données:', {
-    agence: agence,
-    nbClients: excelData.length,
-    premierClient: excelData[0],
-    userEmail: currentUser.email,
-    userName: currentUser.nom
-  });
-
-  try {
-    const response = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'importBalances',
+      console.log('📤 Envoi des données:', {
         agence: agence,
-        clients: excelData,
+        nbClients: excelData.length,
+        premierClient: excelData[0],
         userEmail: currentUser.email,
         userName: currentUser.nom
-      })
-    });
+      });
 
-    console.log('📥 Réponse HTTP:', response.status, response.statusText);
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'importBalances',
+            agence: agence,
+            clients: excelData,
+            userEmail: currentUser.email,
+            userName: currentUser.nom
+          })
+        });
 
-    const result = await response.json();
-    console.log('📥 Résultat:', result);
+        console.log('📥 Réponse HTTP:', response.status, response.statusText);
 
-    document.getElementById('importLoading').classList.remove('active');
+        const result = await response.json();
+        console.log('📥 Résultat:', result);
 
-    if (result.success) {
-      showAlert('importAlert', 'success', `✅ ${excelData.length} clients importés avec succès ! (${result.version || ''})`);
-      
-      // Réinitialiser le formulaire
-      document.getElementById('excelFile').value = '';
-      document.getElementById('fileName').textContent = '';
-      excelData = [];
-      currentAgence = null;
-      document.getElementById('previewSection').style.display = 'none';
-      
-      // Réactiver le sélecteur
-      const select = document.getElementById('agenceSelect');
-      select.innerHTML = '<option value="">-- Chargez un fichier Excel --</option>';
-      select.disabled = true;
-    } else {
-      showAlert('importAlert', 'error', `❌ Erreur: ${result.message}`);
+        document.getElementById('importLoading').classList.remove('active');
+
+        if (result.success) {
+          showAlert('importAlert', 'success', `✅ ${excelData.length} clients importés avec succès ! (${result.version || ''})`);
+          
+          // Réinitialiser le formulaire
+          document.getElementById('excelFile').value = '';
+          document.getElementById('fileName').textContent = '';
+          excelData = [];
+          currentAgence = null;
+          document.getElementById('previewSection').style.display = 'none';
+          
+          // Réactiver le sélecteur
+          const select = document.getElementById('agenceSelect');
+          select.innerHTML = '<option value="">-- Chargez un fichier Excel --</option>';
+          select.disabled = true;
+        } else {
+          showAlert('importAlert', 'error', `❌ Erreur: ${result.message}`);
+        }
+
+      } catch (error) {
+        console.error('❌ Erreur import:', error);
+        document.getElementById('importLoading').classList.remove('active');
+        showAlert('importAlert', 'error', '❌ Erreur de connexion au serveur: ' + error.message);
+      }
     }
 
-  } catch (error) {
-    console.error('❌ Erreur import:', error);
-    document.getElementById('importLoading').classList.remove('active');
-    showAlert('importAlert', 'error', '❌ Erreur de connexion au serveur: ' + error.message);
-  }
-}
-
-
-    // ============================================
+        // ============================================
     // LOAD DATA FROM GOOGLE SHEETS
     // ============================================
     async function loadData() {
@@ -1770,7 +1754,3 @@ async function importData() {
   </script>
 </body>
 </html>
-
-
-
-
