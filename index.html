@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestion Balances Âgées - OL</title>
   
-  <!-- Google Sign-In -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
@@ -62,7 +59,13 @@
       width: 45px;
       height: 45px;
       border-radius: 50%;
-      border: 3px solid white;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #667eea;
     }
 
     .logout-btn {
@@ -95,13 +98,61 @@
       border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       text-align: center;
-      max-width: 450px;
+      max-width: 500px;
+      width: 90%;
     }
 
     .login-box h1 {
       color: #667eea;
-      margin-bottom: 30px;
+      margin-bottom: 15px;
       font-size: 32px;
+    }
+
+    .login-box p {
+      color: #6c757d;
+      margin-bottom: 30px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .login-box input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
     }
 
     /* TABS */
@@ -493,6 +544,10 @@
       .filters {
         flex-direction: column;
       }
+
+      .login-box {
+        padding: 30px;
+      }
     }
   </style>
 </head>
@@ -502,12 +557,26 @@
   <div id="loginScreen" class="login-container">
     <div class="login-box">
       <h1>🏢 Gestion Balances Âgées</h1>
-      <p style="color: #6c757d; margin-bottom: 30px;">Connectez-vous avec votre compte Google OL</p>
-      <div id="g_id_onload"
-           data-client_id="YOUR_GOOGLE_CLIENT_ID"
-           data-callback="handleCredentialResponse">
+      <p>Olympic Location - Marseille</p>
+      
+      <div id="errorMessage" class="error-message"></div>
+      
+      <form onsubmit="handleLogin(event)">
+        <input 
+          type="email" 
+          id="emailInput" 
+          placeholder="Votre email @olympiclocation.com" 
+          required
+          autocomplete="email"
+        >
+        <button type="submit" class="login-btn">🔐 Se connecter</button>
+      </form>
+
+      <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef;">
+        <p style="font-size: 12px; color: #6c757d;">
+          💡 Utilisez votre email professionnel Olympic Location
+        </p>
       </div>
-      <div class="g_id_signin" data-type="standard"></div>
     </div>
   </div>
 
@@ -518,13 +587,14 @@
       <div class="header">
         <div>
           <h1>🏢 Gestion Balances Âgées - OL</h1>
-          <p id="agenceDisplay" style="opacity: 0.9; margin-top: 5px;">Agence: Non sélectionnée</p>
+          <p id="agenceDisplay" style="opacity: 0.9; margin-top: 5px;">Agences: <span id="userAgences">-</span></p>
         </div>
         <div class="user-info">
-          <img id="userAvatar" class="user-avatar" src="" alt="User">
+          <div class="user-avatar" id="userAvatar">JD</div>
           <div>
             <div id="userName" style="font-weight: 600;"></div>
             <div id="userEmail" style="font-size: 12px; opacity: 0.8;"></div>
+            <div id="userRole" style="font-size: 11px; opacity: 0.7; margin-top: 2px;"></div>
           </div>
           <button class="logout-btn" onclick="logout()">Déconnexion</button>
         </div>
@@ -545,11 +615,8 @@
           
           <div style="margin-bottom: 20px;">
             <label style="display: block; margin-bottom: 10px; font-weight: 600;">Sélectionner l'agence :</label>
-            <select id="agenceSelect" style="padding: 10px; border-radius: 8px; border: 2px solid #e9ecef; width: 300px;">
+            <select id="agenceSelect" style="padding: 10px; border-radius: 8px; border: 2px solid #e9ecef; width: 100%; max-width: 400px;">
               <option value="">-- Choisir une agence --</option>
-              <option value="101">Agence 101</option>
-              <option value="102">Agence 102</option>
-              <option value="103">Agence 103</option>
             </select>
           </div>
 
@@ -742,6 +809,28 @@
 
   <script>
     // ============================================
+    // LISTE DES UTILISATEURS AUTORISÉS
+    // ============================================
+    const AUTHORIZED_USERS = [
+      { email: 'julien@olympiclocation.com', nom: 'Julien', agences: ['Toutes'], role: 'Administrateur' },
+      { email: 'magali@olympiclocation.com', nom: 'Magali', agences: ['Gèze', 'Plombières'], role: 'Responsable secteur' },
+      { email: 'valentin@olympiclocation.com', nom: 'Valentin', agences: ['5 Av', 'Gare St Charles'], role: 'Responsable secteur' },
+      { email: 'christine@olympiclocation.com', nom: 'Christine', agences: ['La Valentine', 'Aubagne', 'La Ciotat'], role: 'Responsable secteur' },
+      { email: 'florian@olympiclocation.com', nom: 'Florian', agences: ['Toulon', 'La Garde'], role: 'Responsable secteur' },
+      { email: 'yann@olympiclocation.com', nom: 'Yann', agences: ['Gèze'], role: 'Chef agence' },
+      { email: 'abdel@olympiclocation.com', nom: 'Abdel', agences: ['5 Av'], role: 'Chef agence' },
+      { email: 'yazid@olympiclocation.com', nom: 'Yazid', agences: ['Gare St Charles'], role: 'Chef agence' },
+      { email: 'elodie@olympiclocation.com', nom: 'Elodie', agences: ['Aubagne'], role: 'Chef agence' },
+      { email: 'gaetan@olympiclocation.com', nom: 'Gaetan', agences: ['La Valentine'], role: 'Chef agence' },
+      { email: 'abdillah@olympiclocation.com', nom: 'Abdi', agences: ['Plombières'], role: 'Chef agence' },
+      { email: 'pierre@olympiclocation.com', nom: 'Pierre', agences: ['La Garde'], role: 'Chef agence' },
+      { email: 'nathan@olympiclocation.com', nom: 'Nathan', agences: ['La Ciotat'], role: 'Chef agence' },
+      { email: 'nicolas@olympiclocation.com', nom: 'Nicolas', agences: ['Toulon'], role: 'Chef agence' }
+    ];
+
+    const ALL_AGENCES = ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde'];
+
+    // ============================================
     // VARIABLES GLOBALES
     // ============================================
     let currentUser = null;
@@ -749,134 +838,175 @@
     let allData = [];
     let filteredData = [];
     let excelData = [];
-    let currentClientForComment = null;
-    let currentClientForDelete = null;
-    let commentsData = {};
-    let chartAge = null;
-    let chartTop10 = null;
+          let currentClientForComment = null;
+      let currentClientForDelete = null;
+      let commentsData = {};
+      let chartAge = null;
+      let chartTop10 = null;
 
-    let WORKER_URL = 'https://twilight-resonance-5291.julienolympic.workers.dev';
+      let WORKER_URL = 'https://ol-balances.your-worker.workers.dev';
 
-    // ============================================
-    // AUTHENTICATION
-    // ============================================
-    function handleCredentialResponse(response) {
-      const payload = parseJwt(response.credential);
-      
-      // Vérifier domaine OL
-      if (!payload.email.endsWith('@ol.com')) {
-        alert('❌ Accès refusé : Vous devez utiliser un compte @ol.com');
-        return;
+      // ============================================
+      // AUTHENTICATION
+      // ============================================
+      function handleLogin(event) {
+        event.preventDefault();
+        
+        const email = document.getElementById('emailInput').value.toLowerCase().trim();
+        const errorDiv = document.getElementById('errorMessage');
+        
+        // Vérifier si l'email est dans la liste
+        const user = AUTHORIZED_USERS.find(u => u.email === email);
+        
+        if (!user) {
+          errorDiv.textContent = '❌ Email non autorisé. Contactez l\'administrateur.';
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        // Connexion réussie
+        currentUser = user;
+        
+        // Sauvegarder dans localStorage
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        // Afficher l'app
+        showMainApp();
       }
 
-      currentUser = {
-        email: payload.email,
-        name: payload.name,
-        picture: payload.picture
-      };
+      function showMainApp() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
 
-      // Afficher l'app
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainApp').style.display = 'block';
+        // Afficher les infos utilisateur
+        document.getElementById('userName').textContent = currentUser.nom;
+        document.getElementById('userEmail').textContent = currentUser.email;
+        document.getElementById('userRole').textContent = `🎯 ${currentUser.role}`;
+        
+        // Afficher les agences
+        const agencesText = currentUser.agences.includes('Toutes') 
+          ? 'Toutes les agences' 
+          : currentUser.agences.join(', ');
+        document.getElementById('userAgences').textContent = agencesText;
 
-      // Afficher les infos utilisateur
-      document.getElementById('userName').textContent = currentUser.name;
-      document.getElementById('userEmail').textContent = currentUser.email;
-      document.getElementById('userAvatar').src = currentUser.picture;
+        // Initiales pour l'avatar
+        const initials = currentUser.nom.substring(0, 2).toUpperCase();
+        document.getElementById('userAvatar').textContent = initials;
 
-      // Charger la config
-      loadConfig();
-    }
+        // Charger la liste des agences
+        loadAgencesList();
 
-    function parseJwt(token) {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
-    }
-
-    function logout() {
-      currentUser = null;
-      currentAgence = null;
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('mainApp').style.display = 'none';
-    }
-
-    // ============================================
-    // CONFIG
-    // ============================================
-    function loadConfig() {
-      const savedUrl = localStorage.getItem('workerUrl');
-      if (savedUrl) {
-        WORKER_URL = savedUrl;
-        document.getElementById('workerUrl').value = savedUrl;
+        // Charger la config
+        loadConfig();
       }
-    }
 
-    function saveConfig() {
-      const url = document.getElementById('workerUrl').value;
-      localStorage.setItem('workerUrl', url);
-      WORKER_URL = url;
-      showAlert('consultationAlert', 'success', '✅ Configuration enregistrée');
-    }
+      function loadAgencesList() {
+        const select = document.getElementById('agenceSelect');
+        select.innerHTML = '<option value="">-- Choisir une agence --</option>';
 
-    // ============================================
-    // TABS
-    // ============================================
-    function switchTab(tabName) {
-      // Désactiver tous les tabs
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        const agences = currentUser.agences.includes('Toutes') 
+          ? ALL_AGENCES 
+          : currentUser.agences;
 
-      // Activer le tab sélectionné
-      event.target.classList.add('active');
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-
-      // Charger les données si nécessaire
-      if (tabName === 'consultation' && currentAgence) {
-        loadData();
+        agences.forEach(agence => {
+          const option = document.createElement('option');
+          option.value = agence;
+          option.textContent = agence;
+          select.appendChild(option);
+        });
       }
-      if (tabName === 'historique' && currentAgence) {
-        loadHistorique();
+
+      function logout() {
+        currentUser = null;
+        localStorage.removeItem('currentUser');
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('emailInput').value = '';
+        document.getElementById('errorMessage').style.display = 'none';
       }
-    }
 
-    // ============================================
-    // IMPORT EXCEL
-    // ============================================
-    function handleFileSelect(event) {
-      const file = event.target.files[0];
-      if (file) {
-        document.getElementById('fileName').textContent = file.name;
-        parseExcel(file);
+      // Vérifier si l'utilisateur est déjà connecté
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+          currentUser = JSON.parse(savedUser);
+          showMainApp();
+        }
+      });
+
+      // ============================================
+      // CONFIG
+      // ============================================
+      function loadConfig() {
+        const savedUrl = localStorage.getItem('workerUrl');
+        if (savedUrl) {
+          WORKER_URL = savedUrl;
+          document.getElementById('workerUrl').value = savedUrl;
+        }
       }
-    }
 
-    function parseExcel(file) {
-      const reader = new FileReader();
-      
-      reader.onload = function(e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          
-          // Prendre la première feuille
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-          
-          if (jsonData.length === 0) {
-            showAlert('importAlert', 'error', '❌ Fichier Excel vide');
-            return;
-          }
+      function saveConfig() {
+        const url = document.getElementById('workerUrl').value;
+        localStorage.setItem('workerUrl', url);
+        WORKER_URL = url;
+        showAlert('consultationAlert', 'success', '✅ Configuration enregistrée');
+      }
 
-          // Normaliser les données
-          excelData = jsonData.map(row => {
-            // Détecter les noms de colonnes (avec variations possibles)
-            const codeClient = row['Code_Client'] || row['Code Client'] || row['code_client'] || row['CODE_CLIENT'] || '';
-            const nomClient = row['Nom_Client'] || row['Nom Client'] || row['nom_client'] || row['NOM_CLIENT'] || '';
-                          const solde = parseFloat(row['Solde'] || row['solde'] || row['SOLDE'] || 0);
+      // ============================================
+      // TABS
+      // ============================================
+      function switchTab(tabName) {
+        // Désactiver tous les tabs
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        // Activer le tab sélectionné
+        event.target.classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+
+        // Charger les données si nécessaire
+        if (tabName === 'consultation' && currentAgence) {
+          loadData();
+        }
+        if (tabName === 'historique' && currentAgence) {
+          loadHistorique();
+        }
+      }
+
+      // ============================================
+      // IMPORT EXCEL
+      // ============================================
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+          document.getElementById('fileName').textContent = file.name;
+          parseExcel(file);
+        }
+      }
+
+      function parseExcel(file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Prendre la première feuille
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            
+            if (jsonData.length === 0) {
+              showAlert('importAlert', 'error', '❌ Fichier Excel vide');
+              return;
+            }
+
+            // Normaliser les données
+            excelData = jsonData.map(row => {
+              // Détecter les noms de colonnes (avec variations possibles)
+              const codeClient = row['Code_Client'] || row['Code Client'] || row['code_client'] || row['CODE_CLIENT'] || '';
+              const nomClient = row['Nom_Client'] || row['Nom Client'] || row['nom_client'] || row['NOM_CLIENT'] || '';
+              const solde = parseFloat(row['Solde'] || row['solde'] || row['SOLDE'] || 0);
               const age = parseInt(row['Age'] || row['age'] || row['AGE'] || row['Âge'] || 0);
 
               return {
@@ -941,6 +1071,12 @@
           return;
         }
 
+        // Vérifier les permissions
+        if (!currentUser.agences.includes('Toutes') && !currentUser.agences.includes(agence)) {
+          showAlert('importAlert', 'error', '❌ Vous n\'avez pas accès à cette agence');
+          return;
+        }
+
         // Afficher le loading
         document.getElementById('importLoading').classList.add('active');
         showAlert('importAlert', 'info', '⏳ Import en cours...');
@@ -950,10 +1086,11 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              action: 'importBalances',
               agence: agence,
               clients: excelData,
               userEmail: currentUser.email,
-              userName: currentUser.name
+              userName: currentUser.nom
             })
           });
 
@@ -964,7 +1101,6 @@
           if (result.success) {
             showAlert('importAlert', 'success', `✅ ${excelData.length} clients importés avec succès !`);
             currentAgence = agence;
-            document.getElementById('agenceDisplay').textContent = `Agence: ${agence}`;
             
             // Réinitialiser le formulaire
             document.getElementById('excelFile').value = '';
@@ -986,13 +1122,15 @@
       // LOAD DATA FROM GOOGLE SHEETS
       // ============================================
       async function loadData() {
-        if (!currentAgence) {
+        const agence = document.getElementById('agenceSelect').value || currentAgence;
+        
+        if (!agence) {
           showAlert('consultationAlert', 'error', '❌ Aucune agence sélectionnée');
           return;
         }
 
         try {
-          const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${currentAgence}`);
+          const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${agence}`);
           const result = await response.json();
 
           if (result.success) {
@@ -1231,7 +1369,7 @@
             valB = parseFloat(b.Commentaire) || 0;
           } else if (column === 'age') {
             valA = parseInt(a.Heure) || 0;
-            valB = parseInt(b.Heure) || 0;
+            valB = parseInt(a.Heure) || 0;
           }
 
           if (direction === 'asc') {
@@ -1262,14 +1400,15 @@
         }
 
         try {
-          const response = await fetch(`${WORKER_URL}?action=ajouterCommentaire`, {
+          const response = await fetch(`${WORKER_URL}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              action: 'ajouterCommentaire',
               agence: currentAgence,
               codeClient: currentClientForComment.codeClient,
               nomClient: currentClientForComment.nomClient,
-              author: currentUser.name,
+              author: currentUser.nom,
               text: text,
               timestamp: new Date().toLocaleString('fr-FR')
             })
@@ -1310,15 +1449,16 @@
         }
 
         try {
-          const response = await fetch(`${WORKER_URL}?action=supprimerClient`, {
+          const response = await fetch(`${WORKER_URL}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              action: 'supprimerClient',
               agence: currentAgence,
               codeClient: currentClientForDelete.codeClient,
               nomClient: currentClientForDelete.nomClient,
               solde: currentClientForDelete.solde,
-              author: currentUser.name,
+              author: currentUser.nom,
               reason: reason,
               timestamp: new Date().toLocaleString('fr-FR')
             })
