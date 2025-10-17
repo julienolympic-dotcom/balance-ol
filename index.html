@@ -653,6 +653,14 @@
       <!-- TAB: CONSULTATION -->
       <div id="tab-consultation" class="tab-content">
         <div id="consultationAlert"></div>
+        <!-- SÉLECTEUR D'AGENCE -->
+<div class="import-section" style="margin-bottom: 20px;">
+  <label style="display: block; margin-bottom: 10px; font-weight: 600;">🏢 Sélectionner une agence :</label>
+  <select id="agenceConsultation" onchange="handleAgenceChange()" style="padding: 10px; border-radius: 8px; border: 2px solid #e9ecef; width: 100%; max-width: 400px;">
+    <option value="">-- Choisir une agence --</option>
+  </select>
+</div>
+
 
         <!-- FILTERS -->
         <div class="filters">
@@ -916,7 +924,41 @@
 
       // Charger la config
       loadConfig();
+      // Peupler le sélecteur d'agence dans la consultation
+const agenceSelect = document.getElementById('agenceConsultation');
+agenceSelect.innerHTML = '<option value="">-- Choisir une agence --</option>';
+
+const agencesAccessibles = currentUser.agences.includes('Toutes') 
+  ? ALL_AGENCES 
+  : currentUser.agences;
+
+agencesAccessibles.forEach(agence => {
+  const option = document.createElement('option');
+  option.value = agence;
+  option.textContent = agence;
+  agenceSelect.appendChild(option);
+});
+
+console.log('✅ Sélecteur d\'agence peuplé avec:', agencesAccessibles);
     }
+// ============================================
+// GESTION DU CHANGEMENT D'AGENCE
+// ============================================
+function handleAgenceChange() {
+  const select = document.getElementById('agenceConsultation');
+  const agence = select.value;
+
+  if (!agence) {
+    console.log('⚠️ Aucune agence sélectionnée');
+    return;
+  }
+
+  console.log('🔄 Changement d\'agence vers:', agence);
+  currentAgence = agence;
+
+  // Charger les données de l'agence
+  loadData();
+}
 
     function logout() {
       currentUser = null;
@@ -1263,43 +1305,57 @@
       }
     }
 
-        // ============================================
-    // LOAD DATA FROM GOOGLE SHEETS
     // ============================================
-    async function loadData() {
-      const agence = currentAgence;
-      
-      if (!agence) {
-        showAlert('consultationAlert', 'error', '❌ Aucune agence sélectionnée');
-        return;
-      }
+// LOAD DATA FROM GOOGLE SHEETS
+// ============================================
+async function loadData() {
+  const agence = currentAgence;
+  
+  if (!agence) {
+    showAlert('consultationAlert', 'error', '❌ Aucune agence sélectionnée');
+    return;
+  }
 
-      try {
-        const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${agence}`);
-        const result = await response.json();
+  console.log('📥 Chargement des balances pour:', agence);
 
-        if (result.success) {
-          allData = result.data;
-          filteredData = [...allData];
-          
-          // Charger les commentaires
-          await loadComments();
-          
-          // Afficher les données
-          updateStats();
-          updateCharts();
-          renderTable();
-          
-          showAlert('consultationAlert', 'success', `✅ ${allData.length} clients chargés`);
-        } else {
-          showAlert('consultationAlert', 'error', `❌ ${result.message}`);
-        }
-
-      } catch (error) {
-        console.error('❌ Erreur chargement:', error);
-        showAlert('consultationAlert', 'error', '❌ Erreur de chargement des données');
-      }
+  try {
+    const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${encodeURIComponent(agence)}`);
+    
+    if (!response.ok) {
+      throw new Error('Erreur serveur: ' + response.status);
     }
+
+    const result = await response.json();
+    console.log('📥 Réponse serveur:', result);
+
+    if (result.success) {
+      allData = result.data || [];
+      filteredData = [...allData];
+      
+      console.log('✅ Balances chargées:', allData.length, 'clients');
+      
+      // Charger les commentaires
+      await loadComments();
+      
+      // Afficher les statistiques
+      updateStats();
+      
+      // Afficher les graphiques
+      updateCharts();
+      
+      // Afficher le tableau
+      renderTable();
+      
+      showAlert('consultationAlert', 'success', `✅ ${allData.length} clients chargés`);
+    } else {
+      showAlert('consultationAlert', 'error', `❌ ${result.message}`);
+    }
+
+  } catch (error) {
+    console.error('❌ Erreur chargement:', error);
+    showAlert('consultationAlert', 'error', '❌ Erreur de chargement des données: ' + error.message);
+  }
+}
 
     // ============================================
     // LOAD COMMENTS
@@ -1356,20 +1412,63 @@
     }
 
     // ============================================
-    // STATS
-    // ============================================
-    function updateStats() {
-      const nbClients = filteredData.length;
-      const soldeTotal = filteredData.reduce((sum, c) => sum + (parseFloat(c.Solde) || 0), 0);
-      const nbImpayes = filteredData.filter(c => (parseFloat(c.Solde) || 0) < 0).length;
-      const tauxImpayes = nbClients > 0 ? ((nbImpayes / nbClients) * 100).toFixed(1) : 0;
-      const moyenne = nbClients > 0 ? (soldeTotal / nbClients).toFixed(2) : 0;
+// STATS
+// ============================================
+function updateStats() {
+  console.log('📊 Calcul des statistiques pour', filteredData.length, 'clients');
 
-      document.getElementById('statNbClients').textContent = nbClients;
-      document.getElementById('statSoldeTotal').textContent = formatCurrency(soldeTotal);
-      document.getElementById('statTauxImpayes').textContent = `${tauxImpayes}%`;
-      document.getElementById('statMoyenne').textContent = formatCurrency(moyenne);
-    }
+  if (!filteredData || filteredData.length === 0) {
+    console.log('⚠️ Aucune donnée à afficher');
+    document.getElementById('statNbClients').textContent = '0';
+    document.getElementById('statSoldeTotal').textContent = '0 €';
+    document.getElementById('statTauxImpayes').textContent = '0%';
+    document.getElementById('statMoyenne').textContent = '0 €';
+    return;
+  }
+
+  // 1. Nombre de clients
+  const nbClients = filteredData.length;
+
+  // 2. Solde total (somme des soldes)
+  const soldeTotal = filteredData.reduce((sum, client) => {
+    const solde = parseFloat(client.Solde) || 0;
+    return sum + solde;
+  }, 0);
+
+  // 3. Nombre de clients impayés (solde NÉGATIF = impayé)
+  const nbImpayes = filteredData.filter(client => {
+    const solde = parseFloat(client.Solde) || 0;
+    return solde < 0; // Solde négatif = client doit de l'argent
+  }).length;
+
+  const tauxImpayes = nbClients > 0 ? (nbImpayes / nbClients * 100) : 0;
+
+  // 4. Moyenne par client
+  const moyenne = nbClients > 0 ? (soldeTotal / nbClients) : 0;
+
+  // Afficher les statistiques
+  document.getElementById('statNbClients').textContent = nbClients.toLocaleString('fr-FR');
+  
+  document.getElementById('statSoldeTotal').textContent = soldeTotal.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + ' €';
+  
+  document.getElementById('statTauxImpayes').textContent = tauxImpayes.toFixed(1) + '%';
+  
+  document.getElementById('statMoyenne').textContent = moyenne.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + ' €';
+
+  console.log('✅ Statistiques affichées:', {
+    clients: nbClients,
+    solde: soldeTotal,
+    impayes: tauxImpayes,
+    moyenne: moyenne
+  });
+}
+
 
     // ============================================
     // CHARTS
@@ -1754,3 +1853,4 @@
   </script>
 </body>
 </html>
+
