@@ -985,75 +985,133 @@
       }
 
       function parseExcel(file) {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-          try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            
-            // Prendre la première feuille
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-            
-            if (jsonData.length === 0) {
-              showAlert('importAlert', 'error', '❌ Fichier Excel vide');
-              return;
-            }
-
-            // Normaliser les données
-            excelData = jsonData.map(row => {
-              // Détecter les noms de colonnes (avec variations possibles)
-              const codeClient = row['Code_Client'] || row['Code Client'] || row['code_client'] || row['CODE_CLIENT'] || '';
-              const nomClient = row['Nom_Client'] || row['Nom Client'] || row['nom_client'] || row['NOM_CLIENT'] || '';
-              const solde = parseFloat(row['Solde'] || row['solde'] || row['SOLDE'] || 0);
-              const age = parseInt(row['Age'] || row['age'] || row['AGE'] || row['Âge'] || 0);
-
-              return {
-                codeClient: codeClient.toString().trim(),
-                nomClient: nomClient.toString().trim(),
-                solde: solde,
-                age: age,
-                agence: document.getElementById('agenceSelect').value
-              };
-            });
-
-            console.log('📊 Données Excel chargées:', excelData.length, 'lignes');
-            showPreview();
-            showAlert('importAlert', 'success', `✅ ${excelData.length} lignes chargées depuis Excel`);
-
-          } catch (error) {
-            console.error('❌ Erreur parsing Excel:', error);
-            showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel');
-          }
-        };
-
-        reader.readAsArrayBuffer(file);
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      // Prendre la première feuille
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      
+      if (jsonData.length === 0) {
+        showAlert('importAlert', 'error', '❌ Fichier Excel vide');
+        return;
       }
+
+      console.log('📊 Première ligne Excel:', jsonData[0]);
+
+      // Normaliser les données
+      excelData = jsonData.map(row => {
+        // Détecter les colonnes
+        const codeClient = (
+          row['Compte'] || 
+          row['Code_Client'] || 
+          row['Code Client'] || 
+          row['code_client'] || 
+          ''
+        ).toString().trim();
+
+        const nomClient = (
+          row['Intitulé'] || 
+          row['Nom_Client'] || 
+          row['Nom Client'] || 
+          row['nom_client'] || 
+          ''
+        ).toString().trim();
+
+        // Calculer le solde
+        const solde = parseFloat(row['Solde'] || row['solde'] || 0);
+
+        // Calculer l'âge moyen pondéré
+        const tranche120 = parseFloat(row['Echue depuis\nDe :120 à +'] || 0);
+        const tranche90 = parseFloat(row['Echue depuis\nDe :90 à 119'] || 0);
+        const tranche60 = parseFloat(row['Echue depuis\nDe :60 à 89'] || 0);
+        const tranche30 = parseFloat(row['Echue depuis\nDe :30 à 59'] || 0);
+        const tranche0 = parseFloat(row['Echue depuis\nDe :0 à 29'] || 0);
+
+        // Calcul de l'âge moyen (pondéré par les montants)
+        const totalEchu = tranche120 + tranche90 + tranche60 + tranche30 + tranche0;
+        let ageMoyen = 0;
+
+        if (totalEchu > 0) {
+          ageMoyen = Math.round(
+            (tranche120 * 135 + tranche90 * 105 + tranche60 * 75 + tranche30 * 45 + tranche0 * 15) / totalEchu
+          );
+        }
+
+        return {
+          codeClient: codeClient,
+          nomClient: nomClient,
+          solde: solde,
+          age: ageMoyen,
+          tranche120: tranche120,
+          tranche90: tranche90,
+          tranche60: tranche60,
+          tranche30: tranche30,
+          tranche0: tranche0,
+          paiement: parseFloat(row['Paiement'] || 0),
+          agence: document.getElementById('agenceSelect').value
+        };
+      }).filter(row => row.codeClient && row.codeClient !== ''); // Filtrer les lignes vides
+
+      console.log('📊 Données Excel chargées:', excelData.length, 'lignes');
+      console.log('📊 Exemple première ligne:', excelData[0]);
+      
+      showPreview();
+      showAlert('importAlert', 'success', `✅ ${excelData.length} lignes chargées depuis Excel`);
+
+    } catch (error) {
+      console.error('❌ Erreur parsing Excel:', error);
+      showAlert('importAlert', 'error', '❌ Erreur lors de la lecture du fichier Excel: ' + error.message);
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
 
       function showPreview() {
-        const preview = excelData.slice(0, 10);
-        const thead = document.querySelector('#previewTable thead');
-        const tbody = document.querySelector('#previewTable tbody');
+  const preview = excelData.slice(0, 10);
+  const thead = document.querySelector('#previewTable thead');
+  const tbody = document.querySelector('#previewTable tbody');
 
-        // Créer les en-têtes
-        thead.innerHTML = '<tr><th>Code Client</th><th>Nom Client</th><th>Solde</th><th>Âge (jours)</th></tr>';
+  // Créer les en-têtes
+  thead.innerHTML = `
+    <tr>
+      <th>Code Client</th>
+      <th>Nom Client</th>
+      <th>Solde</th>
+      <th>Âge moyen</th>
+      <th>120+ j</th>
+      <th>90-119 j</th>
+      <th>60-89 j</th>
+      <th>30-59 j</th>
+      <th>0-29 j</th>
+    </tr>
+  `;
 
-        // Créer les lignes
-        tbody.innerHTML = '';
-        preview.forEach(row => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${row.codeClient}</td>
-            <td>${row.nomClient}</td>
-            <td class="${row.solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(row.solde)}</td>
-            <td>${row.age}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+  // Créer les lignes
+  tbody.innerHTML = '';
+  preview.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.codeClient}</td>
+      <td>${row.nomClient}</td>
+      <td class="${row.solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(row.solde)}</td>
+      <td>${row.age} jours</td>
+      <td>${formatCurrency(row.tranche120)}</td>
+      <td>${formatCurrency(row.tranche90)}</td>
+      <td>${formatCurrency(row.tranche60)}</td>
+      <td>${formatCurrency(row.tranche30)}</td>
+      <td>${formatCurrency(row.tranche0)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 
-        document.getElementById('previewSection').style.display = 'block';
-      }
+  document.getElementById('previewSection').style.display = 'block';
+}
 
       // ============================================
       // IMPORT DATA TO GOOGLE SHEETS
@@ -1214,17 +1272,18 @@
       // STATS
       // ============================================
       function updateStats() {
-        const nbClients = filteredData.length;
-        const soldeTotal = filteredData.reduce((sum, c) => sum + (parseFloat(c.Commentaire) || 0), 0);
-        const nbImpayes = filteredData.filter(c => (parseFloat(c.Commentaire) || 0) < 0).length;
-        const tauxImpayes = nbClients > 0 ? ((nbImpayes / nbClients) * 100).toFixed(1) : 0;
-        const moyenne = nbClients > 0 ? (soldeTotal / nbClients).toFixed(2) : 0;
+  const nbClients = filteredData.length;
+  const soldeTotal = filteredData.reduce((sum, c) => sum + (parseFloat(c.Solde) || 0), 0);
+  const nbImpayes = filteredData.filter(c => (parseFloat(c.Solde) || 0) < 0).length;
+  const tauxImpayes = nbClients > 0 ? ((nbImpayes / nbClients) * 100).toFixed(1) : 0;
+  const moyenne = nbClients > 0 ? (soldeTotal / nbClients).toFixed(2) : 0;
 
-        document.getElementById('statNbClients').textContent = nbClients;
-        document.getElementById('statSoldeTotal').textContent = formatCurrency(soldeTotal);
-        document.getElementById('statTauxImpayes').textContent = `${tauxImpayes}%`;
-        document.getElementById('statMoyenne').textContent = formatCurrency(moyenne);
-      }
+  document.getElementById('statNbClients').textContent = nbClients;
+  document.getElementById('statSoldeTotal').textContent = formatCurrency(soldeTotal);
+  document.getElementById('statTauxImpayes').textContent = `${tauxImpayes}%`;
+  document.getElementById('statMoyenne').textContent = formatCurrency(moyenne);
+}
+
 
       // ============================================
       // CHARTS
@@ -1235,42 +1294,43 @@
       }
 
       function updateChartAge() {
-        const tranches = {
-          '0-30': 0,
-          '31-60': 0,
-          '61-90': 0,
-          '90+': 0
-        };
+  const tranches = {
+    '0-30': 0,
+    '31-60': 0,
+    '61-90': 0,
+    '90+': 0
+  };
 
-        filteredData.forEach(client => {
-          const age = parseInt(client.Heure) || 0;
-          if (age <= 30) tranches['0-30']++;
-          else if (age <= 60) tranches['31-60']++;
-          else if (age <= 90) tranches['61-90']++;
-          else tranches['90+']++;
-        });
+  filteredData.forEach(client => {
+    const age = parseInt(client.Age_Moyen) || 0;
+    if (age <= 30) tranches['0-30']++;
+    else if (age <= 60) tranches['31-60']++;
+    else if (age <= 90) tranches['61-90']++;
+    else tranches['90+']++;
+  });
 
-        const ctx = document.getElementById('chartAge').getContext('2d');
-        
-        if (chartAge) chartAge.destroy();
+  const ctx = document.getElementById('chartAge').getContext('2d');
+  
+  if (chartAge) chartAge.destroy();
 
-        chartAge = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: Object.keys(tranches),
-            datasets: [{
-              data: Object.values(tranches),
-              backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'bottom' }
-            }
-          }
-        });
+  chartAge = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(tranches),
+      datasets: [{
+        data: Object.values(tranches),
+        backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
       }
+    }
+  });
+}
+
 
       function updateChartTop10() {
         const sorted = [...filteredData]
@@ -1307,44 +1367,45 @@
       // TABLE
       // ============================================
       function renderTable() {
-        const tbody = document.getElementById('dataTableBody');
-        tbody.innerHTML = '';
+  const tbody = document.getElementById('dataTableBody');
+  tbody.innerHTML = '';
 
-        filteredData.forEach(client => {
-          const tr = document.createElement('tr');
-          const solde = parseFloat(client.Commentaire) || 0;
-          const codeClient = client.Code_Client;
-          const comments = commentsData[codeClient] || [];
+  filteredData.forEach(client => {
+    const tr = document.createElement('tr');
+    const solde = parseFloat(client.Solde) || 0;
+    const codeClient = client.Code_Client;
+    const comments = commentsData[codeClient] || [];
 
-          tr.innerHTML = `
-            <td>${client.Code_Client}</td>
-            <td>${client.Nom_Client}</td>
-            <td class="${solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(solde)}</td>
-            <td>${client.Heure || 0}</td>
-            <td>
-              <button class="add-comment-btn" onclick="openCommentModal('${codeClient}', '${client.Nom_Client}')">
-                💬 Ajouter (${comments.length})
-              </button>
-              <div class="comments-section" style="display: ${comments.length > 0 ? 'block' : 'none'}">
-                ${comments.map(c => `
-                  <div class="comment">
-                    <div class="comment-author">${c.author}</div>
-                    <div class="comment-date">${c.timestamp}</div>
-                    <div class="comment-text">${c.text}</div>
-                  </div>
-                `).join('')}
-              </div>
-            </td>
-            <td>
-              <button class="btn btn-danger" style="padding: 8px 15px; font-size: 12px;" 
-                      onclick="openDeleteModal('${codeClient}', '${client.Nom_Client}', ${solde})">
-                🗑️ Supprimer
-              </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
+    tr.innerHTML = `
+      <td>${client.Code_Client}</td>
+      <td>${client.Nom_Client}</td>
+      <td class="${solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(solde)}</td>
+      <td>${client.Age_Moyen || 0} jours</td>
+      <td>
+        <button class="add-comment-btn" onclick="openCommentModal('${codeClient}', '${client.Nom_Client}')">
+          💬 Ajouter (${comments.length})
+        </button>
+        <div class="comments-section" style="display: ${comments.length > 0 ? 'block' : 'none'}">
+          ${comments.map(c => `
+            <div class="comment">
+              <div class="comment-author">${c.author}</div>
+              <div class="comment-date">${c.timestamp}</div>
+              <div class="comment-text">${c.text}</div>
+            </div>
+          `).join('')}
+        </div>
+      </td>
+      <td>
+        <button class="btn btn-danger" style="padding: 8px 15px; font-size: 12px;" 
+                onclick="openDeleteModal('${codeClient}', '${client.Nom_Client}', ${solde})">
+          🗑️ Supprimer
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 
       // ============================================
       // SORT TABLE
@@ -1621,3 +1682,4 @@
     </script>
   </body>
   </html>
+
