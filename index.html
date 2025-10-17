@@ -1321,33 +1321,19 @@ async function loadData() {
     console.log('📥 Réponse serveur:', result);
 
     if (result.success) {
-      allData = result.data || [];
-      filteredData = [...allData];
-      
-      console.log('✅ Balances chargées:', allData.length, 'clients');
-      
-      // Charger les commentaires
-      await loadComments();
-      
-      // Afficher les statistiques
-      updateStats();
-      
-      // Afficher les graphiques
-      updateCharts();
-      
-      // Afficher le tableau
-      renderTable();
-      
-      showAlert('consultationAlert', 'success', `✅ ${allData.length} clients chargés`);
-    } else {
-      showAlert('consultationAlert', 'error', `❌ ${result.message}`);
-    }
+    const rawData = result.data || [];
+    console.log('✅ Balances brutes chargées:', rawData.length, 'clients');
 
-  } catch (error) {
-    console.error('❌ Erreur chargement:', error);
-    showAlert('consultationAlert', 'error', '❌ Erreur de chargement des données: ' + error.message);
-  }
+    if (rawData.length > 0) {
+        // C'est ici qu'on envoie les données aux nouvelles fonctions de la consultation
+        processConsultData(rawData); 
+        showAlert('consultationAlert', 'success', `✅ ${rawData.length} clients chargés pour l'agence ${agence}`);
+    } else {
+        showAlert('consultationAlert', 'info', `ℹ️ Aucune donnée trouvée pour l'agence ${agence}.`);
+        // Optionnel : tu peux aussi vider la vue ici si tu veux
+    }
 }
+
 // === Variables pour tri et graphique ===
 let consultData = [];
 let consultSummary = {};
@@ -1691,98 +1677,11 @@ function formatCurrency(val) {
     // ============================================
     // FILTERS
     // ============================================
-    function applyFilters() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const minSolde = parseFloat(document.getElementById('minSolde').value) || -Infinity;
-      const maxSolde = parseFloat(document.getElementById('maxSolde').value) || Infinity;
-      const ageFilter = document.getElementById('ageFilter').value;
-
-      filteredData = allData.filter(client => {
-        // Recherche
-        const matchSearch = !searchTerm || 
-          client.Code_Client.toLowerCase().includes(searchTerm) ||
-          client.Nom_Client.toLowerCase().includes(searchTerm);
-
-        // Solde
-        const solde = parseFloat(client.Solde) || 0;
-        const matchSolde = solde >= minSolde && solde <= maxSolde;
-
-        // Âge
-        let matchAge = true;
-        if (ageFilter) {
-          const age = parseInt(client.Age_Moyen) || 0;
-          if (ageFilter === '0-30') matchAge = age <= 30;
-          else if (ageFilter === '31-60') matchAge = age > 30 && age <= 60;
-          else if (ageFilter === '61-90') matchAge = age > 60 && age <= 90;
-          else if (ageFilter === '90+') matchAge = age > 90;
-        }
-
-        return matchSearch && matchSolde && matchAge;
-      });
-
-      updateStats();
-      updateCharts();
-      renderTable();
-    }
+    
 
     // ============================================
 // STATS
 // ============================================
-function updateStats() {
-  console.log('📊 Calcul des statistiques pour', filteredData.length, 'clients');
-
-  if (!filteredData || filteredData.length === 0) {
-    console.log('⚠️ Aucune donnée à afficher');
-    document.getElementById('statNbClients').textContent = '0';
-    document.getElementById('statSoldeTotal').textContent = '0 €';
-    document.getElementById('statTauxImpayes').textContent = '0%';
-    document.getElementById('statMoyenne').textContent = '0 €';
-    return;
-  }
-
-  // 1. Nombre de clients
-  const nbClients = filteredData.length;
-
-  // 2. Solde total (somme des soldes)
-  const soldeTotal = filteredData.reduce((sum, client) => {
-    const solde = parseFloat(client.Solde) || 0;
-    return sum + solde;
-  }, 0);
-
-  // 3. Nombre de clients impayés (solde NÉGATIF = impayé)
-  const nbImpayes = filteredData.filter(client => {
-    const solde = parseFloat(client.Solde) || 0;
-    return solde < 0; // Solde négatif = client doit de l'argent
-  }).length;
-
-  const tauxImpayes = nbClients > 0 ? (nbImpayes / nbClients * 100) : 0;
-
-  // 4. Moyenne par client
-  const moyenne = nbClients > 0 ? (soldeTotal / nbClients) : 0;
-
-  // Afficher les statistiques
-  document.getElementById('statNbClients').textContent = nbClients.toLocaleString('fr-FR');
-  
-  document.getElementById('statSoldeTotal').textContent = soldeTotal.toLocaleString('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }) + ' €';
-  
-  document.getElementById('statTauxImpayes').textContent = tauxImpayes.toFixed(1) + '%';
-  
-  document.getElementById('statMoyenne').textContent = moyenne.toLocaleString('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }) + ' €';
-
-  console.log('✅ Statistiques affichées:', {
-    clients: nbClients,
-    solde: soldeTotal,
-    impayes: tauxImpayes,
-    moyenne: moyenne
-  });
-}
-
 
     // ============================================
     // CHARTS
@@ -1792,153 +1691,17 @@ function updateStats() {
       updateChartTop10();
     }
 
-    function updateChartAge() {
-      const tranches = {
-        '0-30': 0,
-        '31-60': 0,
-        '61-90': 0,
-        '90+': 0
-      };
-
-      filteredData.forEach(client => {
-        const age = parseInt(client.Age_Moyen) || 0;
-        if (age <= 30) tranches['0-30']++;
-        else if (age <= 60) tranches['31-60']++;
-        else if (age <= 90) tranches['61-90']++;
-        else tranches['90+']++;
-      });
-
-      const ctx = document.getElementById('chartAge').getContext('2d');
-      
-      if (chartAge) chartAge.destroy();
-
-      chartAge = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(tranches),
-          datasets: [{
-            data: Object.values(tranches),
-            backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'bottom' }
-          }
-        }
-      });
-    }
-
-    function updateChartTop10() {
-      const sorted = [...filteredData]
-        .sort((a, b) => Math.abs(parseFloat(b.Solde) || 0) - Math.abs(parseFloat(a.Solde) || 0))
-        .slice(0, 10);
-
-      const ctx = document.getElementById('chartTop10').getContext('2d');
-      
-      if (chartTop10) chartTop10.destroy();
-
-      chartTop10 = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: sorted.map(c => c.Code_Client),
-          datasets: [{
-            label: 'Solde',
-            data: sorted.map(c => parseFloat(c.Solde) || 0),
-            backgroundColor: '#667eea'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    }
-
+   
     // ============================================
     // TABLE
     // ============================================
-    function renderTable() {
-      const tbody = document.getElementById('dataTableBody');
-      tbody.innerHTML = '';
-
-      filteredData.forEach(client => {
-        const tr = document.createElement('tr');
-        const solde = parseFloat(client.Solde) || 0;
-        const codeClient = client.Code_Client;
-        const comments = commentsData[codeClient] || [];
-
-        tr.innerHTML = `
-          <td>${client.Code_Client}</td>
-          <td>${client.Nom_Client}</td>
-          <td class="${solde >= 0 ? 'solde-positif' : 'solde-negatif'}">${formatCurrency(solde)}</td>
-          <td>${client.Age_Moyen || 0} jours</td>
-          <td>
-            <button class="add-comment-btn" onclick="openCommentModal('${codeClient}', '${client.Nom_Client}')">
-              💬 Ajouter (${comments.length})
-            </button>
-            <div class="comments-section" style="display: ${comments.length > 0 ? 'block' : 'none'}">
-              ${comments.map(c => `
-                <div class="comment">
-                  <div class="comment-author">${c.author}</div>
-                  <div class="comment-date">${c.timestamp}</div>
-                  <div class="comment-text">${c.text}</div>
-                </div>
-              `).join('')}
-            </div>
-          </td>
-          <td>
-            <button class="btn btn-danger" style="padding: 8px 15px; font-size: 12px;" 
-                    onclick="openDeleteModal('${codeClient}', '${client.Nom_Client}', ${solde})">
-              🗑️ Supprimer
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
+    
     // ============================================
     // SORT TABLE
     // ============================================
     let sortDirection = {};
 
-    function sortTable(column) {
-      const direction = sortDirection[column] === 'asc' ? 'desc' : 'asc';
-      sortDirection[column] = direction;
-
-      filteredData.sort((a, b) => {
-        let valA, valB;
-
-        if (column === 'codeClient') {
-          valA = a.Code_Client;
-          valB = b.Code_Client;
-        } else if (column === 'nomClient') {
-          valA = a.Nom_Client;
-          valB = b.Nom_Client;
-        } else if (column === 'solde') {
-          valA = parseFloat(a.Solde) || 0;
-          valB = parseFloat(b.Solde) || 0;
-        } else if (column === 'age') {
-          valA = parseInt(a.Age_Moyen) || 0;
-          valB = parseInt(b.Age_Moyen) || 0;
-        }
-
-        if (direction === 'asc') {
-          return valA > valB ? 1 : -1;
-        } else {
-          return valA < valB ? 1 : -1;
-        }
-      });
-
-      renderTable();
-    }
+    
 
     // ============================================
     // COMMENTS
@@ -2167,5 +1930,6 @@ function updateStats() {
   </script>
 </body>
 </html>
+
 
 
