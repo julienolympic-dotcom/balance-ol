@@ -723,6 +723,30 @@
       <canvas id="chartTop10"></canvas>
     </div>
   </div>
+        
+<!-- TAB: CONFIG -->
+<div id="tab-config" class="tab-content">
+    <div class="import-section" style="border: 1px solid #ececec;">
+        <h2 style="margin-bottom: 20px;">⚙️ Configuration de l'API</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <label for="workerUrl" style="display: block; margin-bottom: 10px; font-weight: 600;">
+                URL du Worker Cloudflare :
+            </label>
+            <input 
+                type="text" 
+                id="workerUrl" 
+                placeholder="https://xxxxx.xxxx.workers.dev" 
+                style="padding: 10px; border-radius: 8px; border: 2px solid #e9ecef; width: 100%; max-width: 500px;"
+            >
+            <p style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                💡 C'est l'adresse qui connecte cette interface à Google Sheets.
+            </p>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveConfig()">💾 Enregistrer la configuration</button>
+    </div>
+</div>
 
   <!-- Détail par Client -->
   <div class="import-section" style="margin-bottom: 30px; border: 1px solid #ececec;">
@@ -2143,4 +2167,5 @@ function updateStats() {
   </script>
 </body>
 </html>
+
 
