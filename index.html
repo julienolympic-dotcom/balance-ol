@@ -558,32 +558,41 @@ async function importerFichier() {
 
     console.log('📤 Envoi de', data.clients.length, 'clients pour l\'agence', agence);
 
+    // ✅ CORRECTION ICI : Structure attendue par le Worker
     const response = await fetch(API_CONFIG.workerUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        action: 'import',
-        data: data.clients,
-        agence: agence,
-        user: currentUser.email,
-        metadata: {
-          userName: currentUser.nom,
-          dateImport: new Date().toISOString()
-        }
+        agence: agence,                    // ✅ Pas de "action"
+        clients: data.clients,             // ✅ "clients" au lieu de "data"
+        userEmail: currentUser.email,      // ✅ "userEmail" au lieu de "user"
+        userName: currentUser.nom          // ✅ "userName"
       })
     });
+
+    console.log('📥 Status HTTP:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
 
     const result = await response.json();
     console.log('✅ Réponse import:', result);
 
     if (result.success) {
       showMessage('importMessage', 
-        `✅ Import réussi ! ${result.nbClients} clients importés (${result.version || 'v1'})`, 
+        `✅ Import réussi ! ${result.nbClients} clients importés`, 
         'success');
       fileInput.value = '';
       showSuccess(`Import terminé : ${result.nbClients} clients`);
+      
+      // Optionnel : Passer automatiquement à l'onglet consultation
+      setTimeout(() => {
+        switchTab('consultation');
+      }, 2000);
     } else {
       showMessage('importMessage', '❌ ' + (result.message || 'Erreur inconnue'), 'error');
     }
@@ -1083,4 +1092,5 @@ console.log('📡 Configuration API:', API_CONFIG);
 </body>
 </html>
           
+
 
