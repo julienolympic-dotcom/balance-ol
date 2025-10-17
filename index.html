@@ -990,59 +990,57 @@
   reader.onload = function(e) {
     try {
       const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
       
       // Prendre la première feuille
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
       
-      if (jsonData.length === 0) {
-        showAlert('importAlert', 'error', '❌ Fichier Excel vide');
+      // ⚠️ IMPORTANT : Utiliser {header: 1} pour avoir un tableau de tableaux
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false });
+      
+      if (jsonData.length < 3) {
+        showAlert('importAlert', 'error', '❌ Fichier Excel vide ou invalide');
         return;
       }
 
-      console.log('📊 Première ligne Excel:', jsonData[0]);
+      console.log('📊 En-têtes Excel:', jsonData[0]);
+      console.log('📊 Première ligne de données:', jsonData[2]);
 
-      // Normaliser les données
-      excelData = jsonData.map(row => {
-        // Détecter les colonnes
-        const codeClient = (
-          row['Compte'] || 
-          row['Code_Client'] || 
-          row['Code Client'] || 
-          row['code_client'] || 
-          ''
-        ).toString().trim();
-
-        const nomClient = (
-          row['Intitulé'] || 
-          row['Nom_Client'] || 
-          row['Nom Client'] || 
-          row['nom_client'] || 
-          ''
-        ).toString().trim();
-
-        // Calculer le solde
-        const solde = parseFloat(row['Solde'] || row['solde'] || 0);
+      // Normaliser les données (en commençant à la ligne 2, car ligne 0 = en-têtes)
+      excelData = [];
+      
+      for (let i = 2; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        
+        // Vérifier que la ligne n'est pas vide
+        if (!row || !row[0] || row.length < 9) continue;
+        
+        const codeClient = String(row[0]).trim();
+        const nomClient = String(row[1]).trim();
+        
+        // Ignorer les lignes vides ou invalides
+        if (!codeClient || codeClient === '') continue;
+        
+        // Extraire les tranches d'âge (colonnes 2 à 6)
+        const tranche120 = parseFloat(row[2]) || 0;
+        const tranche90 = parseFloat(row[3]) || 0;
+        const tranche60 = parseFloat(row[4]) || 0;
+        const tranche30 = parseFloat(row[5]) || 0;
+        const tranche0 = parseFloat(row[6]) || 0;
+        const paiement = parseFloat(row[7]) || 0;
+        const solde = parseFloat(row[8]) || 0;
 
         // Calculer l'âge moyen pondéré
-        const tranche120 = parseFloat(row['Echue depuis\nDe :120 à +'] || 0);
-        const tranche90 = parseFloat(row['Echue depuis\nDe :90 à 119'] || 0);
-        const tranche60 = parseFloat(row['Echue depuis\nDe :60 à 89'] || 0);
-        const tranche30 = parseFloat(row['Echue depuis\nDe :30 à 59'] || 0);
-        const tranche0 = parseFloat(row['Echue depuis\nDe :0 à 29'] || 0);
-
-        // Calcul de l'âge moyen (pondéré par les montants)
-        const totalEchu = tranche120 + tranche90 + tranche60 + tranche30 + tranche0;
+        const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
         let ageMoyen = 0;
 
         if (totalEchu > 0) {
           ageMoyen = Math.round(
-            (tranche120 * 135 + tranche90 * 105 + tranche60 * 75 + tranche30 * 45 + tranche0 * 15) / totalEchu
+            (Math.abs(tranche120) * 135 + Math.abs(tranche90) * 105 + Math.abs(tranche60) * 75 + Math.abs(tranche30) * 45 + Math.abs(tranche0) * 15) / totalEchu
           );
         }
 
-        return {
+        excelData.push({
           codeClient: codeClient,
           nomClient: nomClient,
           solde: solde,
@@ -1052,12 +1050,18 @@
           tranche60: tranche60,
           tranche30: tranche30,
           tranche0: tranche0,
-          paiement: parseFloat(row['Paiement'] || 0),
+          paiement: paiement,
           agence: document.getElementById('agenceSelect').value
-        };
-      }).filter(row => row.codeClient && row.codeClient !== ''); // Filtrer les lignes vides
+        });
+      }
 
       console.log('📊 Données Excel chargées:', excelData.length, 'lignes');
+      
+      if (excelData.length === 0) {
+        showAlert('importAlert', 'error', '❌ Aucune donnée valide trouvée dans le fichier');
+        return;
+      }
+      
       console.log('📊 Exemple première ligne:', excelData[0]);
       
       showPreview();
@@ -1071,6 +1075,23 @@
 
   reader.readAsArrayBuffer(file);
 }
+
+    function showAlert(elementId, type, message) {
+  const alertDiv = document.getElementById(elementId);
+  if (!alertDiv) {
+    console.warn('Element alert introuvable:', elementId);
+    return;
+  }
+  
+  alertDiv.className = `alert alert-${type}`;
+  alertDiv.textContent = message;
+  alertDiv.style.display = 'block';
+  
+  setTimeout(() => {
+    alertDiv.style.display = 'none';
+  }, 5000);
+}
+
 
       function showPreview() {
   const preview = excelData.slice(0, 10);
@@ -1682,4 +1703,5 @@
     </script>
   </body>
   </html>
+
 
