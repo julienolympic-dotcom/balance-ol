@@ -1300,6 +1300,9 @@ function handleAgenceChange() {
     // ============================================
 // LOAD DATA FROM GOOGLE SHEETS
 // ============================================
+// ============================================
+// LOAD DATA FROM GOOGLE SHEETS
+// ============================================
 async function loadData() {
   const agence = currentAgence;
   
@@ -1321,17 +1324,25 @@ async function loadData() {
     console.log('📥 Réponse serveur:', result);
 
     if (result.success) {
-    const rawData = result.data || [];
-    console.log('✅ Balances brutes chargées:', rawData.length, 'clients');
+        const rawData = result.data || [];
+        console.log('✅ Balances brutes chargées:', rawData.length, 'clients');
 
-    if (rawData.length > 0) {
-        // C'est ici qu'on envoie les données aux nouvelles fonctions de la consultation
-        processConsultData(rawData); 
-        showAlert('consultationAlert', 'success', `✅ ${rawData.length} clients chargés pour l'agence ${agence}`);
+        if (rawData.length > 0) {
+            // C'est ici qu'on envoie les données aux nouvelles fonctions de la consultation
+            processConsultData(rawData); 
+            showAlert('consultationAlert', 'success', `✅ ${rawData.length} clients chargés pour l'agence ${agence}`);
+        } else {
+            showAlert('consultationAlert', 'info', `ℹ️ Aucune donnée trouvée pour l'agence ${agence}.`);
+            // Optionnel : tu peux aussi vider la vue ici si tu veux
+        }
     } else {
-        showAlert('consultationAlert', 'info', `ℹ️ Aucune donnée trouvée pour l'agence ${agence}.`);
-        // Optionnel : tu peux aussi vider la vue ici si tu veux
+        showAlert('consultationAlert', 'error', `❌ ${result.message}`);
     }
+
+  } catch (error) {
+    console.error('❌ Erreur chargement:', error);
+    showAlert('consultationAlert', 'error', '❌ Erreur de chargement des données: ' + error.message);
+  }
 }
 
 // === Variables pour tri et graphique ===
@@ -1930,6 +1941,7 @@ function formatCurrency(val) {
   </script>
 </body>
 </html>
+
 
 
 
