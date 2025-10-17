@@ -1960,78 +1960,151 @@ function analyzeBalanceConsultation() {
   generateRecommendationsConsultation(clientsData, soldesDebiteurs);
 }
 
-    // ==========================================
-    // GRAPHIQUES
-    // ==========================================
-    function generateChartsConsultation(clientsData) {
-      // Graphique par ancienneté
-      const ageData = {
-        labels: ['< 30 jours', '30-60 jours', '60-90 jours', '> 90 jours'],
-        datasets: [{
-          label: 'Montant (€)',
-          data: [
-            clientsData.reduce((sum, c) => sum + c.montant30, 0),
-            clientsData.reduce((sum, c) => sum + c.montant60, 0),
-            clientsData.reduce((sum, c) => sum + c.montant90, 0),
-            clientsData.reduce((sum, c) => sum + c.montant90plus, 0)
-          ],
-          backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#7f1d1d']
-        }]
-      };
+    // ============================================
+// 📊 GÉNÉRATION DES GRAPHIQUES (CONSULTATION)
+// ============================================
+function generateChartsConsultation(clientsData) {
+  // Détruire les anciens graphiques s'ils existent
+  if (window.riskChartConsultation) {
+    window.riskChartConsultation.destroy();
+  }
+  if (window.ageChartConsultation) {
+    window.ageChartConsultation.destroy();
+  }
+  if (window.topClientsChartConsultation) {
+    window.topClientsChartConsultation.destroy();
+  }
 
-      const ageCtx = document.getElementById('ageChartConsultation');
-      if (ageChartInstanceConsultation) {
-        ageChartInstanceConsultation.destroy();
-      }
-      ageChartInstanceConsultation = new Chart(ageCtx, {
-        type: 'bar',
-        data: ageData,
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false }
-          }
+  // ============================================
+  // 📊 GRAPHIQUE 1 : RÉPARTITION PAR NIVEAU DE RISQUE
+  // ============================================
+  const riskCounts = {
+    critical: clientsData.filter(c => c.risque === 'critical').length,
+    high: clientsData.filter(c => c.risque === 'high').length,
+    medium: clientsData.filter(c => c.risque === 'medium').length,
+    low: clientsData.filter(c => c.risque === 'low').length
+  };
+
+  const ctxRisk = document.getElementById('riskChartConsultation').getContext('2d');
+  window.riskChartConsultation = new Chart(ctxRisk, {
+    type: 'bar',  // ✅ CHANGÉ de 'horizontalBar' à 'bar'
+    data: {
+      labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
+      datasets: [{
+        label: 'Nombre de clients',
+        data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
+        backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
+      }]
+    },
+    options: {
+      indexAxis: 'y',  // ✅ AJOUTÉ pour rendre horizontal
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'Répartition par niveau de risque'
         }
-      });
-
-      // Top 10 risques
-      const topRisks = clientsData
-        .filter(c => c.solde > 0)
-        .sort((a, b) => b.solde - a.solde)
-        .slice(0, 10);
-
-      const riskData = {
-        labels: topRisks.map(c => c.nom.substring(0, 20)),
-        datasets: [{
-          label: 'Solde (€)',
-          data: topRisks.map(c => c.solde),
-          backgroundColor: topRisks.map(c => {
-            if (c.risque === 'critical') return '#7f1d1d';
-            if (c.risque === 'high') return '#ef4444';
-            if (c.risque === 'medium') return '#f59e0b';
-            return '#10b981';
-          })
-        }]
-      };
-
-      const riskCtx = document.getElementById('riskChartConsultation');
-      if (riskChartInstanceConsultation) {
-        riskChartInstanceConsultation.destroy();
-      }
-      riskChartInstanceConsultation = new Chart(riskCtx, {
-        type: 'horizontalBar',
-        data: riskData,
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            x: { beginAtZero: true }
-          }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
         }
-      });
+      }
     }
+  });
+
+  // ============================================
+  // 📊 GRAPHIQUE 2 : RÉPARTITION PAR ÂGE MOYEN
+  // ============================================
+  const ageBuckets = {
+    '0-30j': clientsData.filter(c => c.ageMoyen <= 30).length,
+    '31-60j': clientsData.filter(c => c.ageMoyen > 30 && c.ageMoyen <= 60).length,
+    '61-90j': clientsData.filter(c => c.ageMoyen > 60 && c.ageMoyen <= 90).length,
+    '90+j': clientsData.filter(c => c.ageMoyen > 90).length
+  };
+
+  const ctxAge = document.getElementById('ageChartConsultation').getContext('2d');
+  window.ageChartConsultation = new Chart(ctxAge, {
+    type: 'doughnut',
+    data: {
+      labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
+      datasets: [{
+        data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
+        backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: {
+          display: true,
+          text: 'Répartition par âge moyen de créance'
+        }
+      }
+    }
+  });
+
+  // ============================================
+  // 📊 GRAPHIQUE 3 : TOP 10 CLIENTS PAR SOLDE
+  // ============================================
+  const topClients = clientsData
+    .filter(c => c.solde > 0)
+    .sort((a, b) => b.solde - a.solde)
+    .slice(0, 10);
+
+  const ctxTop = document.getElementById('topClientsChartConsultation').getContext('2d');
+  window.topClientsChartConsultation = new Chart(ctxTop, {
+    type: 'bar',  // ✅ CHANGÉ de 'horizontalBar' à 'bar'
+    data: {
+      labels: topClients.map(c => c.nom.substring(0, 20)),
+      datasets: [{
+        label: 'Solde (€)',
+        data: topClients.map(c => c.solde),
+        backgroundColor: topClients.map(c => {
+          if (c.risque === 'critical') return '#dc3545';
+          if (c.risque === 'high') return '#fd7e14';
+          if (c.risque === 'medium') return '#ffc107';
+          return '#28a745';
+        })
+      }]
+    },
+    options: {
+      indexAxis: 'y',  // ✅ AJOUTÉ pour rendre horizontal
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'Top 10 clients par solde'
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return formatCurrency(context.parsed.x);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return formatCurrency(value);
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
 
     // ==========================================
     // TABLEAU DÉTAILLÉ
@@ -2680,6 +2753,7 @@ function analyzeBalanceConsultation() {
 
 </body>
 </html>
+
 
 
 
