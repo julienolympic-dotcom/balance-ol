@@ -1270,6 +1270,7 @@
     let currentSortDirectionConsultation = 'asc';
     let ageChartInstanceConsultation = null;
     let riskChartInstanceConsultation = null;
+    let topClientsChartInstanceConsultation = null;
     let currentClientForCommentConsultation = null;
     let currentClientForDeleteConsultation = null;
 
@@ -1321,97 +1322,85 @@
     }
 
     async function handleLogin(event) {
-  event.preventDefault();
-  
-  const email = document.getElementById('emailInput').value.trim().toLowerCase();
-  const errorDiv = document.getElementById('errorMessage');
-  
-  // Vérification du domaine
-  if (!email.endsWith('@olympiclocation.com')) {
-    errorDiv.textContent = '❌ Veuillez utiliser votre email @olympiclocation.com';
-    errorDiv.style.display = 'block';
-    return;
-  }
+      event.preventDefault();
+      
+      const email = document.getElementById('emailInput').value.trim().toLowerCase();
+      const errorDiv = document.getElementById('errorMessage');
+      
+      if (!email.endsWith('@olympiclocation.com')) {
+        errorDiv.textContent = '❌ Veuillez utiliser votre email @olympiclocation.com';
+        errorDiv.style.display = 'block';
+        return;
+      }
 
-  try {
-    const response = await fetch(`${WORKER_URL}/users`);
-    
-    if (!response.ok) {
-      throw new Error('Erreur serveur');
-    }
-    
-    const data = await response.json();
-    
-    // Vérifier si data est un tableau ou un objet
-    let users = [];
-    if (Array.isArray(data)) {
-      users = data;
-    } else if (data.users && Array.isArray(data.users)) {
-      users = data.users;
-    } else {
-      // Si ce n'est pas un tableau, créer un utilisateur par défaut
-      console.warn('Format de réponse inattendu, création d\'un utilisateur par défaut');
-      users = [
-        {
+      try {
+        const response = await fetch(`${WORKER_URL}/users`);
+        
+        if (!response.ok) {
+          throw new Error('Erreur serveur');
+        }
+        
+        const data = await response.json();
+        
+        let users = [];
+        if (Array.isArray(data)) {
+          users = data;
+        } else if (data.users && Array.isArray(data.users)) {
+          users = data.users;
+        } else {
+          users = [
+            {
+              email: email,
+              name: email.split('@')[0],
+              role: 'Utilisateur',
+              agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
+            }
+          ];
+        }
+        
+        const user = users.find(u => u.email.toLowerCase() === email);
+        
+        if (user) {
+          currentUser = user;
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          showMainApp();
+        } else {
+          currentUser = {
+            email: email,
+            name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
+            role: 'Utilisateur',
+            agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
+          };
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          showMainApp();
+        }
+        
+      } catch (error) {
+        console.error('Erreur de connexion:', error);
+        
+        currentUser = {
           email: email,
-          name: email.split('@')[0],
+          name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
           role: 'Utilisateur',
           agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
-        }
-      ];
+        };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        showMainApp();
+      }
     }
-    
-    const user = users.find(u => u.email.toLowerCase() === email);
-    
-    if (user) {
-      currentUser = user;
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      showMainApp();
-    } else {
-      // Si l'utilisateur n'est pas trouvé, créer un utilisateur par défaut
-      console.warn('Utilisateur non trouvé, création d\'un compte par défaut');
-      currentUser = {
-        email: email,
-        name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-        role: 'Utilisateur',
-        agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
-      };
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      showMainApp();
-    }
-    
-  } catch (error) {
-    console.error('Erreur de connexion:', error);
-    
-    // En cas d'erreur, permettre quand même la connexion avec un compte par défaut
-    console.warn('Connexion en mode dégradé');
-    currentUser = {
-      email: email,
-      name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-      role: 'Utilisateur',
-      agences: ['Gèze', 'Plombières', '5 Av', 'Gare St Charles', 'La Valentine', 'Aubagne', 'La Ciotat', 'Toulon', 'La Garde']
-    };
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    showMainApp();
-  }
-}
-
 
     function showMainApp() {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('mainApp').style.display = 'block';
       
-      // Afficher les infos utilisateur
       document.getElementById('userName').textContent = currentUser.name;
       document.getElementById('userEmail').textContent = currentUser.email;
       document.getElementById('userRole').textContent = `Rôle: ${currentUser.role}`;
       document.getElementById('userAgences').textContent = currentUser.agences.join(', ');
       
-      // Initiales pour l'avatar
       const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
       document.getElementById('userAvatar').textContent = initials;
       
-      // Charger les agences disponibles
       loadAgencesForConsultation();
     }
 
@@ -1426,11 +1415,9 @@
     // GESTION DES ONGLETS
     // ==========================================
     function switchTab(tabName) {
-      // Désactiver tous les tabs
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-      // Activer le tab sélectionné
       event.target.classList.add('active');
       
       const tabContent = document.getElementById(`tab-${tabName}`);
@@ -1440,7 +1427,6 @@
         console.error(`❌ Onglet introuvable: tab-${tabName}`);
       }
 
-      // Charger les données si nécessaire
       if (tabName === 'consultation' && currentAgence) {
         handleAgenceChangeConsultation();
       }
@@ -1463,22 +1449,17 @@
     function readExcelFile(file) {
       const reader = new FileReader();
       
-            reader.onload = function(e) {
+      reader.onload = function(e) {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           
-          // Lire la première feuille
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
           
-          // Stocker les données brutes
           rawExcelData = jsonData;
           
-          // Détecter l'agence depuis le fichier
           detectAgenceFromFile(jsonData);
-          
-          // Afficher l'aperçu
           displayPreview(jsonData);
           
         } catch (error) {
@@ -1491,67 +1472,62 @@
     }
 
     function detectAgenceFromFile(data) {
-  // Chercher le nom de l'agence dans les premières lignes
-  let detectedAgence = null;
-  
-  for (let i = 0; i < Math.min(10, data.length); i++) {
-    const row = data[i];
-    const rowText = row.join(' ').toLowerCase();
-    
-    // Détection des agences
-    if (rowText.includes('geze') || rowText.includes('gèze')) {
-      detectedAgence = 'Gèze';
-      break;
-    } else if (rowText.includes('plombiere') || rowText.includes('plombière')) {
-      detectedAgence = 'Plombières';
-      break;
-    } else if (rowText.includes('5 av') || rowText.includes('5av') || rowText.includes('cinq av')) {
-      detectedAgence = '5 Av';
-      break;
-    } else if (rowText.includes('gare') && rowText.includes('charles')) {
-      detectedAgence = 'Gare St Charles';
-      break;
-    } else if (rowText.includes('valentine')) {
-      detectedAgence = 'La Valentine';
-      break;
-    } else if (rowText.includes('aubagne')) {
-      detectedAgence = 'Aubagne';
-      break;
-    } else if (rowText.includes('ciotat')) {
-      detectedAgence = 'La Ciotat';
-      break;
-    } else if (rowText.includes('toulon')) {
-      detectedAgence = 'Toulon';
-      break;
-    } else if (rowText.includes('garde') && !rowText.includes('garderie')) {
-      detectedAgence = 'La Garde';
-      break;
+      let detectedAgence = null;
+      
+      for (let i = 0; i < Math.min(10, data.length); i++) {
+        const row = data[i];
+        const rowText = row.join(' ').toLowerCase();
+        
+        if (rowText.includes('geze') || rowText.includes('gèze')) {
+          detectedAgence = 'Gèze';
+          break;
+        } else if (rowText.includes('plombiere') || rowText.includes('plombière')) {
+          detectedAgence = 'Plombières';
+          break;
+        } else if (rowText.includes('5 av') || rowText.includes('5av') || rowText.includes('cinq av')) {
+          detectedAgence = '5 Av';
+          break;
+        } else if (rowText.includes('gare') && rowText.includes('charles')) {
+          detectedAgence = 'Gare St Charles';
+          break;
+        } else if (rowText.includes('valentine')) {
+          detectedAgence = 'La Valentine';
+          break;
+        } else if (rowText.includes('aubagne')) {
+          detectedAgence = 'Aubagne';
+          break;
+        } else if (rowText.includes('ciotat')) {
+          detectedAgence = 'La Ciotat';
+          break;
+        } else if (rowText.includes('toulon')) {
+          detectedAgence = 'Toulon';
+          break;
+        } else if (rowText.includes('garde') && !rowText.includes('garderie')) {
+          detectedAgence = 'La Garde';
+          break;
+        }
+      }
+      
+      const agenceSelect = document.getElementById('agenceSelect');
+      
+      if (detectedAgence) {
+        if (currentUser.agences.includes(detectedAgence)) {
+          agenceSelect.innerHTML = `<option value="${detectedAgence}">${detectedAgence}</option>`;
+          agenceSelect.value = detectedAgence;
+          currentAgence = detectedAgence;
+          showAlert('importAlert', 'success', `✅ Agence détectée: ${detectedAgence}`);
+        } else {
+          showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence ${detectedAgence}`);
+        }
+      } else {
+        agenceSelect.innerHTML = '<option value="">-- Sélectionner une agence --</option>';
+        currentUser.agences.forEach(agence => {
+          agenceSelect.innerHTML += `<option value="${agence}">${agence}</option>`;
+        });
+        agenceSelect.disabled = false;
+        showAlert('importAlert', 'info', 'ℹ️ Agence non détectée automatiquement. Veuillez sélectionner manuellement.');
+      }
     }
-  }
-  
-  const agenceSelect = document.getElementById('agenceSelect');
-  
-  if (detectedAgence) {
-    // Vérifier si l'utilisateur a accès à cette agence
-    if (currentUser.agences.includes(detectedAgence)) {
-      agenceSelect.innerHTML = `<option value="${detectedAgence}">${detectedAgence}</option>`;
-      agenceSelect.value = detectedAgence;
-      currentAgence = detectedAgence;
-      showAlert('importAlert', 'success', `✅ Agence détectée: ${detectedAgence}`);
-    } else {
-      showAlert('importAlert', 'error', `❌ Vous n'avez pas accès à l'agence ${detectedAgence}`);
-    }
-  } else {
-    // Proposer les agences de l'utilisateur
-    agenceSelect.innerHTML = '<option value="">-- Sélectionner une agence --</option>';
-    currentUser.agences.forEach(agence => {
-      agenceSelect.innerHTML += `<option value="${agence}">${agence}</option>`;
-    });
-    agenceSelect.disabled = false;
-    showAlert('importAlert', 'info', 'ℹ️ Agence non détectée automatiquement. Veuillez sélectionner manuellement.');
-  }
-}
-
 
     function displayPreview(data) {
       const previewSection = document.getElementById('previewSection');
@@ -1559,7 +1535,6 @@
       const thead = table.querySelector('thead');
       const tbody = table.querySelector('tbody');
       
-      // Vider le tableau
       thead.innerHTML = '';
       tbody.innerHTML = '';
       
@@ -1568,7 +1543,6 @@
         return;
       }
       
-      // En-têtes (première ligne)
       const headerRow = document.createElement('tr');
       data[0].forEach(header => {
         const th = document.createElement('th');
@@ -1577,7 +1551,6 @@
       });
       thead.appendChild(headerRow);
       
-      // Données (10 premières lignes)
       const previewRows = data.slice(1, 11);
       previewRows.forEach(row => {
         const tr = document.createElement('tr');
@@ -1603,11 +1576,9 @@
         return;
       }
       
-      // Afficher le loading
       document.getElementById('importLoading').classList.add('active');
       
       try {
-        // Transformer les données pour l'API
         const headers = rawExcelData[0];
         const rows = rawExcelData.slice(1);
         
@@ -1619,7 +1590,6 @@
           return obj;
         });
         
-        // Envoyer au Worker
         const response = await fetch(`${WORKER_URL}/balances`, {
           method: 'POST',
           headers: {
@@ -1636,7 +1606,6 @@
         if (response.ok) {
           showAlert('importAlert', 'success', `✅ Import réussi ! ${formattedData.length} lignes importées pour ${currentAgence}`);
           
-          // Enregistrer dans l'historique
           await logAction('import', null, null, null, currentUser.name, `Import de ${formattedData.length} lignes`);
           
         } else {
@@ -1664,102 +1633,97 @@
     }
 
     // ============================================
-// 📊 GESTION DU CHANGEMENT D'AGENCE (CONSULTATION)
-// ============================================
-async function handleAgenceChangeConsultation() {
-  const agence = document.getElementById('agenceConsultation').value;
-  
-  if (!agence) {
-    document.getElementById('balanceAgeeContainer').style.display = 'none';
-    return;
-  }
-  
-  currentAgence = agence;
-  
-  try {
-    console.log('📥 Chargement des balances pour:', agence);
-    
-    // ✅ CHARGER LES DONNÉES
-    const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${encodeURIComponent(agence)}`);
-    
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
+    // 📊 GESTION DU CHANGEMENT D'AGENCE (CONSULTATION)
+    // ============================================
+    async function handleAgenceChangeConsultation() {
+      const agence = document.getElementById('agenceConsultation').value;
+      
+      console.log('🔄 handleAgenceChangeConsultation appelé pour:', agence);
+      
+      if (!agence) {
+        document.getElementById('balanceAgeeContainer').style.display = 'none';
+        return;
+      }
+      
+      currentAgence = agence;
+      
+      try {
+        console.log('📥 Chargement des balances pour:', agence);
+        
+        const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${encodeURIComponent(agence)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        
+        const text = await response.text();
+        console.log('📥 Réponse brute (100 premiers caractères):', text.substring(0, 100));
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('❌ Erreur parsing JSON:', e);
+          throw new Error('Format de réponse invalide');
+        }
+        
+        console.log('📥 Type de data:', typeof data);
+        console.log('📥 data.success:', data.success);
+        console.log('📥 Array.isArray(data):', Array.isArray(data));
+        
+        let balances = null;
+        
+        if (data.success && Array.isArray(data.data)) {
+          balances = data.data;
+          console.log('✅ Format détecté: { success, data }');
+        }
+        else if (Array.isArray(data)) {
+          balances = data;
+          console.log('✅ Format détecté: tableau direct');
+        }
+        else if (data.balances && Array.isArray(data.balances)) {
+          balances = data.balances;
+          console.log('✅ Format détecté: { balances }');
+        }
+        else if (data.clients && Array.isArray(data.clients)) {
+          balances = data.clients;
+          console.log('✅ Format détecté: { clients }');
+        }
+        else {
+          console.error('❌ Format non reconnu:', data);
+          throw new Error('Format de données non reconnu');
+        }
+        
+        if (!balances || balances.length === 0) {
+          throw new Error('Aucune donnée disponible pour cette agence');
+        }
+        
+        console.log('✅ Nombre de lignes chargées:', balances.length);
+        console.log('✅ Première ligne:', balances[0]);
+        console.log('✅ Colonnes:', Object.keys(balances[0]));
+        
+        balanceDataConsultation = balances;
+        
+        await loadCommentsConsultation(agence);
+        
+        document.getElementById('balanceAgeeContainer').style.display = 'block';
+        
+        // ✅ APPELER UNE SEULE FOIS
+        analyzeBalanceConsultation();
+        
+      } catch (error) {
+        console.error('❌ Erreur chargement:', error);
+        showAlert('consultationAlert', 'error', '❌ ' + error.message);
+        document.getElementById('balanceAgeeContainer').style.display = 'none';
+      }
     }
-    
-    const text = await response.text();
-    console.log('📥 Réponse brute (100 premiers caractères):', text.substring(0, 100));
-    
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error('❌ Erreur parsing JSON:', e);
-      console.error('Contenu reçu:', text);
-      throw new Error('Format de réponse invalide');
-    }
-    
-    console.log('📥 Type de data:', typeof data);
-    console.log('📥 data.success:', data.success);
-    console.log('📥 Array.isArray(data):', Array.isArray(data));
-    
-    // ✅ EXTRACTION DES DONNÉES (LOGIQUE DE L'ANCIEN CODE)
-    let balances = null;
-    
-    // Cas 1: Réponse avec { success: true, data: [...] }
-    if (data.success && Array.isArray(data.data)) {
-      balances = data.data;
-      console.log('✅ Format détecté: { success, data }');
-    }
-    // Cas 2: Réponse directement un tableau
-    else if (Array.isArray(data)) {
-      balances = data;
-      console.log('✅ Format détecté: tableau direct');
-    }
-    // Cas 3: Réponse avec une propriété contenant les données
-    else if (data.balances && Array.isArray(data.balances)) {
-      balances = data.balances;
-      console.log('✅ Format détecté: { balances }');
-    }
-    else if (data.clients && Array.isArray(data.clients)) {
-      balances = data.clients;
-      console.log('✅ Format détecté: { clients }');
-    }
-    else {
-      console.error('❌ Format non reconnu:', data);
-      throw new Error('Format de données non reconnu');
-    }
-    
-    if (!balances || balances.length === 0) {
-      throw new Error('Aucune donnée disponible pour cette agence');
-    }
-    
-    console.log('✅ Nombre de lignes chargées:', balances.length);
-    console.log('✅ Première ligne:', balances[0]);
-    console.log('✅ Colonnes:', Object.keys(balances[0]));
-    
-    // ✅ STOCKER DANS LA VARIABLE GLOBALE
-    balanceDataConsultation = balances;
-    
-    // Charger les commentaires
-    await loadCommentsConsultation(agence);
-    
-    // Afficher et analyser
-    document.getElementById('balanceAgeeContainer').style.display = 'block';
-    analyzeBalanceConsultation();
-    
-  } catch (error) {
-    console.error('❌ Erreur chargement:', error);
-    showAlert('consultationAlert', 'error', '❌ ' + error.message);
-    document.getElementById('balanceAgeeContainer').style.display = 'none';
-  }
-}
-
 
     async function loadCommentsConsultation(agence) {
       try {
         const response = await fetch(`${WORKER_URL}/comments/${agence}`);
         if (response.ok) {
-          commentsDataConsultation = await response.json();
+          const data = await response.json();
+          commentsDataConsultation = data || {};
         } else {
           commentsDataConsultation = {};
         }
@@ -1769,403 +1733,382 @@ async function handleAgenceChangeConsultation() {
       }
     }
 
-    // ==========================================
-    // ANALYSE DE BALANCE ÂGÉE
-    // ==========================================
-   // ==========================================
-// ANALYSE DE BALANCE ÂGÉE (✅ ANCIEN CODE RESTAURÉ)
-// ==========================================
-// ============================================
-// 📊 ANALYSE DE LA BALANCE ÂGÉE (ANCIEN CODE RESTAURÉ)
-// ============================================
-function analyzeBalanceConsultation() {
-  console.log('📊 Début analyse');
-  console.log('📊 balanceDataConsultation:', balanceDataConsultation);
-  console.log('📊 Type:', typeof balanceDataConsultation);
-  console.log('📊 Est array:', Array.isArray(balanceDataConsultation));
-  
-  if (!balanceDataConsultation || !Array.isArray(balanceDataConsultation) || balanceDataConsultation.length === 0) {
-    showAlert('consultationAlert', 'error', '❌ Aucune donnée à analyser');
-    return;
-  }
-
-  console.log('📊 Analyse de', balanceDataConsultation.length, 'lignes');
-  console.log('📊 Première ligne:', balanceDataConsultation[0]);
-
-  // ============================================
-  // ✅ PARSING AVEC L'ANCIEN CODE (INDICES FIXES)
-  // ============================================
-  const clientsData = [];
-  let soldesDebiteurs = 0;
-  let soldesCrediteurs = 0;
-  let clientsCritiques = 0;
-  let montantRisque = 0;
-  let nombreClients = 0;
-
-  // Détecter les noms de colonnes de la première ligne
-  const firstRow = balanceDataConsultation[0];
-  const keys = Object.keys(firstRow);
-  console.log('📊 Colonnes disponibles:', keys);
-
-  balanceDataConsultation.forEach((row, index) => {
-    try {
-      // ✅ EXTRACTION DES VALEURS (compatible avec plusieurs formats)
-      const codeClient = String(
-        row.Code_Client || 
-        row.code_client || 
-        row['Code Client'] || 
-        row.code || 
-        row.Code || 
-        ''
-      ).trim();
+    // ============================================
+    // 📊 ANALYSE DE LA BALANCE ÂGÉE
+    // ============================================
+    function analyzeBalanceConsultation() {
+      console.log('📊 Début analyse');
+      console.log('📊 balanceDataConsultation:', balanceDataConsultation);
+      console.log('📊 Type:', typeof balanceDataConsultation);
+      console.log('📊 Est array:', Array.isArray(balanceDataConsultation));
       
-      const nomClient = String(
-        row.Nom_Client || 
-        row.nom_client || 
-        row['Nom Client'] || 
-        row.nom || 
-        row.Nom || 
-        row.raison_sociale ||
-        row['Raison Sociale'] ||
-        'Client inconnu'
-      ).trim();
-      
-      // ✅ SOLDE
-      const solde = parseFloat(
-        row.Solde || 
-        row.solde || 
-        row.Balance || 
-        row.balance || 
-        0
-      );
-      
-      // ✅ TRANCHES D'ANCIENNETÉ
-      const tranche0 = parseFloat(
-        row.Echeance_0 || 
-        row.echeance_0 || 
-        row['Echeance 0'] ||
-        row['0-29j'] || 
-        row['0_29'] ||
-        0
-      );
-      
-      const tranche30 = parseFloat(
-        row.Echeance_30 || 
-        row.echeance_30 || 
-        row['Echeance 30'] ||
-        row['30-59j'] || 
-        row['30_59'] ||
-        0
-      );
-      
-      const tranche60 = parseFloat(
-        row.Echeance_60 || 
-        row.echeance_60 || 
-        row['Echeance 60'] ||
-        row['60-89j'] || 
-        row['60_89'] ||
-        0
-      );
-      
-      const tranche90 = parseFloat(
-        row.Echeance_90 || 
-        row.echeance_90 || 
-        row['Echeance 90'] ||
-        row['90-119j'] || 
-        row['90_119'] ||
-        0
-      );
-      
-      const tranche120 = parseFloat(
-        row.Echeance_120 || 
-        row.echeance_120 || 
-        row['Echeance 120'] ||
-        row['120+j'] || 
-        row['120_plus'] ||
-        0
-      );
-
-      // Ignorer les lignes vides
-      if (!codeClient || codeClient === '' || solde === 0) {
+      if (!balanceDataConsultation || !Array.isArray(balanceDataConsultation) || balanceDataConsultation.length === 0) {
+        showAlert('consultationAlert', 'error', '❌ Aucune donnée à analyser');
         return;
       }
 
-      nombreClients++;
+      console.log('📊 Analyse de', balanceDataConsultation.length, 'lignes');
+      console.log('📊 Première ligne:', balanceDataConsultation[0]);
 
-      // ✅ CALCUL DE L'ÂGE MOYEN (FORMULE DE L'ANCIEN CODE)
-      const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
-      let ageMoyen = 0;
+      const clientsData = [];
+      let soldesDebiteurs = 0;
+      let soldesCrediteurs = 0;
+      let clientsCritiques = 0;
+      let montantRisque = 0;
+      let nombreClients = 0;
 
-      if (totalEchu > 0) {
-        ageMoyen = Math.round(
-          (Math.abs(tranche120) * 135 + 
-           Math.abs(tranche90) * 105 + 
-           Math.abs(tranche60) * 75 + 
-           Math.abs(tranche30) * 45 + 
-           Math.abs(tranche0) * 15) / totalEchu
-        );
-      }
+      const firstRow = balanceDataConsultation[0];
+      const keys = Object.keys(firstRow);
+      console.log('📊 Colonnes disponibles:', keys);
 
-      // Calcul des soldes
-      if (solde > 0) {
-        soldesDebiteurs += solde;
-      } else {
-        soldesCrediteurs += Math.abs(solde);
-      }
+      balanceDataConsultation.forEach((row, index) => {
+        try {
+          const codeClient = String(
+            row.Code_Client || 
+            row.code_client || 
+            row['Code Client'] || 
+            row.code || 
+            row.Code || 
+            ''
+          ).trim();
+          
+          const nomClient = String(
+            row.Nom_Client || 
+            row.nom_client || 
+            row['Nom Client'] || 
+            row.nom || 
+            row.Nom || 
+            row.raison_sociale ||
+            row['Raison Sociale'] ||
+            'Client inconnu'
+          ).trim();
+          
+          const solde = parseFloat(
+            row.Solde || 
+            row.solde || 
+            row.Balance || 
+            row.balance || 
+            0
+          );
+          
+          const tranche0 = parseFloat(
+            row.Echeance_0 || 
+            row.echeance_0 || 
+            row['Echeance 0'] ||
+            row['0-29j'] || 
+            row['0_29'] ||
+            0
+          );
+          
+          const tranche30 = parseFloat(
+            row.Echeance_30 || 
+            row.echeance_30 || 
+            row['Echeance 30'] ||
+            row['30-59j'] || 
+            row['30_59'] ||
+            0
+          );
+          
+          const tranche60 = parseFloat(
+            row.Echeance_60 || 
+            row.echeance_60 || 
+            row['Echeance 60'] ||
+            row['60-89j'] || 
+            row['60_89'] ||
+            0
+          );
+          
+          const tranche90 = parseFloat(
+            row.Echeance_90 || 
+            row.echeance_90 || 
+            row['Echeance 90'] ||
+            row['90-119j'] || 
+            row['90_119'] ||
+            0
+          );
+          
+          const tranche120 = parseFloat(
+            row.Echeance_120 || 
+            row.echeance_120 || 
+            row['Echeance 120'] ||
+            row['120+j'] || 
+            row['120_plus'] ||
+            0
+          );
 
-      // ✅ CALCUL DU POURCENTAGE D'ANCIENNETÉ
-      const montantsAnciens = Math.abs(tranche60) + Math.abs(tranche90) + Math.abs(tranche120);
-      const pourcentageAncien = solde !== 0 ? (montantsAnciens / Math.abs(solde)) * 100 : 0;
+          if (!codeClient || codeClient === '' || solde === 0) {
+            return;
+          }
 
-      // ✅ NIVEAU DE RISQUE
-      let risque = 'low';
-      if (Math.abs(tranche120) > 0 || ageMoyen > 90) {
-        risque = 'critical';
-        clientsCritiques++;
-      } else if (Math.abs(tranche90) > 0 || ageMoyen > 60) {
-        risque = 'high';
-      } else if (Math.abs(tranche60) > 0 || ageMoyen > 30) {
-        risque = 'medium';
-      }
+          nombreClients++;
 
-      // Montant à risque (>60j pour les débiteurs)
-      if (solde > 0 && montantsAnciens > 0) {
-        montantRisque += montantsAnciens;
-      }
+          const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
+          let ageMoyen = 0;
 
-      // ✅ STOCKER LES DONNÉES CLIENT
-      clientsData.push({
-        code: codeClient,
-        nom: nomClient,
-        solde: solde,
-        montant30: tranche0,
-        montant60: tranche30,
-        montant90: tranche60,
-        montant90plus: tranche90 + tranche120,
-        ageMoyen: ageMoyen,
-        pourcentageAncien: pourcentageAncien,
-        risque: risque
+          if (totalEchu > 0) {
+            ageMoyen = Math.round(
+              (Math.abs(tranche120) * 135 + 
+               Math.abs(tranche90) * 105 + 
+               Math.abs(tranche60) * 75 + 
+               Math.abs(tranche30) * 45 + 
+               Math.abs(tranche0) * 15) / totalEchu
+            );
+          }
+
+          if (solde > 0) {
+            soldesDebiteurs += solde;
+          } else {
+            soldesCrediteurs += Math.abs(solde);
+          }
+
+          const montantsAnciens = Math.abs(tranche60) + Math.abs(tranche90) + Math.abs(tranche120);
+          const pourcentageAncien = solde !== 0 ? (montantsAnciens / Math.abs(solde)) * 100 : 0;
+
+          let risque = 'low';
+          if (Math.abs(tranche120) > 0 || ageMoyen > 90) {
+            risque = 'critical';
+            clientsCritiques++;
+          } else if (Math.abs(tranche90) > 0 || ageMoyen > 60) {
+            risque = 'high';
+          } else if (Math.abs(tranche60) > 0 || ageMoyen > 30) {
+            risque = 'medium';
+          }
+
+          if (solde > 0 && montantsAnciens > 0) {
+            montantRisque += montantsAnciens;
+          }
+
+          clientsData.push({
+            code: codeClient,
+            nom: nomClient,
+            solde: solde,
+            montant30: tranche0,
+            montant60: tranche30,
+            montant90: tranche60,
+            montant90plus: tranche90 + tranche120,
+            ageMoyen: ageMoyen,
+            pourcentageAncien: pourcentageAncien,
+            risque: risque
+          });
+          
+        } catch (error) {
+          console.error(`❌ Erreur ligne ${index}:`, error, row);
+        }
       });
+
+      console.log('✅ Clients analysés:', nombreClients);
+      if (clientsData.length > 0) {
+        console.log('✅ Premier client traité:', clientsData[0]);
+      }
+
+      document.getElementById('soldesDebiteursConsultation').textContent = formatCurrency(soldesDebiteurs);
+      document.getElementById('soldesCrediteursConsultation').textContent = formatCurrency(soldesCrediteurs);
+      document.getElementById('balanceTotaleConsultation').textContent = formatCurrency(soldesDebiteurs - soldesCrediteurs);
+      document.getElementById('clientsCritiquesConsultation').textContent = clientsCritiques;
+      document.getElementById('nombreClientsConsultation').textContent = nombreClients;
+      document.getElementById('montantRisqueConsultation').textContent = formatCurrency(montantRisque);
       
-    } catch (error) {
-      console.error(`❌ Erreur ligne ${index}:`, error, row);
+      const tauxRisque = soldesDebiteurs > 0 ? ((montantRisque / soldesDebiteurs) * 100).toFixed(1) : 0;
+      document.getElementById('tauxRisqueConsultation').textContent = tauxRisque + '%';
+
+      generateChartsConsultation(clientsData);
+      fillDetailsTableConsultation(clientsData);
+      generateRecommendationsConsultation(clientsData, soldesDebiteurs);
     }
-  });
 
-  console.log('✅ Clients analysés:', nombreClients);
-  if (clientsData.length > 0) {
-    console.log('✅ Premier client traité:', clientsData[0]);
-  }
-
-  // Afficher les statistiques
-  document.getElementById('soldesDebiteursConsultation').textContent = formatCurrency(soldesDebiteurs);
-  document.getElementById('soldesCrediteursConsultation').textContent = formatCurrency(soldesCrediteurs);
-  document.getElementById('balanceTotaleConsultation').textContent = formatCurrency(soldesDebiteurs - soldesCrediteurs);
-  document.getElementById('clientsCritiquesConsultation').textContent = clientsCritiques;
-  document.getElementById('nombreClientsConsultation').textContent = nombreClients;
-  document.getElementById('montantRisqueConsultation').textContent = formatCurrency(montantRisque);
-  
-  const tauxRisque = soldesDebiteurs > 0 ? ((montantRisque / soldesDebiteurs) * 100).toFixed(1) : 0;
-  document.getElementById('tauxRisqueConsultation').textContent = tauxRisque + '%';
-
-  // Générer les graphiques
-  generateChartsConsultation(clientsData);
-
-  // Remplir le tableau
-  fillDetailsTableConsultation(clientsData);
-
-  // Générer les recommandations
-  generateRecommendationsConsultation(clientsData, soldesDebiteurs);
-}
-
-// ============================================
-// 📊 GÉNÉRATION DES GRAPHIQUES (CONSULTATION)
-// ============================================
-function generateChartsConsultation(clientsData) {
-  console.log('📊 Génération des graphiques pour', clientsData.length, 'clients');
-  
-  // ✅ DÉTRUIRE LES ANCIENS GRAPHIQUES
-  try {
-    if (window.riskChartConsultation && typeof window.riskChartConsultation.destroy === 'function') {
-      window.riskChartConsultation.destroy();
-    }
-  } catch (e) {}
-  
-  try {
-    if (window.ageChartConsultation && typeof window.ageChartConsultation.destroy === 'function') {
-      window.ageChartConsultation.destroy();
-    }
-  } catch (e) {}
-  
-  try {
-    if (window.topClientsChartConsultation && typeof window.topClientsChartConsultation.destroy === 'function') {
-      window.topClientsChartConsultation.destroy();
-    }
-  } catch (e) {}
-
-  // ============================================
-  // 📊 GRAPHIQUE 1 : RÉPARTITION PAR NIVEAU DE RISQUE
-  // ============================================
-  const riskCounts = {
-    critical: clientsData.filter(c => c.risque === 'critical').length,
-    high: clientsData.filter(c => c.risque === 'high').length,
-    medium: clientsData.filter(c => c.risque === 'medium').length,
-    low: clientsData.filter(c => c.risque === 'low').length
-  };
-
-  console.log('📊 Répartition risques:', riskCounts);
-
-  try {
-    const ctxRisk = document.getElementById('riskChartConsultation');
-    if (ctxRisk) {
-      window.riskChartConsultation = new Chart(ctxRisk, {
-        type: 'bar',
-        data: {
-          labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
-          datasets: [{
-            label: 'Nombre de clients',
-            data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
-            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false, // ✅ DÉSACTIVER ANIMATIONS
-          plugins: {
-            legend: { display: false },
-            title: {
-              display: true,
-              text: 'Répartition par niveau de risque'
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
-            }
-          }
+    // ============================================
+    // 📊 GÉNÉRATION DES GRAPHIQUES (CONSULTATION)
+    // ============================================
+    function generateChartsConsultation(clientsData) {
+      console.log('📊 Génération des graphiques pour', clientsData.length, 'clients');
+      
+      // ✅ DÉTRUIRE LES ANCIENS GRAPHIQUES
+      if (window.riskChartConsultation) {
+        try {
+          window.riskChartConsultation.destroy();
+        } catch (e) {
+          console.warn('Erreur destruction riskChart:', e);
         }
-      });
-      console.log('✅ Graphique risque créé');
-    }
-  } catch (error) {
-    console.error('❌ Erreur graphique risque:', error);
-  }
-
-  // ============================================
-  // 📊 GRAPHIQUE 2 : RÉPARTITION PAR ÂGE MOYEN
-  // ============================================
-  const ageBuckets = {
-    '0-30j': clientsData.filter(c => c.ageMoyen <= 30).length,
-    '31-60j': clientsData.filter(c => c.ageMoyen > 30 && c.ageMoyen <= 60).length,
-    '61-90j': clientsData.filter(c => c.ageMoyen > 60 && c.ageMoyen <= 90).length,
-    '90+j': clientsData.filter(c => c.ageMoyen > 90).length
-  };
-
-  console.log('📊 Répartition âges:', ageBuckets);
-
-  try {
-    const ctxAge = document.getElementById('ageChartConsultation');
-    if (ctxAge) {
-      window.ageChartConsultation = new Chart(ctxAge, {
-        type: 'doughnut',
-        data: {
-          labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
-          datasets: [{
-            data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
-            backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false, // ✅ DÉSACTIVER ANIMATIONS
-          plugins: {
-            legend: { position: 'bottom' },
-            title: {
-              display: true,
-              text: 'Répartition par âge moyen de créance'
-            }
-          }
+      }
+      
+      if (window.ageChartConsultation) {
+        try {
+          window.ageChartConsultation.destroy();
+        } catch (e) {
+          console.warn('Erreur destruction ageChart:', e);
         }
-      });
-      console.log('✅ Graphique âge créé');
-    }
-  } catch (error) {
-    console.error('❌ Erreur graphique âge:', error);
-  }
+      }
+      
+      if (window.topClientsChartConsultation) {
+        try {
+          window.topClientsChartConsultation.destroy();
+        } catch (e) {
+          console.warn('Erreur destruction topClientsChart:', e);
+        }
+      }
 
-  // ============================================
-  // 📊 GRAPHIQUE 3 : TOP 10 CLIENTS PAR SOLDE
-  // ============================================
-  const topClients = clientsData
-    .filter(c => c.solde > 0)
-    .sort((a, b) => b.solde - a.solde)
-    .slice(0, 10);
+      // ============================================
+      // 📊 GRAPHIQUE 1 : RÉPARTITION PAR NIVEAU DE RISQUE
+      // ============================================
+      const riskCounts = {
+        critical: clientsData.filter(c => c.risque === 'critical').length,
+        high: clientsData.filter(c => c.risque === 'high').length,
+        medium: clientsData.filter(c => c.risque === 'medium').length,
+        low: clientsData.filter(c => c.risque === 'low').length
+      };
 
-  console.log('📊 Top 10 clients:', topClients.length);
+      console.log('📊 Répartition risques:', riskCounts);
 
-  try {
-    const ctxTop = document.getElementById('topClientsChartConsultation');
-    if (ctxTop) {
-      window.topClientsChartConsultation = new Chart(ctxTop, {
-        type: 'bar',
-        data: {
-          labels: topClients.map(c => c.nom.substring(0, 20)),
-          datasets: [{
-            label: 'Solde (€)',
-            data: topClients.map(c => c.solde),
-            backgroundColor: topClients.map(c => {
-              if (c.risque === 'critical') return '#dc3545';
-              if (c.risque === 'high') return '#fd7e14';
-              if (c.risque === 'medium') return '#ffc107';
-              return '#28a745';
-            })
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false, // ✅ DÉSACTIVER ANIMATIONS
-          plugins: {
-            legend: { display: false },
-            title: {
-              display: true,
-              text: 'Top 10 clients par solde'
+      try {
+        const ctxRisk = document.getElementById('riskChartConsultation');
+        if (ctxRisk) {
+          window.riskChartConsultation = new Chart(ctxRisk, {
+            type: 'bar',
+            data: {
+              labels: ['🔴 Critique (>90j)', '🟠 Élevé (60-90j)', '🟡 Moyen (30-60j)', '🟢 Faible (<30j)'],
+              datasets: [{
+                label: 'Nombre de clients',
+                data: [riskCounts.critical, riskCounts.high, riskCounts.medium, riskCounts.low],
+                backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
+              }]
             },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return formatCurrency(context.parsed.x);
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: {
+                legend: { display: false },
+                title: {
+                  display: true,
+                  text: 'Répartition par niveau de risque'
+                }              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  ticks: { precision: 0 }
                 }
               }
             }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return formatCurrency(value);
-                }
-              }
-            }
-          }
+          });
+          console.log('✅ Graphique risque créé');
         }
-      });
-      console.log('✅ Graphique top clients créé');
-    } else {
-      console.error('❌ Canvas topClientsChartConsultation introuvable dans le DOM');
+      } catch (error) {
+        console.error('❌ Erreur graphique risque:', error);
+      }
+
+      // ============================================
+      // 📊 GRAPHIQUE 2 : RÉPARTITION PAR ÂGE MOYEN
+      // ============================================
+      const ageBuckets = {
+        '0-30j': clientsData.filter(c => c.ageMoyen <= 30).length,
+        '31-60j': clientsData.filter(c => c.ageMoyen > 30 && c.ageMoyen <= 60).length,
+        '61-90j': clientsData.filter(c => c.ageMoyen > 60 && c.ageMoyen <= 90).length,
+        '90+j': clientsData.filter(c => c.ageMoyen > 90).length
+      };
+
+      console.log('📊 Répartition âges:', ageBuckets);
+
+      try {
+        const ctxAge = document.getElementById('ageChartConsultation');
+        if (ctxAge) {
+          window.ageChartConsultation = new Chart(ctxAge, {
+            type: 'doughnut',
+            data: {
+              labels: ['0-30 jours', '31-60 jours', '61-90 jours', '90+ jours'],
+              datasets: [{
+                data: [ageBuckets['0-30j'], ageBuckets['31-60j'], ageBuckets['61-90j'], ageBuckets['90+j']],
+                backgroundColor: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: {
+                legend: { position: 'bottom' },
+                title: {
+                  display: true,
+                  text: 'Répartition par âge moyen de créance'
+                }
+              }
+            }
+          });
+          console.log('✅ Graphique âge créé');
+        }
+      } catch (error) {
+        console.error('❌ Erreur graphique âge:', error);
+      }
+
+      // ============================================
+      // 📊 GRAPHIQUE 3 : TOP 10 CLIENTS PAR SOLDE
+      // ============================================
+      const topClients = clientsData
+        .filter(c => c.solde > 0)
+        .sort((a, b) => b.solde - a.solde)
+        .slice(0, 10);
+
+      console.log('📊 Top 10 clients:', topClients.length);
+
+      try {
+        const ctxTop = document.getElementById('topClientsChartConsultation');
+        if (ctxTop) {
+          window.topClientsChartConsultation = new Chart(ctxTop, {
+            type: 'bar',
+            data: {
+              labels: topClients.map(c => c.nom.substring(0, 20)),
+              datasets: [{
+                label: 'Solde (€)',
+                data: topClients.map(c => c.solde),
+                backgroundColor: topClients.map(c => {
+                  if (c.risque === 'critical') return '#dc3545';
+                  if (c.risque === 'high') return '#fd7e14';
+                  if (c.risque === 'medium') return '#ffc107';
+                  return '#28a745';
+                })
+              }]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: {
+                legend: { display: false },
+                title: {
+                  display: true,
+                  text: 'Top 10 clients par solde'
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return formatCurrency(context.parsed.x);
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      return formatCurrency(value);
+                    }
+                  }
+                }
+              }
+            }
+          });
+          console.log('✅ Graphique top clients créé');
+        } else {
+          console.error('❌ Canvas topClientsChartConsultation introuvable dans le DOM');
+        }
+      } catch (error) {
+        console.error('❌ Erreur graphique top clients:', error);
+      }
+      
+      console.log('✅ Tous les graphiques générés');
     }
-  } catch (error) {
-    console.error('❌ Erreur graphique top clients:', error);
-  }
-  
-  console.log('✅ Tous les graphiques générés');
-}
 
     // ==========================================
     // TABLEAU DÉTAILLÉ
@@ -2174,26 +2117,18 @@ function generateChartsConsultation(clientsData) {
       const tbody = document.getElementById('detailsTableConsultation');
       tbody.innerHTML = '';
 
-      // Appliquer les filtres
       const riskFilter = document.getElementById('riskFilterConsultation').value;
       const soldeTypeFilter = document.getElementById('soldeTypeFilterConsultation').value;
       const minBalance = parseFloat(document.getElementById('minBalanceConsultation').value) || 0;
 
       let filteredData = clientsData.filter(client => {
-        // Filtre par risque
         if (riskFilter !== 'all' && client.risque !== riskFilter) return false;
-        
-        // Filtre par type de solde
         if (soldeTypeFilter === 'debiteur' && client.solde <= 0) return false;
         if (soldeTypeFilter === 'crediteur' && client.solde >= 0) return false;
-        
-        // Filtre par montant minimum
         if (Math.abs(client.solde) < minBalance) return false;
-        
         return true;
       });
 
-      // Tri
       if (currentSortColumnConsultation) {
         filteredData.sort((a, b) => {
           let valA = a[currentSortColumnConsultation];
@@ -2213,22 +2148,18 @@ function generateChartsConsultation(clientsData) {
       filteredData.forEach(client => {
         const tr = document.createElement('tr');
         
-        // Couleur de fond selon le risque
         if (client.risque === 'critical') tr.style.backgroundColor = '#fef2f2';
         else if (client.risque === 'high') tr.style.backgroundColor = '#fff7ed';
         else if (client.risque === 'medium') tr.style.backgroundColor = '#fefce8';
         
-        // Code client
         const tdCode = document.createElement('td');
         tdCode.textContent = client.code;
         tr.appendChild(tdCode);
         
-        // Nom client
         const tdNom = document.createElement('td');
         tdNom.textContent = client.nom;
         tr.appendChild(tdNom);
         
-        // Solde
         const tdSolde = document.createElement('td');
         tdSolde.textContent = formatCurrency(client.solde);
         tdSolde.style.textAlign = 'right';
@@ -2236,13 +2167,11 @@ function generateChartsConsultation(clientsData) {
         tdSolde.style.color = client.solde > 0 ? '#dc2626' : '#16a34a';
         tr.appendChild(tdSolde);
         
-        // Ancienneté
         const tdAnciennete = document.createElement('td');
         tdAnciennete.textContent = client.pourcentageAncien.toFixed(1) + '%';
         tdAnciennete.style.textAlign = 'right';
         tr.appendChild(tdAnciennete);
         
-        // Risque
         const tdRisque = document.createElement('td');
         tdRisque.style.textAlign = 'center';
         const riskBadge = document.createElement('span');
@@ -2272,7 +2201,6 @@ function generateChartsConsultation(clientsData) {
         tdRisque.appendChild(riskBadge);
         tr.appendChild(tdRisque);
         
-        // Action (Détails)
         const tdAction = document.createElement('td');
         tdAction.style.textAlign = 'center';
         const btnDetails = document.createElement('button');
@@ -2284,7 +2212,6 @@ function generateChartsConsultation(clientsData) {
         tdAction.appendChild(btnDetails);
         tr.appendChild(tdAction);
         
-        // Commentaire
         const tdComment = document.createElement('td');
         const commentCell = document.createElement('div');
         commentCell.className = 'comment-input-cell';
@@ -2301,7 +2228,6 @@ function generateChartsConsultation(clientsData) {
         tdComment.appendChild(commentCell);
         tr.appendChild(tdComment);
         
-        // Supprimer
         const tdDelete = document.createElement('td');
         tdDelete.style.textAlign = 'center';
         const btnDelete = document.createElement('button');
@@ -2316,7 +2242,6 @@ function generateChartsConsultation(clientsData) {
         tbody.appendChild(tr);
       });
 
-      // Ajouter les écouteurs pour les filtres
       document.getElementById('riskFilterConsultation').onchange = () => fillDetailsTableConsultation(clientsData);
       document.getElementById('soldeTypeFilterConsultation').onchange = () => fillDetailsTableConsultation(clientsData);
       document.getElementById('minBalanceConsultation').oninput = () => fillDetailsTableConsultation(clientsData);
@@ -2333,7 +2258,6 @@ function generateChartsConsultation(clientsData) {
         currentSortDirectionConsultation = 'asc';
       }
       
-      // Réafficher le tableau avec le tri
       analyzeBalanceConsultation();
     }
 
@@ -2371,16 +2295,12 @@ function generateChartsConsultation(clientsData) {
       document.getElementById('modalClientNameConsultation').textContent = client.nom;
       document.getElementById('modalClientSoldeConsultation').textContent = formatCurrency(client.solde);
       
-      // Pré-remplir le nom de l'utilisateur
       document.getElementById('commentAuthorConsultation').value = currentUser.name;
       
-      // Afficher l'historique
       displayCommentHistoryConsultation(client.code);
       
-      // Vider le champ de nouveau commentaire
       document.getElementById('newCommentTextConsultation').value = '';
       
-      // Afficher le modal
       document.getElementById('commentModalConsultation').classList.add('active');
     }
 
@@ -2408,57 +2328,82 @@ function generateChartsConsultation(clientsData) {
     }
 
     async function saveNewCommentConsultation() {
-  const agence = document.getElementById('agenceSelectConsultation').value;
-  const commentText = document.getElementById('newCommentTextConsultation').value.trim();
-  
-  console.log('💾 Tentative sauvegarde commentaire:', { agence, commentText });
+      // ✅ CORRECTION : Utiliser le bon ID
+      const author = document.getElementById('commentAuthorConsultation').value.trim();
+      const commentText = document.getElementById('newCommentTextConsultation').value.trim();
+      
+      console.log('💾 Tentative sauvegarde commentaire:', { author, commentText, currentAgence });
 
-  if (!commentText) {
-    alert('Veuillez saisir un commentaire');
-    return;
-  }
+      if (!author) {
+        alert('⚠️ Veuillez entrer votre nom');
+        return;
+      }
 
-  try {
-    const response = await fetch(`${API_URL}/comments/${encodeURIComponent(agence)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: commentText,
-        author: currentUser.name,
-        timestamp: new Date().toISOString()
-      })
-    });
+      if (!commentText) {
+        alert('⚠️ Veuillez saisir un commentaire');
+        return;
+      }
 
-    console.log('📡 Réponse serveur:', response.status, response.statusText);
-    
-    const result = await response.json();
-    console.log('📦 Données reçues:', result);
+      if (!currentClientForCommentConsultation) {
+        alert('⚠️ Erreur : client non sélectionné');
+        return;
+      }
 
-    if (result.success) {
-      console.log('✅ Commentaire sauvegardé avec succès');
-      
-      // Réinitialiser le champ
-      document.getElementById('newCommentTextConsultation').value = '';
-      
-      // Recharger les commentaires
-      await loadCommentsConsultation(agence);
-      
-      // Log l'action
-      await logAction('Commentaire ajouté', agence);
-      
-      // Réanalyser pour mettre à jour l'affichage
-      await analyzeBalanceConsultation();
-      
-      alert('✅ Commentaire ajouté avec succès');
-    } else {
-      console.error('❌ Échec sauvegarde:', result.error);
-      alert('❌ Erreur lors de la sauvegarde du commentaire');
+      try {
+        const clientCode = currentClientForCommentConsultation.code;
+        
+        // Initialiser le tableau de commentaires si nécessaire
+        if (!commentsDataConsultation[clientCode]) {
+          commentsDataConsultation[clientCode] = [];
+        }
+        
+        // Ajouter le nouveau commentaire
+        const newComment = {
+          author: author,
+          text: commentText,
+          timestamp: new Date().toISOString()
+        };
+        
+        commentsDataConsultation[clientCode].push(newComment);
+        
+        // Sauvegarder sur le serveur
+        const response = await fetch(`${WORKER_URL}/comments/${encodeURIComponent(currentAgence)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(commentsDataConsultation)
+        });
+
+        console.log('📡 Réponse serveur:', response.status, response.statusText);
+        
+        if (response.ok) {
+          console.log('✅ Commentaire sauvegardé avec succès');
+          
+          // Réinitialiser le champ
+          document.getElementById('newCommentTextConsultation').value = '';
+          
+          // Rafraîchir l'affichage
+          displayCommentHistoryConsultation(clientCode);
+          
+          // Log l'action
+          await logAction('comment', clientCode, currentClientForCommentConsultation.nom, currentClientForCommentConsultation.solde, author, commentText);
+          
+          // Fermer le modal
+          closeCommentModalConsultation();
+          
+          // Réanalyser pour mettre à jour le tableau
+          analyzeBalanceConsultation();
+          
+          showSaveIndicator('saveIndicatorConsultation');
+          
+        } else {
+          console.error('❌ Échec sauvegarde');
+          alert('❌ Erreur lors de la sauvegarde du commentaire');
+        }
+      } catch (error) {
+        console.error('❌ Erreur sauvegarde commentaire:', error);
+        alert('❌ Erreur lors de la sauvegarde du commentaire');
+      }
     }
-  } catch (error) {
-    console.error('❌ Erreur sauvegarde commentaire:', error);
-    alert('❌ Erreur lors de la sauvegarde du commentaire');
-  }
-}
 
     async function deleteCommentConsultation(clientCode, index) {
       if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
@@ -2471,7 +2416,6 @@ function generateChartsConsultation(clientsData) {
         delete commentsDataConsultation[clientCode];
       }
       
-      // Sauvegarder sur le serveur
       try {
         await fetch(`${WORKER_URL}/comments/${currentAgence}`, {
           method: 'POST',
@@ -2524,16 +2468,20 @@ function generateChartsConsultation(clientsData) {
       const client = currentClientForDeleteConsultation;
       
       try {
-        // Enregistrer dans l'historique
         await logAction('delete', client.code, client.nom, client.solde, author, reason);
         
-        // Supprimer du tableau de données
         balanceDataConsultation = balanceDataConsultation.filter(row => {
-          const code = Object.values(row)[0];
+          const code = String(
+            row.Code_Client || 
+            row.code_client || 
+            row['Code Client'] || 
+            row.code || 
+            row.Code || 
+            ''
+          ).trim();
           return code !== client.code;
         });
         
-        // Sauvegarder les nouvelles données
         await fetch(`${WORKER_URL}/balances`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2603,7 +2551,6 @@ function generateChartsConsultation(clientsData) {
     // RECOMMANDATIONS
     // ==========================================
     function generateRecommendationsConsultation(clientsData, soldesDebiteurs) {
-      // Clients critiques (>90j)
       const criticalClients = clientsData.filter(c => c.montant90plus > 0 && c.solde > 0);
       
       if (criticalClients.length > 0) {
@@ -2614,7 +2561,6 @@ function generateChartsConsultation(clientsData) {
         document.getElementById('urgentAlertConsultation').classList.add('hidden');
       }
       
-      // Risque élevé
       const highRiskClients = clientsData.filter(c => c.risque === 'high' || c.risque === 'critical');
       if (highRiskClients.length > 0) {
         document.getElementById('riskAlertConsultation').classList.remove('hidden');
@@ -2624,7 +2570,6 @@ function generateChartsConsultation(clientsData) {
         document.getElementById('riskAlertConsultation').classList.add('hidden');
       }
       
-      // Concentration du risque (top 5)
       const top5 = clientsData.filter(c => c.solde > 0).sort((a, b) => b.solde - a.solde).slice(0, 5);
       const top5Total = top5.reduce((sum, c) => sum + c.solde, 0);
       const concentrationPct = soldesDebiteurs > 0 ? (top5Total / soldesDebiteurs * 100).toFixed(1) : 0;
@@ -2637,7 +2582,6 @@ function generateChartsConsultation(clientsData) {
         document.getElementById('riskConcentrationCardConsultation').classList.add('hidden');
       }
       
-      // Liste des clients critiques
       if (criticalClients.length > 0) {
         document.getElementById('criticalClientsCardConsultation').classList.remove('hidden');
         document.getElementById('criticalClientsCountConsultation').textContent = 
@@ -2720,14 +2664,26 @@ function generateChartsConsultation(clientsData) {
         const response = await fetch(`${WORKER_URL}/historique/${currentAgence}`);
         
         if (response.ok) {
-          const historique = await response.json();
+          const data = await response.json();
+          
+          // ✅ CORRECTION : Vérifier que c'est un tableau
+          let historique = [];
+          if (Array.isArray(data)) {
+            historique = data;
+          } else if (data.historique && Array.isArray(data.historique)) {
+            historique = data.historique;
+          } else if (data.actions && Array.isArray(data.actions)) {
+            historique = data.actions;
+          }
+          
+          console.log('📜 Chargement historique:', historique.length, 'actions');
           displayHistorique(historique);
         } else {
           showAlert('historiqueAlert', 'info', 'ℹ️ Aucun historique disponible');
         }
         
       } catch (error) {
-        console.error('Erreur chargement historique:', error);
+        console.error('❌ Erreur chargement historique:', error);
         showAlert('historiqueAlert', 'error', '❌ Erreur lors du chargement de l\'historique');
       }
     }
@@ -2736,22 +2692,26 @@ function generateChartsConsultation(clientsData) {
       const tbody = document.getElementById('historiqueTableBody');
       tbody.innerHTML = '';
       
-      if (!historique || historique.length === 0) {
+      // ✅ CORRECTION : Vérifier que c'est un tableau
+      if (!Array.isArray(historique) || historique.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #6c757d;">Aucune action enregistrée</td></tr>';
         return;
       }
       
-      historique.reverse().forEach(action => {
+      // ✅ CORRECTION : Copier le tableau avant de le modifier
+      const historiqueReverse = [...historique].reverse();
+      
+      historiqueReverse.forEach(action => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${action.date}</td>
-          <td>${action.heure}</td>
+          <td>${action.date || '-'}</td>
+          <td>${action.heure || '-'}</td>
           <td><span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: ${getTypeColor(action.type)}; color: white;">${getTypeLabel(action.type)}</span></td>
-          <td>${action.clientCode}</td>
-          <td>${action.clientName}</td>
-          <td style="text-align: right; font-weight: bold;">${formatCurrency(action.solde)}</td>
-          <td>${action.author}</td>
-          <td>${action.reason}</td>
+          <td>${action.clientCode || '-'}</td>
+          <td>${action.clientName || '-'}</td>
+          <td style="text-align: right; font-weight: bold;">${formatCurrency(action.solde || 0)}</td>
+          <td>${action.author || '-'}</td>
+          <td>${action.reason || '-'}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -2787,6 +2747,11 @@ function generateChartsConsultation(clientsData) {
 
     function showAlert(elementId, type, message) {
       const alertDiv = document.getElementById(elementId);
+      if (!alertDiv) {
+        console.warn('⚠️ Element alert introuvable:', elementId);
+        return;
+      }
+      
       alertDiv.className = `alert alert-${type}`;
       alertDiv.textContent = message;
       alertDiv.style.display = 'block';
@@ -2798,6 +2763,11 @@ function generateChartsConsultation(clientsData) {
 
     function showSaveIndicator(elementId) {
       const indicator = document.getElementById(elementId);
+      if (!indicator) {
+        console.warn('⚠️ Indicateur de sauvegarde introuvable:', elementId);
+        return;
+      }
+      
       indicator.style.display = 'block';
       
       setTimeout(() => {
@@ -2820,6 +2790,18 @@ function generateChartsConsultation(clientsData) {
 
 </body>
 </html>
+
+
+
+  </script>
+
+  <!-- Bibliothèques externes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+</body>
+</html>
+
 
 
 
