@@ -1645,41 +1645,97 @@
       });
     }
 
-    async function handleAgenceChangeConsultation() {
-      const agence = document.getElementById('agenceConsultation').value;
-      
-      if (!agence) {
-        document.getElementById('balanceAgeeContainer').style.display = 'none';
-        return;
-      }
-      
-      currentAgence = agence;
-      
-      try {
-        // Charger les données de balance
-        const response = await fetch(`${WORKER_URL}/balances/${agence}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          balanceDataConsultation = data;
-          
-          // Charger les commentaires
-          await loadCommentsConsultation(agence);
-          
-          // Afficher l'analyseur
-          document.getElementById('balanceAgeeContainer').style.display = 'block';
-          analyzeBalanceConsultation();
-          
-        } else {
-          showAlert('consultationAlert', 'error', `❌ Aucune donnée trouvée pour ${agence}`);
-          document.getElementById('balanceAgeeContainer').style.display = 'none';
-        }
-        
-      } catch (error) {
-        console.error('Erreur chargement données:', error);
-        showAlert('consultationAlert', 'error', '❌ Erreur lors du chargement des données');
-      }
+    // ============================================
+// 📊 GESTION DU CHANGEMENT D'AGENCE (CONSULTATION)
+// ============================================
+async function handleAgenceChangeConsultation() {
+  const agence = document.getElementById('agenceConsultation').value;
+  
+  if (!agence) {
+    document.getElementById('balanceAgeeContainer').style.display = 'none';
+    return;
+  }
+  
+  currentAgence = agence;
+  
+  try {
+    console.log('📥 Chargement des balances pour:', agence);
+    
+    // ✅ CHARGER LES DONNÉES
+    const response = await fetch(`${WORKER_URL}?action=getBalances&agence=${encodeURIComponent(agence)}`);
+    
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
     }
+    
+    const text = await response.text();
+    console.log('📥 Réponse brute (100 premiers caractères):', text.substring(0, 100));
+    
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('❌ Erreur parsing JSON:', e);
+      console.error('Contenu reçu:', text);
+      throw new Error('Format de réponse invalide');
+    }
+    
+    console.log('📥 Type de data:', typeof data);
+    console.log('📥 data.success:', data.success);
+    console.log('📥 Array.isArray(data):', Array.isArray(data));
+    
+    // ✅ EXTRACTION DES DONNÉES (LOGIQUE DE L'ANCIEN CODE)
+    let balances = null;
+    
+    // Cas 1: Réponse avec { success: true, data: [...] }
+    if (data.success && Array.isArray(data.data)) {
+      balances = data.data;
+      console.log('✅ Format détecté: { success, data }');
+    }
+    // Cas 2: Réponse directement un tableau
+    else if (Array.isArray(data)) {
+      balances = data;
+      console.log('✅ Format détecté: tableau direct');
+    }
+    // Cas 3: Réponse avec une propriété contenant les données
+    else if (data.balances && Array.isArray(data.balances)) {
+      balances = data.balances;
+      console.log('✅ Format détecté: { balances }');
+    }
+    else if (data.clients && Array.isArray(data.clients)) {
+      balances = data.clients;
+      console.log('✅ Format détecté: { clients }');
+    }
+    else {
+      console.error('❌ Format non reconnu:', data);
+      throw new Error('Format de données non reconnu');
+    }
+    
+    if (!balances || balances.length === 0) {
+      throw new Error('Aucune donnée disponible pour cette agence');
+    }
+    
+    console.log('✅ Nombre de lignes chargées:', balances.length);
+    console.log('✅ Première ligne:', balances[0]);
+    console.log('✅ Colonnes:', Object.keys(balances[0]));
+    
+    // ✅ STOCKER DANS LA VARIABLE GLOBALE
+    balanceDataConsultation = balances;
+    
+    // Charger les commentaires
+    await loadCommentsConsultation(agence);
+    
+    // Afficher et analyser
+    document.getElementById('balanceAgeeContainer').style.display = 'block';
+    analyzeBalanceConsultation();
+    
+  } catch (error) {
+    console.error('❌ Erreur chargement:', error);
+    showAlert('consultationAlert', 'error', '❌ ' + error.message);
+    document.getElementById('balanceAgeeContainer').style.display = 'none';
+  }
+}
+
 
     async function loadCommentsConsultation(agence) {
       try {
@@ -1701,8 +1757,16 @@
    // ==========================================
 // ANALYSE DE BALANCE ÂGÉE (✅ ANCIEN CODE RESTAURÉ)
 // ==========================================
+// ============================================
+// 📊 ANALYSE DE LA BALANCE ÂGÉE (ANCIEN CODE RESTAURÉ)
+// ============================================
 function analyzeBalanceConsultation() {
-  if (!balanceDataConsultation || balanceDataConsultation.length === 0) {
+  console.log('📊 Début analyse');
+  console.log('📊 balanceDataConsultation:', balanceDataConsultation);
+  console.log('📊 Type:', typeof balanceDataConsultation);
+  console.log('📊 Est array:', Array.isArray(balanceDataConsultation));
+  
+  if (!balanceDataConsultation || !Array.isArray(balanceDataConsultation) || balanceDataConsultation.length === 0) {
     showAlert('consultationAlert', 'error', '❌ Aucune donnée à analyser');
     return;
   }
@@ -1711,7 +1775,7 @@ function analyzeBalanceConsultation() {
   console.log('📊 Première ligne:', balanceDataConsultation[0]);
 
   // ============================================
-  // ✅ PARSING AVEC L'ANCIEN CODE QUI MARCHAIT
+  // ✅ PARSING AVEC L'ANCIEN CODE (INDICES FIXES)
   // ============================================
   const clientsData = [];
   let soldesDebiteurs = 0;
@@ -1720,84 +1784,160 @@ function analyzeBalanceConsultation() {
   let montantRisque = 0;
   let nombreClients = 0;
 
-  balanceDataConsultation.forEach(row => {
-    // ✅ EXTRACTION DES COLONNES (format Google Sheets)
-    const codeClient = String(row.Code_Client || row.code_client || row['Code Client'] || '').trim();
-    const nomClient = String(row.Nom_Client || row.nom_client || row['Nom Client'] || 'Client inconnu').trim();
-    
-    // ✅ SOLDE ET TRANCHES (colonnes exactes du Google Sheet)
-    const solde = parseFloat(row.Solde || row.solde || 0);
-    const tranche0 = parseFloat(row.Echeance_0 || row.echeance0 || row['0-29j'] || 0);
-    const tranche30 = parseFloat(row.Echeance_30 || row.echeance30 || row['30-59j'] || 0);
-    const tranche60 = parseFloat(row.Echeance_60 || row.echeance60 || row['60-89j'] || 0);
-    const tranche90 = parseFloat(row.Echeance_90 || row.echeance90 || row['90-119j'] || 0);
-    const tranche120 = parseFloat(row.Echeance_120 || row.echeance120 || row['120+j'] || 0);
+  // Détecter les noms de colonnes de la première ligne
+  const firstRow = balanceDataConsultation[0];
+  const keys = Object.keys(firstRow);
+  console.log('📊 Colonnes disponibles:', keys);
 
-    // Ignorer les lignes vides
-    if (!codeClient || codeClient === '' || solde === 0) {
-      return;
-    }
-
-    nombreClients++;
-
-    // ✅ CALCUL DE L'ÂGE MOYEN (ANCIEN CODE)
-    const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
-    let ageMoyen = 0;
-
-    if (totalEchu > 0) {
-      ageMoyen = Math.round(
-        (Math.abs(tranche120) * 135 + 
-         Math.abs(tranche90) * 105 + 
-         Math.abs(tranche60) * 75 + 
-         Math.abs(tranche30) * 45 + 
-         Math.abs(tranche0) * 15) / totalEchu
+  balanceDataConsultation.forEach((row, index) => {
+    try {
+      // ✅ EXTRACTION DES VALEURS (compatible avec plusieurs formats)
+      const codeClient = String(
+        row.Code_Client || 
+        row.code_client || 
+        row['Code Client'] || 
+        row.code || 
+        row.Code || 
+        ''
+      ).trim();
+      
+      const nomClient = String(
+        row.Nom_Client || 
+        row.nom_client || 
+        row['Nom Client'] || 
+        row.nom || 
+        row.Nom || 
+        row.raison_sociale ||
+        row['Raison Sociale'] ||
+        'Client inconnu'
+      ).trim();
+      
+      // ✅ SOLDE
+      const solde = parseFloat(
+        row.Solde || 
+        row.solde || 
+        row.Balance || 
+        row.balance || 
+        0
       );
+      
+      // ✅ TRANCHES D'ANCIENNETÉ
+      const tranche0 = parseFloat(
+        row.Echeance_0 || 
+        row.echeance_0 || 
+        row['Echeance 0'] ||
+        row['0-29j'] || 
+        row['0_29'] ||
+        0
+      );
+      
+      const tranche30 = parseFloat(
+        row.Echeance_30 || 
+        row.echeance_30 || 
+        row['Echeance 30'] ||
+        row['30-59j'] || 
+        row['30_59'] ||
+        0
+      );
+      
+      const tranche60 = parseFloat(
+        row.Echeance_60 || 
+        row.echeance_60 || 
+        row['Echeance 60'] ||
+        row['60-89j'] || 
+        row['60_89'] ||
+        0
+      );
+      
+      const tranche90 = parseFloat(
+        row.Echeance_90 || 
+        row.echeance_90 || 
+        row['Echeance 90'] ||
+        row['90-119j'] || 
+        row['90_119'] ||
+        0
+      );
+      
+      const tranche120 = parseFloat(
+        row.Echeance_120 || 
+        row.echeance_120 || 
+        row['Echeance 120'] ||
+        row['120+j'] || 
+        row['120_plus'] ||
+        0
+      );
+
+      // Ignorer les lignes vides
+      if (!codeClient || codeClient === '' || solde === 0) {
+        return;
+      }
+
+      nombreClients++;
+
+      // ✅ CALCUL DE L'ÂGE MOYEN (FORMULE DE L'ANCIEN CODE)
+      const totalEchu = Math.abs(tranche120) + Math.abs(tranche90) + Math.abs(tranche60) + Math.abs(tranche30) + Math.abs(tranche0);
+      let ageMoyen = 0;
+
+      if (totalEchu > 0) {
+        ageMoyen = Math.round(
+          (Math.abs(tranche120) * 135 + 
+           Math.abs(tranche90) * 105 + 
+           Math.abs(tranche60) * 75 + 
+           Math.abs(tranche30) * 45 + 
+           Math.abs(tranche0) * 15) / totalEchu
+        );
+      }
+
+      // Calcul des soldes
+      if (solde > 0) {
+        soldesDebiteurs += solde;
+      } else {
+        soldesCrediteurs += Math.abs(solde);
+      }
+
+      // ✅ CALCUL DU POURCENTAGE D'ANCIENNETÉ
+      const montantsAnciens = Math.abs(tranche60) + Math.abs(tranche90) + Math.abs(tranche120);
+      const pourcentageAncien = solde !== 0 ? (montantsAnciens / Math.abs(solde)) * 100 : 0;
+
+      // ✅ NIVEAU DE RISQUE
+      let risque = 'low';
+      if (Math.abs(tranche120) > 0 || ageMoyen > 90) {
+        risque = 'critical';
+        clientsCritiques++;
+      } else if (Math.abs(tranche90) > 0 || ageMoyen > 60) {
+        risque = 'high';
+      } else if (Math.abs(tranche60) > 0 || ageMoyen > 30) {
+        risque = 'medium';
+      }
+
+      // Montant à risque (>60j pour les débiteurs)
+      if (solde > 0 && montantsAnciens > 0) {
+        montantRisque += montantsAnciens;
+      }
+
+      // ✅ STOCKER LES DONNÉES CLIENT
+      clientsData.push({
+        code: codeClient,
+        nom: nomClient,
+        solde: solde,
+        montant30: tranche0,
+        montant60: tranche30,
+        montant90: tranche60,
+        montant90plus: tranche90 + tranche120,
+        ageMoyen: ageMoyen,
+        pourcentageAncien: pourcentageAncien,
+        risque: risque
+      });
+      
+    } catch (error) {
+      console.error(`❌ Erreur ligne ${index}:`, error, row);
     }
-
-    // Calcul des soldes
-    if (solde > 0) {
-      soldesDebiteurs += solde;
-    } else {
-      soldesCrediteurs += Math.abs(solde);
-    }
-
-    // ✅ CALCUL DU POURCENTAGE D'ANCIENNETÉ
-    const montantsAnciens = Math.abs(tranche60) + Math.abs(tranche90) + Math.abs(tranche120);
-    const pourcentageAncien = solde !== 0 ? (montantsAnciens / Math.abs(solde)) * 100 : 0;
-
-    // ✅ NIVEAU DE RISQUE
-    let risque = 'low';
-    if (Math.abs(tranche120) > 0 || ageMoyen > 90) {
-      risque = 'critical';
-      clientsCritiques++;
-    } else if (Math.abs(tranche90) > 0 || ageMoyen > 60) {
-      risque = 'high';
-    } else if (Math.abs(tranche60) > 0 || ageMoyen > 30) {
-      risque = 'medium';
-    }
-
-    // Montant à risque (>60j pour les débiteurs)
-    if (solde > 0 && montantsAnciens > 0) {
-      montantRisque += montantsAnciens;
-    }
-
-    // ✅ STOCKER LES DONNÉES CLIENT
-    clientsData.push({
-      code: codeClient,
-      nom: nomClient,
-      solde: solde,
-      montant30: tranche0,
-      montant60: tranche30,
-      montant90: tranche60,
-      montant90plus: tranche90 + tranche120, // Regrouper 90+ et 120+
-      ageMoyen: ageMoyen,
-      pourcentageAncien: pourcentageAncien,
-      risque: risque
-    });
   });
 
   console.log('✅ Clients analysés:', nombreClients);
-  console.log('✅ Premier client:', clientsData[0]);
+  if (clientsData.length > 0) {
+    console.log('✅ Premier client traité:', clientsData[0]);
+  }
 
   // Afficher les statistiques
   document.getElementById('soldesDebiteursConsultation').textContent = formatCurrency(soldesDebiteurs);
@@ -2540,6 +2680,7 @@ function analyzeBalanceConsultation() {
 
 </body>
 </html>
+
 
 
 
